@@ -1,0 +1,16 @@
+[
+  {
+    "address": "5ZwJqpwa5u4...UserWallet",
+    "firstSeen": 1769333632012,
+    "lastSeen": 1769334523098,
+    "transactionCount": 3,
+    "knownAssociates": [
+      "PoolSourceAdd",
+      "PoolDestAdd",
+      "UserDestAdd",
+      "DeFi111111111111111111111111111111111111111",
+      "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
+    ],
+    "privacyDebtScore": 40
+  }
+]
