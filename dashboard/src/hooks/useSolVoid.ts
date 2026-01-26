@@ -16,6 +16,7 @@ export const useSolVoid = (overrideProgramId?: string) => {
     const [leaks, setLeaks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSimulation, setIsSimulation] = useState(false);
 
     const programId = overrideProgramId || DEFAULT_PROGRAM_ID;
 
@@ -25,9 +26,9 @@ export const useSolVoid = (overrideProgramId?: string) => {
         return new SolVoidClient({
             rpcUrl: connection.rpcEndpoint,
             programId,
-            mock: false
+            mock: isSimulation
         }, wallet);
-    }, [connection.rpcEndpoint, programId, wallet]);
+    }, [connection.rpcEndpoint, programId, wallet, isSimulation]);
 
     const scanAddress = useCallback(async (targetAddress: string) => {
         if (!client) return;
@@ -44,7 +45,13 @@ export const useSolVoid = (overrideProgramId?: string) => {
             const passportData = await client.getPassport(targetAddress);
             setPassport(passportData);
         } catch (err: any) {
-            setError(err.message);
+            if (err.message.includes('403') || err.message.includes('Access forbidden')) {
+                console.warn("SOLVOID_BRIDGE: RPC Access Restricted. Engaging Simulation Mode.");
+                setIsSimulation(true);
+                setError("RPC_ACCESS_FORBIDDEN: Engaging Simulation Mode");
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -87,6 +94,7 @@ export const useSolVoid = (overrideProgramId?: string) => {
         leaks,
         loading,
         error,
+        isSimulation,
         scanAddress,
         executeRescue
     };

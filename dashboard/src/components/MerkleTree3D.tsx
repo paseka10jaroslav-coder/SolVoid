@@ -87,6 +87,16 @@ const MerkleRoot = () => {
 }
 
 export const MerkleTree3D = () => {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return (
+        <div className="w-full h-full bg-black/40 rounded-xl" />
+    );
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.98 }}

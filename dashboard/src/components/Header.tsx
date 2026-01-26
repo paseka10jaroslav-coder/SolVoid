@@ -8,11 +8,22 @@ import { motion } from 'framer-motion';
 interface HeaderProps {
     score?: number;
     loading: boolean;
+    isSimulation?: boolean;
 }
 
-export const Header = ({ score, loading }: HeaderProps) => {
+export const Header = ({ score, loading, isSimulation }: HeaderProps) => {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const isHealthy = score === undefined || score >= 80;
     const isCompromised = score !== undefined && score < 50;
+
+    if (!mounted) return (
+        <header className="tactical-glass m-4 p-4 flex justify-between items-center bg-black/40 opacity-0 h-20" />
+    );
 
     return (
         <motion.header
@@ -25,8 +36,14 @@ export const Header = ({ score, loading }: HeaderProps) => {
                     <Shield className="text-tactical-cyan w-8 h-8" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tighter text-glow-cyan font-sans">SOLVOID</h1>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono">Tactical Privacy Infrastructure</p>
+                    <h1 className="text-2xl font-bold tracking-tighter text-glow-cyan font-sans uppercase">SOLVOID</h1>
+                    <div className="flex items-center gap-2">
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-mono">Tactical Infrastructure</p>
+                        <div className="w-1 h-3 bg-white/10" />
+                        <span className={`text-[8px] font-bold font-mono px-1.5 py-0.5 rounded ${isSimulation ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-tactical-cyan/10 text-tactical-cyan border border-tactical-cyan/20'}`}>
+                            BRIDGE: {isSimulation ? "RESTRICTED_SIMULATED" : "CONNECTED_LIVE"}
+                        </span>
+                    </div>
                 </div>
             </div>
 

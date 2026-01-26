@@ -53,6 +53,29 @@ export class SolVoidClient {
      * Scans an address for privacy leaks and prepares remediation shielding.
      */
     public async protect(address: PublicKey) {
+        if (this.config.mock) {
+            this.passport.updateScore(address.toBase58(), 42);
+            return [{
+                signature: '5Qw9...zX9',
+                privacyScore: 42,
+                leaks: [
+                    {
+                        type: 'identity' as any,
+                        scope: 'funding',
+                        visibility: 'PUBLIC' as any,
+                        severity: 'CRITICAL' as any,
+                        description: 'Identity linked to CEX provenance via history analysis.'
+                    },
+                    {
+                        type: 'metadata' as any,
+                        scope: 'fingerprinting',
+                        visibility: 'PROGRAM' as any,
+                        severity: 'HIGH' as any,
+                        description: 'High entropy: account touches 4+ distinct non-system programs.'
+                    }
+                ]
+            }] as any;
+        }
         const results = await this.pipeline.processAddress(address);
 
         // Update passport score automatically
@@ -75,6 +98,15 @@ export class SolVoidClient {
      * Automatic scan and atomic shield for all tainted assets.
      */
     public async rescue(address: PublicKey) {
+        if (this.config.mock) {
+            return {
+                status: 'success',
+                txid: '3mKj6...nP5',
+                leakedAssets: [{ mint: 'SOL', amount: 1000000000 }],
+                oldScore: 42,
+                newScore: 95
+            };
+        }
         // 1. Scan for leaks
         const results = await this.protect(address);
         const allLeaks = results.flatMap((r: any) => r.leaks);
@@ -104,6 +136,9 @@ export class SolVoidClient {
      */
     public async shield(_amount: number) {
         const commitmentData = this.protocolShield.generateCommitment();
+        if (this.config.mock) {
+            return { txid: '4RzVp...aB2', commitmentData };
+        }
         const txid = await this.protocolShield.deposit(commitmentData.commitment);
         return { txid, commitmentData };
     }

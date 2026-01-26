@@ -13,9 +13,14 @@ interface Contribution {
 }
 
 export const CeremonyMonitor = () => {
+    const [mounted, setMounted] = useState(false);
     const [contributions, setContributions] = useState<Contribution[]>([]);
     const [isjoining, setIsJoining] = useState(false);
     const [ceremonyStatus, setCeremonyStatus] = useState<'OPEN' | 'FINALIZING' | 'COMPLETED'>('OPEN');
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const addContribution = (nodeName: string) => {
         const newC: Contribution = {

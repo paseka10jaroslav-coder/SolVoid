@@ -20,6 +20,7 @@ export default function Home() {
     leaks,
     loading,
     error,
+    isSimulation,
     scanAddress,
     executeRescue
   } = useSolVoid();
@@ -36,7 +37,7 @@ export default function Home() {
       <div className="fixed inset-0 bg-radial pointer-events-none" />
       <div className="scanner-overlay" />
 
-      <Header score={passport?.overallScore} loading={loading} />
+      <Header score={passport?.overallScore} loading={loading} isSimulation={isSimulation} />
 
       {/* TACTICAL INTERFACE CONTAINER */}
       <div className="flex-1 flex flex-col p-4 pt-2 gap-6 relative z-10 max-w-screen-2xl mx-auto w-full">

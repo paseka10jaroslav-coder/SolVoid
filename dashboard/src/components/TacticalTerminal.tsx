@@ -12,7 +12,12 @@ interface LogEntry {
 }
 
 export const TacticalTerminal = () => {
+    const [mounted, setMounted] = useState(false);
     const [logs, setLogs] = useState<LogEntry[]>([]);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     const [isMaximized, setIsMaximized] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -96,9 +101,9 @@ export const TacticalTerminal = () => {
                             >
                                 <span className="text-white/10 whitespace-nowrap min-w-[70px]">[{log.timestamp}]</span>
                                 <span className={`font-bold whitespace-nowrap min-w-[60px] ${log.type === 'ERROR' ? 'text-tactical-red' :
-                                        log.type === 'WARNING' ? 'text-amber-500' :
-                                            log.type === 'SYSTEM' ? 'text-tactical-purple' :
-                                                'text-tactical-cyan'
+                                    log.type === 'WARNING' ? 'text-amber-500' :
+                                        log.type === 'SYSTEM' ? 'text-tactical-purple' :
+                                            'text-tactical-cyan'
                                     }`}>
                                     [{log.type}]
                                 </span>
