@@ -1,164 +1,241 @@
 <div align="center">
 
-# SOLVOID | TACTICAL PRIVACY INFRASTRUCTURE
-### [ENTERPRISE_EDITION_V1.2.4]
+# SOLVOID | THE DIGITAL FORTRESS FOR SOLANA
+### [ARCHITECTURE] | [SPECIFICATIONS] | [INTEGRATION]
+#### [VERSION: 1.2.4-STABLE] | [SECURITY: ENFORCED]
 
 ---
 
-[SYSTEM_STATUS: **ONLINE**] | [ENCRYPTION: **GROTH16_ACTIVE**] | [ANONYMITY_SET: **1,048,575**]
+[STATUS: **OPERATIONAL**] | [ENCRYPTION: **GROTH16_ACTIVE**] | [ANONYMITY_SET: **1,048,575**] | [ACCESS: **PUBLIC**]
 
 ---
 
 </div>
 
-## [00] EXECUTIVE SUMMARY
+## [00] INTRODUCTION: PRIVACY LIFECYCLE MANAGEMENT (PLM)
 
-SolVoid is an elite **Privacy Lifecycle Management (PLM)** platform engineered for the Solana ecosystem. It bridges the critical gap between passive auditing (vulnerability identification) and active cryptographic defense (asset shielding). Utilizing high-depth Merkle Trees and Groth16 ZK-SNARKs, SolVoid provides a "Digital Fortress" for institutional and high-net-worth on-chain identifiers.
+SolVoid is an elite, enterprise-grade Privacy Lifecycle Management (PLM) framework engineered specifically for the Solana ecosystem. It establishes a critical bridge between passive auditing (vulnerability identification) and active cryptographic defense (non-custodial asset shielding).
 
----
+In a transparent blockchain environment, every transaction serves as a data point for MEV bots, forensic analytics firms, and malicious actors. SolVoid provides the necessary infrastructure for entities to regain control over their on-chain identity and financial privacy through cryptographically enforced anonymity.
 
-## [01] PROTOCOL ARCHITECTURE
-
-The SolVoid protocol operates as a four-stage state machine, transitioning accounts from a compromised "Public" state to a neutralized "Shielded" state.
-
-### [A] THE FORENSIC PIPELINE
-The engine performs multi-layered analysis of transaction telemetry to compute a deterministic **Privacy Score**.
-
-```mermaid
-graph LR
-    A[TRANSACTION_TELEMETRY] --> B{FORENSIC_ENGINE}
-    B -->|IDENTITY_LINK| C[CEX/KYC_TRACING]
-    B -->|METADATA_LEAK| D[PAYLOAD_FORENSICS]
-    B -->|STATE_EXPOSURE| E[PROGRAM_FOOTPRINT]
-    C & D & E --> F[PRIVACY_PASSPORT]
-    F --> G[THRESHOLD_ALARM]
-```
-
-### [B] THE SHADOW VAULT (ZK-SHIELDING)
-Assets are decoupled from their history through a non-custodial commitment pool.
-
-```mermaid
-graph TD
-    subgraph "ZK_CIRCUIT (GROTH16)"
-        P1[SECRET_ENTROPY] --> COM[POSEIDON_COMMITMENT]
-        P2[NULLIFIER] --> COM
-    end
-    
-    COM --> MT[20_DEPTH_MERKLE_TREE]
-    MT -->|ROOT_UPDATE| BC[SOLANA_LEDGER]
-    
-    subgraph "ANONYMOUS_WITHDRAWAL"
-        BC -->|MEMBERSHIP_PROOF| ZKP[ZK_PROOF_GENERATION]
-        ZKP --> REL[SHADOW_RELAYER]
-        REL --> REC[FRESH_RECIPIENT]
-    end
-```
+### CORE MISSION
+*   **Auditability**: Identify where and how your identity is leaking.
+*   **Neutralization**: Move tainted assets into the Shadow Vault using ZK-SNARKs.
+*   **Recovery**: Execute unlinkable withdrawals to fresh identifiers.
 
 ---
 
-## [02] TECHNICAL SPECIFICATIONS
+## [01] TECHNICAL ARCHITECTURE & CRYPTOGRAPHY
 
-| COMPONENT | SPECIFICATION | IMPLEMENTATION |
+The SolVoid protocol is built on a foundation of zero-knowledge proofs and high-depth Merkle state trees.
+
+### 1.1 CRYPTOGRAPHIC PRIMITIVES
+| PARAMETER | SPECIFICATION | RATIONALE |
 | :--- | :--- | :--- |
-| **ZK-Proof** | Groth16 | Alt-Bn128 / R1CS |
-| **Hash Function** | Poseidon / Keccak-256 | High-Efficiency Circuit Logic |
-| **Tree Depth** | 20 Levels | 1,048,575 Maximum Leaves |
-| **History Buffer** | 30 Roots | Prevents Asynchronous Race Conditions |
-| **Relay Hops** | 3 Nodes | Onion-Style Transaction Routing |
-| **Audit Coverage** | 1000 TX Depth | Multi-Layer Identity Forensics |
+| **Proof System** | Groth16 ZK-SNARK | Optimal verification speed and minimal proof size (131 bytes). |
+| **Elliptic Curve** | BN128 (Alt-Bn128) | High compatibility with on-chain verification hardware. |
+| **Hash Function** | Poseidon / Keccak-256 | High-efficiency computation within ZK circuits. |
+| **Commitment** | `Poseidon(Secret, Nullifier)` | Unlinkable asset representation. |
+
+### 1.2 PROTOCOL FLOW: THE 4-PHASE CYCLE
+The transition from a public, compromised identifier to a private, secure one follows a strict state machine:
+
+```mermaid
+sequenceDiagram
+    participant U as User Identity
+    participant S as Forensic Engine
+    participant V as Shadow Vault
+    participant R as Relayer Network
+    participant D as Final Recipient
+
+    U->>S: [1] Forensics (Identify Leaks)
+    S-->>U: Return Privacy Passport
+    U->>V: [2] Shielding (Deposit + Commitment)
+    V-->>V: Insert into Merkle Tree
+    U->>U: [3] Proof Generation (Local snarkjs)
+    U->>R: Submit Proof + NullifierHash
+    R->>V: [4] Withdrawal (Verify + Payout)
+    V->>D: Assets Delivered (No Link to U)
+```
 
 ---
 
-## [03] CORE COMMAND INTERFACE
+## [02] FORENSIC ENGINE: THE PRIVACY PASSPORT
 
-The `solvoid-scan` CLI is a high-density utility for privacy management.
+The SolVoid Scanner performs multi-layered telemetry analysis to identify identity provenance and data leaks.
 
-### [ COMMAND_PROTECT ]
-*   **Action**: Executes deep-scanning forensics.
-*   **Usage**: `npx solvoid-scan protect <ADDRESS> --rpc <PRIVATE_URL>`
-*   **Metric**: Detects Identity Linkage, Metadata Hygiene, and MEV Resilience.
+### 2.1 DETECTION LAYERS
+*   **Layer 1: Identity Linkage**: Tracing provenance from CEX/KYC'd wallets to the current identifier.
+*   **Layer 2: Metadata Hygiene**: Detecting serialized public keys or sensitive IDs in instruction data payloads.
+*   **Layer 3: State Exposure**: Identifying footprints in third-party program accounts (e.g., ATA creation, Lending records).
+*   **Layer 4: MEV Resilience**: Analyzing vulnerability to predatory mempool agents based on transaction frequency and slippage.
 
-### [ COMMAND_RESCUE ]
-*   **Action**: Automated identify-and-shield macro.
-*   **Usage**: `npx solvoid-scan rescue <ADDRESS> --surgical --shadow-rpc`
-*   **Logic**: Targets only leaked assets to optimize transaction volume.
+### 2.2 SCORING ALGORITHM
+The **Privacy Score** is a weighted metric (0-100) calculated as:
+`S = 100 - Σ(Leak_Penalty * Multiplier)`
 
-### [ COMMAND_SHIELD ]
-*   **Action**: Cryptographic commitment of fixed denominations.
-*   **Usage**: `npx solvoid-scan shield 1.0`
-*   **Output**: Returns unique **Secret** and **Nullifier** pairs.
-
-### [ COMMAND_WITHDRAW ]
-*   **Action**: Unlinked recovery of shielded assets.
-*   **Usage**: `npx solvoid-scan withdraw <SECRET> <NULLIFIER> <RECIPIENT>`
+| SEVERITY | PENALTY | EXAMPLES |
+| :--- | :--- | :--- |
+| **CRITICAL** | -40 | Direct link to CEX, Raw Pubkey in payload. |
+| **HIGH** | -25 | Funding from Doxxed wallet, State exposure. |
+| **MEDIUM** | -15 | Metadata hygiene issues, fingerprinting. |
+| **LOW** | -5 | RPC-level exposure, non-stealth broadcasting. |
 
 ---
 
-## [04] SDK INTEGRATION (FOR PROTOCOL ENGINEERS)
+## [03] GETTING STARTED GUIDE
 
-Integrate the tactical privacy engine directly into your DApp or infrastructure stack.
+### 3.1 INSTALLATION
+```bash
+npm install solvoid
+```
 
+### 3.2 ENVIRONMENT CONFIGURATION
+Create a `.env` file in your project root to define operational parameters:
+```env
+# Solana RPC Endpoint (Recommend Helius/Alchemy)
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+
+# Shadow Vault Program Address
+SOLVOID_PROGRAM_ID=Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i
+
+# Relayer Service URL for ZK Submit
+SHADOW_RELAYER_URL=http://localhost:3000
+
+# Circuits paths
+ZK_WASM_PATH=./build/withdraw.wasm
+ZK_ZKEY_PATH=./build/withdraw_final.zkey
+```
+
+### 3.3 INITIAL ONBOARDING FLOW
+1.  **Audit**: `npx solvoid-scan protect <ADDRESS>`
+2.  **Shield**: `npx solvoid-scan shield 1.0`
+3.  **Withdraw**: `npx solvoid-scan withdraw <SECRET> <NULLIFIER> <RECIPIENT>`
+
+---
+
+## [04] COMMAND LINE INTERFACE (CLI) REFERENCE
+
+The `solvoid-scan` utility is a high-performance terminal interface for privacy management.
+
+### COMMANDS
+*   `protect <ADDRESS>`: 
+    *   Generates a full Privacy Passport.
+    *   Scans last 1000 transactions.
+*   `rescue <ADDRESS>`:
+    *   **Surgical Rescue**: Identify and shield leaked assets automatically.
+    *   Flags: `--surgical`, `--shadow-rpc`.
+*   `shield <AMOUNT>`:
+    *   Deposit assets and generate commitments.
+    *   Output: `SECRET` and `NULLIFIER` (Backup Required).
+*   `withdraw <SEC> <NULL> <REC>`:
+    *   Unlinkable recovery via ZK-SNARK.
+
+### GLOBAL FLAGS
+| FLAG | DESCRIPTION | DEFAULT |
+| :--- | :--- | :--- |
+| `--rpc` | Custom Solana RPC URL. | Mainnet Beta |
+| `--relayer` | Custom Relayer API URL. | localhost:3000 |
+| `--shadow-rpc`| Encrypted multi-hop broadcasting. | FALSE |
+| `--mock` | Test mode (No real SOL used). | FALSE |
+
+---
+
+## [05] SDK INTEGRATION GUIDE
+
+The SolVoid SDK allows developers to integrate privacy features directly into their protocols.
+
+### 5.1 INITIALIZATION
 ```typescript
 import { SolVoidClient } from 'solvoid';
+import { Keypair } from '@solana/web3.js';
 
-/**
- * [INIT] Configure Technical Signer
- */
 const client = new SolVoidClient({
-    rpcUrl: "https://your-node.com",
+    rpcUrl: process.env.SOLANA_RPC_URL,
     programId: "Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i",
-    relayerUrl: "https://relayer.solvoid.example.com",
-    stealthMode: true
-}, vaultSigner);
+    relayerUrl: "https://relayer.solvoid.io"
+}, walletSigner);
+```
 
-/**
- * [ACTION] Execute Multi-Layer Forensics
- */
-const results = await client.protect(targetPublicKey);
-console.log(`[STATE] Score: ${results.avgScore} | Health: ${results.badgeStr}`);
+### 5.2 KEY SDK METHODS
+| METHOD | DESCRIPTION | RETURN TYPE |
+| :--- | :--- | :--- |
+| `protect(address)` | Analyze hardware leaks and scores. | `Promise<LeakResult[]>` |
+| `getPassport(address)`| Retrieve health records and badges. | `Promise<Passport>` |
+| `rescue(address)` | Execute identified leak shielding. | `Promise<RescueResult>` |
+| `shield(amount)` | Direct vault deposit. | `Promise<ShieldResult>` |
+| `withdraw(params )` | ZK-membership proof withdrawal. | `Promise<WithdrawResult>` |
 
-/**
- * [ACTION] Perform Surgical Shielding
- */
-const { txid, commitmentData } = await client.shield(10.0 * 1e9);
-// commitmentData.secret -> Store in Secure Vault
+---
+
+## [06] RELAYER API SPECIFICATION
+
+The Relayer facilitates anonymous interactions by abstracting IP addresses and gas.
+
+### ENDPOINTS
+*   **GET `/commitments`**: 
+    *   Returns the full state of the Merkle Tree.
+    *   Used for local path construction.
+*   **POST `/relay-withdraw`**: 
+    *   Submits Proof + Public Signals.
+    *   Relayer pays gas and takes a small bounty.
+*   **POST `/webhook`**: 
+    *   Real-time Geyser ingestion for tree sync.
+
+---
+
+## [07] DEVELOPMENT & DEPLOYMENT
+
+### 7.1 CIRCUIT COMPILATION
+Build the ZK circuits locally for custom deployments:
+```bash
+./scripts/build-zk.sh
+```
+*   **Requires**: `circom` 2.x and `snarkjs` installed globally.
+
+### 7.2 PROGRAM DEPLOYMENT (ANCHOR)
+```bash
+cd program
+cargo build-sbf
+solana program deploy ./target/deploy/solvoid.so
+```
+
+### 7.3 TEST SUITES
+```bash
+# SDK Logic and Privacy Engine
+npm test
+
+# On-Chain Merkle Tree State
+cd program && cargo test
 ```
 
 ---
 
-## [05] THE SHADOW RELAYER NETWORK
+## [08] SHIELDING WORKFLOW & DENOMINATION
 
-To maintain IP anonymity, SolVoid utilizes an specialized Relayer API.
+To maximize the **Anonymity Set**, SolVoid uses a Fixed-Denomination Architecture.
 
-*   **Endpoint**: `POST /relay-withdraw` -> Accepts ZK-Proof payloads.
-*   **Endpoint**: `GET /commitments` -> Fetches Merkle state for local Proving.
-*   **Architecture**: Relayers take a protocol-defined bounty to pay for Solana gas, severing the fee-payer relationship.
-
----
-
-## [06] DOCUMENTATION HUB MAP
-
-| MODULE | DESCRIPTION | REFERENCE |
+| DENOMINATION | ANONYMITY FACTOR | RECOMMENDED USE |
 | :--- | :--- | :--- |
-| **Architecture** | Deep-dive into ZK Circuits and Program State. | [VIEW_OVERVIEW](./documentation/architecture/OVERVIEW.md) |
-| **Core_SDK** | Full Method and Type Registry for Developers. | [VIEW_SDK_REF](./documentation/reference/SDK.md) |
-| **Relayer_API** | Specifications for JSON-RPC implementation. | [VIEW_API_REF](./documentation/reference/API.md) |
-| **CLI_Guide** | Advanced flags and Enterprise workflows. | [VIEW_CLI_REF](./documentation/reference/CLI.md) |
-| **Onboarding** | Tactical guide from installation to recovery. | [VIEW_START_GUIDE](./documentation/guides/GETTING_STARTED.md) |
+| **0.1 SOL** | 1.0x | Micro-testing |
+| **1.0 SOL** | 2.5x | Standard Retail |
+| **10.0 SOL** | 5.0x | High-Net-Worth/Institutional |
+| **100.0 SOL** | 10.0x | Strategic Reserve |
 
 ---
 
-## [07] COMPLIANCE & SECURITY STANDARDS
+## [09] SECURITY & COMPLIANCE
 
-*   **NON-CUSTODIAL**: All cryptographic secrets are generated and stored locally.
-*   **AUDIT_READY**: Circuits are deterministic; verification keys match public R1CS.
-*   **NO_IP_LOGGING**: Stealth-mode RPC queries prevent transaction-to-IP correlation.
+*   **100% Non-Custodial**: Secrets are never transmitted to the blockchain or Relayer.
+*   **Zero-Logging Architecture**: CLI and Relayer use ephemeral states to prevent pattern matching.
+*   **Deterministic Integrity**: Circuits verify against public R1CS definitions.
+*   **MEV-Resilience**: Shadow-RPC broadcasting bypasses the public mempool.
 
 ---
 
-<div align="center">
+## [10] DISCLAIMER
 
-**[ TERMINAL_STATUS: SECURE ]**
-**[ PROPERTY_OF: SOLVOID_PROTOCOL_MAINTAINERS ]**
+SolVoid is an experimental privacy protocol. While it utilizes state-of-the-art Groth16 ZK-SNARKs and forensic scanners, on-chain privacy is a competitive field. No tool can provide 100% anonymity against nation-state level forensics without active user caution. Use professionally.
 
-</div>
+---
+[SYSTEM_STATUS: **SECURE**] | [ARCHITECTURE_VERIFIED: **TRUE**] | [REVISION: **V2.1.0**]
