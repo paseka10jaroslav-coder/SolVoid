@@ -1,6 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { PrivacyEngine } from './privacy-engine';
 import { PrivacyShield } from './privacy/shield';
+import { EventBus } from './events/bus';
 
 export class PrivacyPipeline {
     private connection: Connection;
@@ -17,8 +18,14 @@ export class PrivacyPipeline {
      * Map web3.js signatures to privacy results by analyzing the last 10 txs.
      */
     public async processAddress(address: PublicKey) {
+        EventBus.scanStart(address.toBase58());
+        EventBus.info('Fetching transaction history from Solana cluster...');
+
         const signatures = await this.connection.getSignaturesForAddress(address);
+        EventBus.info(`Found ${signatures.length} transactions. Analyzing latest 10...`);
+
         const results = [];
+        let totalLeaks = 0;
 
         for (const sig of signatures.slice(0, 10)) {
             const tx: any = await this.connection.getTransaction(sig.signature, {
@@ -26,6 +33,12 @@ export class PrivacyPipeline {
             });
 
             if (tx) {
+                // Emit transaction parsed event
+                const programId = tx.transaction.message.staticAccountKeys[
+                    tx.transaction.message.compiledInstructions[0]?.programIdIndex || 0
+                ]?.toBase58() || 'Unknown';
+                EventBus.transactionParsed(sig.signature, programId);
+
                 // Parse standard Solana tx structure into ours
                 const txData: any = {
                     message: {
@@ -47,6 +60,12 @@ export class PrivacyPipeline {
                 const leaks = this.engine.analyzeTransaction(txData);
                 const privacyScore = this.engine.calculateScore(leaks);
 
+                // Emit leak events
+                for (const leak of leaks) {
+                    EventBus.leakDetected(leak.type, leak.severity, leak.description, sig.signature);
+                    totalLeaks++;
+                }
+
                 if (leaks.length > 0) {
                     const remediation = await this.generateRemediation(address, leaks);
                     results.push({
@@ -65,6 +84,13 @@ export class PrivacyPipeline {
             }
         }
 
+        // Calculate final score
+        const avgScore = results.length > 0
+            ? Math.round(results.reduce((acc, r) => acc + r.privacyScore, 0) / results.length)
+            : 100;
+
+        EventBus.scanComplete(address.toBase58(), totalLeaks, avgScore);
+
         return results;
     }
 
@@ -76,6 +102,7 @@ export class PrivacyPipeline {
 
         if (criticalLeaks.length > 0) {
             const commitmentData = this.shield.generateCommitment();
+            EventBus.info('Critical leaks detected. Generating shielding recommendation...');
 
             return {
                 action: 'SHIELD_BALANCE',

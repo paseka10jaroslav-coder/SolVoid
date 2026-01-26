@@ -18,3 +18,9 @@ export { KNOWN_PROGRAMS, identifyProgram, isSwapProgram } from './registry/progr
 
 // Export configuration utilities
 export { ConfigLoader, EnvConfig } from './utils/config';
+
+// Export event system
+export { EventBus, ForensicEvent } from './events/bus';
+
+// Export shadow relay network
+export { ShadowRPC, ShadowNode, RelayOptions } from './network/shadow-rpc';

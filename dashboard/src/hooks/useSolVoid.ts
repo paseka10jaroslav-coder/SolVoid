@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { SolVoidClient } from '../../../sdk/client';
+import { SolVoidClient } from 'solvoid';
 
 const DEFAULT_PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID || "Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i";
 
@@ -16,24 +16,23 @@ export const useSolVoid = (overrideProgramId?: string) => {
     const [leaks, setLeaks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSimulation, setIsSimulation] = useState(false);
+    const [rpcError, setRpcError] = useState(false);
 
     const programId = overrideProgramId || DEFAULT_PROGRAM_ID;
 
     const client = useMemo(() => {
-        // SolVoidClient expects { rpcUrl, programId }, we give it current connection info
-        // and the adapter wallet interface.
         return new SolVoidClient({
             rpcUrl: connection.rpcEndpoint,
-            programId,
-            mock: isSimulation
+            programId
         }, wallet);
-    }, [connection.rpcEndpoint, programId, wallet, isSimulation]);
+    }, [connection.rpcEndpoint, programId, wallet]);
 
     const scanAddress = useCallback(async (targetAddress: string) => {
         if (!client) return;
         setLoading(true);
         setError(null);
+        setRpcError(false);
+
         try {
             const pubkey = new PublicKey(targetAddress);
 
@@ -45,12 +44,13 @@ export const useSolVoid = (overrideProgramId?: string) => {
             const passportData = await client.getPassport(targetAddress);
             setPassport(passportData);
         } catch (err: any) {
-            if (err.message.includes('403') || err.message.includes('Access forbidden')) {
-                console.warn("SOLVOID_BRIDGE: RPC Access Restricted. Engaging Simulation Mode.");
-                setIsSimulation(true);
-                setError("RPC_ACCESS_FORBIDDEN: Engaging Simulation Mode");
+            const errorMsg = err.message || 'Unknown error';
+
+            if (errorMsg.includes('403') || errorMsg.includes('Access forbidden') || errorMsg.includes('rate limit')) {
+                setRpcError(true);
+                setError("RPC access restricted. Please use a private RPC endpoint.");
             } else {
-                setError(err.message);
+                setError(errorMsg);
             }
         } finally {
             setLoading(false);
@@ -61,13 +61,14 @@ export const useSolVoid = (overrideProgramId?: string) => {
         if (!client || !publicKey) return;
         setLoading(true);
         setError(null);
+
         try {
             const result = await client.rescue(publicKey);
 
             // Refresh state after rescue
             const passportData = await client.getPassport(publicKey.toBase58());
             setPassport(passportData);
-            await scanAddress(publicKey.toBase58()); // Re-scan to show cleared state
+            await scanAddress(publicKey.toBase58());
 
             return result;
         } catch (err: any) {
@@ -94,7 +95,7 @@ export const useSolVoid = (overrideProgramId?: string) => {
         leaks,
         loading,
         error,
-        isSimulation,
+        rpcError,
         scanAddress,
         executeRescue
     };

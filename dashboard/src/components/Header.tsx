@@ -8,10 +8,10 @@ import { motion } from 'framer-motion';
 interface HeaderProps {
     score?: number;
     loading: boolean;
-    isSimulation?: boolean;
+    rpcError?: boolean;
 }
 
-export const Header = ({ score, loading, isSimulation }: HeaderProps) => {
+export const Header = ({ score, loading, rpcError }: HeaderProps) => {
     const [mounted, setMounted] = React.useState(false);
 
     React.useEffect(() => {
@@ -40,8 +40,8 @@ export const Header = ({ score, loading, isSimulation }: HeaderProps) => {
                     <div className="flex items-center gap-2 mt-0.5">
                         <p className="text-[10px] text-white/40 font-mono">Tactical Privacy Infrastructure</p>
                         <span className="text-white/10">|</span>
-                        <span className={`text-[9px] font-medium font-mono px-1.5 py-0.5 rounded ${isSimulation ? 'bg-amber-500/10 text-amber-400' : 'bg-tactical-cyan/10 text-tactical-cyan'}`}>
-                            {isSimulation ? "Simulation" : "Live"}
+                        <span className={`text-[9px] font-medium font-mono px-1.5 py-0.5 rounded ${rpcError ? 'bg-tactical-red/10 text-tactical-red' : 'bg-green-500/10 text-green-500'}`}>
+                            {rpcError ? "RPC Error" : "Live"}
                         </span>
                     </div>
                 </div>

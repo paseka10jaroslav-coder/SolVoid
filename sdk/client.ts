@@ -5,18 +5,19 @@ import { RescueAnalyzer } from './rescue/analyzer';
 import { RescueBuilder } from './rescue/builder';
 import { PassportManager } from './passport/manager';
 import { ShadowRPC } from './network/shadow-rpc';
+import { EventBus } from './events/bus';
 import * as crypto from 'crypto';
 
 export interface SolVoidConfig {
     rpcUrl: string;
     programId: string;
     relayerUrl?: string;
-    mock?: boolean;
 }
 
 /**
  * SolVoidClient
  * High-level orchestration for scanning, shielding, and ZK-withdrawals.
+ * Production-ready: No mock modes.
  */
 export class SolVoidClient {
     private pipeline: PrivacyPipeline;
@@ -25,10 +26,7 @@ export class SolVoidClient {
     private connection: Connection;
     private protocolShield: PrivacyShield;
 
-    private config: SolVoidConfig;
-
     constructor(config: SolVoidConfig, wallet: any) {
-        this.config = config;
         this.connection = new Connection(config.rpcUrl, 'confirmed');
         this.passport = new PassportManager();
 
@@ -53,29 +51,6 @@ export class SolVoidClient {
      * Scans an address for privacy leaks and prepares remediation shielding.
      */
     public async protect(address: PublicKey) {
-        if (this.config.mock) {
-            this.passport.updateScore(address.toBase58(), 42);
-            return [{
-                signature: '5Qw9...zX9',
-                privacyScore: 42,
-                leaks: [
-                    {
-                        type: 'identity' as any,
-                        scope: 'funding',
-                        visibility: 'PUBLIC' as any,
-                        severity: 'CRITICAL' as any,
-                        description: 'Identity linked to CEX provenance via history analysis.'
-                    },
-                    {
-                        type: 'metadata' as any,
-                        scope: 'fingerprinting',
-                        visibility: 'PROGRAM' as any,
-                        severity: 'HIGH' as any,
-                        description: 'High entropy: account touches 4+ distinct non-system programs.'
-                    }
-                ]
-            }] as any;
-        }
         const results = await this.pipeline.processAddress(address);
 
         // Update passport score automatically
@@ -98,29 +73,30 @@ export class SolVoidClient {
      * Automatic scan and atomic shield for all tainted assets.
      */
     public async rescue(address: PublicKey) {
-        if (this.config.mock) {
-            return {
-                status: 'success',
-                txid: '3mKj6...nP5',
-                leakedAssets: [{ mint: 'SOL', amount: 1000000000 }],
-                oldScore: 42,
-                newScore: 95
-            };
-        }
+        EventBus.info('Initiating rescue operation...', { address: address.toBase58() });
+
         // 1. Scan for leaks
         const results = await this.protect(address);
         const allLeaks = results.flatMap((r: any) => r.leaks);
 
         // 2. Identify Leaked Assets
         const leakedAssets = RescueAnalyzer.identifyLeakedAssets(allLeaks);
-        if (leakedAssets.length === 0) return { status: 'secure', message: 'No leaked assets found.' };
+        if (leakedAssets.length === 0) {
+            EventBus.info('No leaked assets found. Wallet is secure.');
+            return { status: 'secure', message: 'No leaked assets found.' };
+        }
+
+        EventBus.info(`Found ${leakedAssets.length} leaked assets. Building rescue transaction...`);
 
         // 3. Build Atomic Rescue Transaction
         const builder = new RescueBuilder(this.connection, this.protocolShield);
         const rescueTx = await builder.buildAtomicRescueTx(address, leakedAssets);
 
         // Broadcast via the relay network to hide IP
+        EventBus.info('Broadcasting via Shadow Relay Network...');
         const txid = await this.shadow.broadcastPrivately(rescueTx, { hops: 3, stealthMode: true });
+
+        EventBus.relayBroadcast(3, txid);
 
         return {
             status: 'success',
@@ -135,11 +111,16 @@ export class SolVoidClient {
      * Directly shields an amount of SOL.
      */
     public async shield(_amount: number) {
+        EventBus.info('Generating commitment for shielding operation...');
         const commitmentData = this.protocolShield.generateCommitment();
-        if (this.config.mock) {
-            return { txid: '4RzVp...aB2', commitmentData };
-        }
+
+        EventBus.info('Submitting deposit transaction...');
         const txid = await this.protocolShield.deposit(commitmentData.commitment);
+
+        EventBus.emit('COMMITMENT_CREATED', 'Commitment created successfully', {
+            commitment: commitmentData.commitmentHex
+        }, txid);
+
         return { txid, commitmentData };
     }
 
@@ -156,20 +137,27 @@ export class SolVoidClient {
         relayerSigner: any,
         fee: number = 0
     ) {
+        EventBus.info('Starting withdrawal process...');
+
         const secret = Buffer.from(secretHex, 'hex');
         const nullifier = Buffer.from(nullifierHex, 'hex');
 
         // Generate proof of membership in the commitment pool
         const commitment = crypto.createHash('sha256').update(Buffer.concat([secret, nullifier])).digest();
         const index = allCommitments.findIndex(c => c.equals(commitment));
-        if (index === -1) throw new Error("Commitment not found in state");
+        if (index === -1) {
+            EventBus.error('Commitment not found in state');
+            throw new Error("Commitment not found in state");
+        }
 
+        EventBus.info('Generating Merkle proof...');
         const merklePath = await this.protocolShield.getMerkleProof(index, allCommitments);
 
         // Final root used for ZK verification
         const root = Buffer.alloc(32); // Placeholder for root calculation logic
 
         // 3. Generate ZK-Proof
+        EventBus.info('Generating ZK-SNARK proof (Groth16)...');
         const { proof } = await this.protocolShield.generateZKProof(
             secret,
             nullifier,
@@ -179,8 +167,15 @@ export class SolVoidClient {
             zkeyPath
         );
 
+        EventBus.proofGenerated('Groth16');
+
         // 4. Submit to blockchain (or relayer)
+        EventBus.info('Submitting withdrawal via relayer...');
         const nullifierHash = crypto.createHash('sha256').update(nullifier).digest();
-        return await this.protocolShield.withdraw(nullifierHash, root, [proof], recipient, relayerSigner, fee);
+        const result = await this.protocolShield.withdraw(nullifierHash, root, [proof], recipient, relayerSigner, fee);
+
+        EventBus.emit('WITHDRAWAL_COMPLETE', 'Withdrawal completed successfully', { recipient: recipient.toBase58() });
+
+        return result;
     }
 }

@@ -124,19 +124,19 @@ export const MerkleTree3D = () => {
 
             <div className="absolute top-6 left-6 pointer-events-none space-y-1">
                 <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-tactical-cyan animate-pulse"></div>
-                    <p className="text-[10px] uppercase font-bold text-tactical-cyan tracking-[0.4em] font-mono">
-                        [STATE_EXPLORER_ACTIVE]
+                    <div className="w-1.5 h-1.5 rounded-full bg-tactical-cyan animate-pulse" />
+                    <p className="text-xs font-medium text-tactical-cyan">
+                        State Explorer
                     </p>
                 </div>
-                <p className="text-[9px] uppercase text-white/30 tracking-[0.2em] font-mono ml-4">
-                    Visualizing Layer 20 / 1.04M Leaves
+                <p className="text-[10px] text-white/40 ml-4">
+                    ZK Commitment Tree Visualization
                 </p>
             </div>
 
             <div className="absolute bottom-6 right-6 pointer-events-none text-right">
-                <p className="text-[8px] uppercase text-white/20 tracking-[0.5em] font-mono">
-                    PROTOCOL_VISUALIZATION_ENGINE_V4
+                <p className="text-[10px] text-white/20 font-mono">
+                    Protocol v1.0
                 </p>
             </div>
         </motion.div>
