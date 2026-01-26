@@ -17,38 +17,38 @@ export const ShadowVault = ({ commitments }: ShadowVaultProps) => {
         >
             <div className="flex items-center gap-3 mb-6">
                 <Database className="w-4 h-4 text-tactical-cyan" />
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 font-mono">Shadow Vault: Nodes</h3>
+                <h3 className="text-sm font-semibold text-white/80">Shadow Vault</h3>
             </div>
 
             <div className="space-y-6 flex-1">
                 <div className="p-4 rounded-xl border border-tactical-cyan/10 bg-tactical-cyan/[0.02]">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
                         <Hash className="w-3 h-3 text-tactical-cyan opacity-50" />
-                        <span className="text-[9px] uppercase font-bold text-white/30 tracking-widest font-mono">Merkle Root</span>
+                        <span className="text-[10px] text-white/40 font-mono">Merkle Root</span>
                     </div>
-                    <p className="text-[9px] font-mono text-tactical-cyan/60 break-all leading-relaxed">
-                        {commitments.length > 0 ? "0x7F4E92B1...SYNCED" : "UNINITIALIZED_STATE_WAITING_FOR_LEAVES"}
+                    <p className="text-xs font-mono text-tactical-cyan/70 break-all leading-relaxed">
+                        {commitments.length > 0 ? "0x7F4E92B1...SYNCED" : "Awaiting first commitment..."}
                     </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="tactical-glass p-4 flex flex-col items-center justify-center text-center border-white/5">
-                        <Lock className="w-6 h-6 text-tactical-purple mb-2 opacity-50" />
-                        <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em] font-mono">Anonymity Set</span>
-                        <span className="text-lg font-bold text-white font-sans tracking-tight">{commitments.length > 0 ? "1,024,512" : "0"}</span>
+                        <Lock className="w-5 h-5 text-tactical-purple mb-2 opacity-60" />
+                        <span className="text-[10px] text-white/40">Anonymity Set</span>
+                        <span className="text-lg font-semibold text-white mt-1">{commitments.length > 0 ? "1,024,512" : "0"}</span>
                     </div>
                     <div className="tactical-glass p-4 flex flex-col items-center justify-center text-center border-white/5">
-                        <Unlock className="w-6 h-6 text-tactical-cyan mb-2 opacity-50" />
-                        <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em] font-mono">Protected</span>
-                        <span className="text-lg font-bold text-white font-sans tracking-tight">{commitments.length}</span>
+                        <Unlock className="w-5 h-5 text-tactical-cyan mb-2 opacity-60" />
+                        <span className="text-[10px] text-white/40">Protected</span>
+                        <span className="text-lg font-semibold text-white mt-1">{commitments.length}</span>
                     </div>
                 </div>
 
                 <div className="space-y-3">
-                    <h4 className="text-[9px] uppercase font-bold text-white/30 tracking-[0.3em] font-mono">Active ZK-Notes</h4>
+                    <h4 className="text-xs font-medium text-white/40">Active ZK-Notes</h4>
                     {commitments.length === 0 ? (
-                        <div className="py-12 text-center border border-dashed border-white/5 rounded-xl bg-white/[0.01]">
-                            <p className="text-[9px] uppercase text-white/20 font-mono tracking-widest leading-relaxed px-4">No active commitments found in current vault state</p>
+                        <div className="py-10 text-center border border-dashed border-white/5 rounded-xl bg-white/[0.01]">
+                            <p className="text-xs text-white/30 px-4">No active commitments in vault</p>
                         </div>
                     ) : (
                         commitments.map((c, i) => (
@@ -71,7 +71,7 @@ export const ShadowVault = ({ commitments }: ShadowVaultProps) => {
             <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="mt-6 w-full py-3 border border-tactical-cyan/30 text-tactical-cyan text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-tactical-cyan/10 transition-all font-mono rounded-lg outline-none"
+                className="mt-6 w-full py-3 border border-tactical-cyan/30 text-tactical-cyan text-xs font-semibold hover:bg-tactical-cyan/10 transition-all rounded-lg outline-none"
             >
                 Commit Entropy
             </motion.button>

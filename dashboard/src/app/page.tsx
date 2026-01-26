@@ -54,8 +54,8 @@ export default function Home() {
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-tactical-cyan group-focus-within:opacity-100 transition-all duration-500" />
               <input
                 type="text"
-                placeholder="TARGET_ADDRESS_FOR_DEEP_INSPECTOR..."
-                className="w-full tactical-glass py-4 pl-14 pr-6 bg-black/40 text-[11px] font-mono text-tactical-cyan/80 outline-none border-white/5 focus:border-tactical-cyan/30 transition-all duration-500 placeholder:text-white/10 uppercase tracking-[0.2em]"
+                placeholder="Enter target address for deep inspection..."
+                className="w-full tactical-glass py-4 pl-14 pr-6 bg-black/40 text-sm font-mono text-tactical-cyan/90 outline-none border-white/5 focus:border-tactical-cyan/30 transition-all duration-500 placeholder:text-white/20 placeholder:normal-case placeholder:tracking-normal"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
@@ -91,32 +91,32 @@ export default function Home() {
             <div className="tactical-glass p-6 bg-tactical-cyan/[0.03] border-tactical-cyan/10">
               <div className="flex items-center gap-3 mb-5">
                 <Terminal className="w-4 h-4 text-tactical-cyan opacity-60" />
-                <h4 className="text-[10px] uppercase font-bold text-white/40 tracking-[0.3em] font-mono">Diagnostics</h4>
+                <h4 className="text-xs uppercase font-semibold text-white/50 tracking-widest font-mono">Diagnostics</h4>
               </div>
               <div className="space-y-4 font-mono">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-white/20 uppercase tracking-tighter">Zk_Session:</span>
-                  <span className="text-tactical-cyan opacity-80 font-bold">READY</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-white/40">ZK Session</span>
+                  <span className="text-tactical-cyan font-semibold">READY</span>
                 </div>
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-white/20 uppercase tracking-tighter">Chain_Latency:</span>
-                  <span className="text-tactical-cyan opacity-80 font-bold">14ms</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-white/40">Chain Latency</span>
+                  <span className="text-tactical-cyan font-semibold">14ms</span>
                 </div>
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-white/20 uppercase tracking-tighter">Target_Node:</span>
-                  <span className="text-tactical-cyan opacity-80 font-bold truncate max-w-[120px]">{address || 'GHOST'}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-white/40">Target Node</span>
+                  <span className="text-tactical-cyan font-semibold truncate max-w-[120px]">{address || 'Awaiting...'}</span>
                 </div>
               </div>
             </div>
 
             <div className={`tactical-glass p-5 bg-tactical-red/[0.02] border-tactical-red/5 ${passport?.overallScore < 50 ? 'animate-pulse' : 'opacity-40'}`}>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-3">
                 <AlertCircle className="w-4 h-4 text-tactical-red" />
-                <h4 className="text-[9px] uppercase font-bold text-tactical-red opacity-80 tracking-widest font-mono">Neural Warning</h4>
+                <h4 className="text-xs uppercase font-semibold text-tactical-red/90 tracking-wider font-mono">Warning</h4>
               </div>
-              <p className="text-[9px] text-white/30 leading-relaxed uppercase font-mono tracking-tight">
+              <p className="text-[11px] text-white/40 leading-relaxed font-mono">
                 {passport?.overallScore < 50
-                  ? "Critical leakage identified in instruction history. immediate surgical rescue required."
+                  ? "Critical leakage identified in instruction history. Immediate surgical rescue required."
                   : "No critical zero-day leaks identified in current session."}
               </p>
             </div>
@@ -158,17 +158,17 @@ export default function Home() {
       <footer className="tactical-glass m-4 mt-0 mb-32 p-3.5 flex justify-between items-center bg-black/60 relative z-50 border-white/5">
         <div className="flex gap-10 items-center">
           <div className="flex flex-col">
-            <span className="text-[8px] text-white/20 uppercase tracking-[0.4em] font-mono">Sector_Alpha</span>
-            <span className="text-[9px] text-white/40 font-mono tracking-widest">34.0522° N • 118.2437° W</span>
+            <span className="text-[10px] text-white/30 uppercase tracking-widest font-mono">Sector Alpha</span>
+            <span className="text-xs text-white/50 font-mono">34.0522° N • 118.2437° W</span>
           </div>
           <div className="hidden sm:flex items-center gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-tactical-cyan shadow-[0_0_10px_rgba(0,240,255,1)]" />
-            <span className="text-[9px] text-tactical-cyan uppercase tracking-[0.2em] font-bold font-mono">Engine_Synchronized</span>
+            <span className="text-[10px] text-tactical-cyan uppercase tracking-wider font-semibold font-mono">Engine Synchronized</span>
           </div>
         </div>
 
-        <div className="text-[9px] text-white/10 uppercase tracking-[0.5em] font-mono hover:text-white/30 transition-colors cursor-default">
-          SOLVOID_PLATFORM_V.1.2.4_STABLE
+        <div className="text-[10px] text-white/20 uppercase tracking-widest font-mono hover:text-white/40 transition-colors cursor-default">
+          SolVoid Platform v1.2.4
         </div>
       </footer>
 
