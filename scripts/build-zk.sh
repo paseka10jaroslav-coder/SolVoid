@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # PrivacyZero ZK-Ceremony & Compilation Script
 # This script automates the creation of the zero-knowledge artifacts.
@@ -15,19 +16,23 @@ then
     exit 1
 fi
 
-circom program/circuits/withdraw.circom --wasm --r1cs -o ./build
+mkdir -p ./build
+
+circom program/circuits/withdraw.circom --wasm --r1cs -o ./build -l node_modules -l program/circuits
 
 # 2. Trusted Setup (Phase 1 - Powers of Tau)
 # We use a 2^14 tau file which is sufficient for this circuit depth.
 echo "[2/4] Downloading Powers of Tau..."
 if [ ! -f "pot14_final.ptau" ]; then
-    curl -L https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_14.ptau -o pot14_final.ptau
+    curl -L https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_14.ptau -o pot14_final.ptau
 fi
 
 # 3. Phase 2 Setup (Circuit Specific)
 echo "[3/4] Generating ZKey..."
-npx snarkjs groth16 setup ./build/withdraw.r1cs pot14_final.ptau withdraw_0000.zkey
-echo "Contribution..." | npx snarkjs groth16 contribution withdraw_0000.zkey withdraw_final.zkey --name="PrivacyZero Contribution" -v
+if [ ! -f "withdraw_0000.zkey" ]; then
+    npx snarkjs groth16 setup ./build/withdraw.r1cs pot14_final.ptau withdraw_0000.zkey
+fi
+echo "Contribution..." | npx snarkjs zkey contribute withdraw_0000.zkey withdraw_final.zkey --name="PrivacyZero Contribution" -v
 
 # 4. Export Verification Key
 echo "[4/4] Exporting Verification Key..."

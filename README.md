@@ -1,115 +1,123 @@
-# SOLVOID | DIGITAL FORTRESS
+# SOLVOID | THE DIGITAL FORTRESS FOR SOLANA
 
-<p align="center">
-  <img src="./docs/assets/banner.png" alt="SolVoid Banner" width="800">
-</p>
+[VERSION: 1.2.4-STABLE] | [LICENSE: MIT] | [SECURITY: ENFORCED]
 
-## The Premium Privacy Lifecycle Management (PLM) for Solana
-
-**SolVoid** is an enterprise-grade cybersecurity platform that bridges the gap between passive privacy auditing and active cryptographic defense on the Solana blockchain.
-
-[![Stable Version](https://img.shields.io/badge/version-1.2.4--stable-00FF41?style=for-the-badge&logo=solana)](https://github.com/solvoid/solvoid)
-[![License](https://img.shields.io/badge/license-MIT-white?style=for-the-badge)](./LICENSE)
-[![ZK Powered](https://img.shields.io/badge/security-ZK--SNARK-B000FF?style=for-the-badge)](./documentation/architecture/OVERVIEW.md)
+SolVoid is a high-performance Privacy Lifecycle Management (PLM) framework engineered for the Solana blockchain. It provides an enterprise-grade suite of forensic auditing tools and cryptographically enforced shielding protocols designed to neutralize identity leaks and maintain on-chain anonymity.
 
 ---
 
-### 🛡️ Tactical Capabilities
+## [I] ARCHITECTURAL PILLARS
 
-#### 1. Identity Forensics (Privacy Passport)
-A deep-scanning engine that performs multi-layered forensic analysis of every account and instruction in your transaction history. It detects **Identity Linkage**, **Metadata Leaks**, and **State Exposure** with surgical precision.
+### 1. IDENTITY FORENSICS (SOLVOID SCANNER)
+The scanner utilizes a multi-layered detection engine to analyze account history. It evaluates transactions against known leakage patterns, including:
+*   **Direct Linkage**: Connections to KYC-verified exchange addresses.
+*   **Binary Metadata Leaks**: Public key exposure within instruction data payloads.
+*   **Account Relationships**: State-level footprints in third-party program accounts.
+*   **MEV Sensitivity**: Vulnerability to predatory sandwich attacks based on historical slippage tolerance.
 
-#### 2. Active Defense (Surgical Rescue)
-A high-stakes workflow designed to identify compromised assets and neutralize threats in real-time. Move assets from high-risk public entries into the Shadow Vault with a single click.
+### 2. DISCRETE SHIELDING (SHADOW VAULT)
+The core privacy layer is a non-custodial vault powered by Groth16 ZK-SNARKs. 
+*   **State Tree**: A 20-level incremental Merkle tree supporting an anonymity set of 1,048,575 individual deposits.
+*   **Commitment Protocol**: Cryptographic binding of secret and nullifier values, ensuring assets are unlinkable once deposited.
+*   **Relayer Isolation**: Support for ephemeral relayers to decouple transaction fee payment from identity.
 
-#### 3. Shadow Vault (ZK Shielding)
-A cryptographically enforced privacy protocol using **Groth16 ZK-SNARKs**. Break on-chain links between your public identity and your private assets using non-custodial shielding and anonymous relayer networks.
+### 3. SURGICAL RESCUE WORKFLOW
+An automated pipeline that bridges auditing and defense. The Rescue workflow identifies tainted assets and executes an atomic migration into the Shadow Vault, effectively "cleansing" the history of the fund's current owner.
 
 ---
 
-### 🚀 Quick Start
+## [II] SYSTEM ARCHITECTURE
 
-#### Installation
-```bash
-npm install @solvoid/sdk
+The following diagram illustrates the flow from initial identity compromise to cryptographic recovery.
+
+```mermaid
+sequenceDiagram
+    participant U as User Identity
+    participant S as SolVoid Scanner
+    participant V as Shadow Vault (Program)
+    participant R as Relayer Network
+    participant D as Fresh Recipient
+
+    note over U, S: PHASE 1: FORENSIC AUDIT
+    U->>S: Request Privacy Passport
+    S-->>U: Identity Leak Detected (High Severity)
+    
+    note over U, V: PHASE 2: SURGICAL SHIELDING
+    U->>V: Deposit (Commitment Hash)
+    V-->>V: Update Merkle State Tree
+    
+    note over U, R: PHASE 3: ZK PROOF GENERATION
+    U->>U: Generate Local ZK-Proof (Groth16)
+    U->>R: Submit Proof + Nullifier Hash (SSH)
+    
+    note over R, D: PHASE 4: ANONYMOUS RECOVERY
+    R->>V: Execute Withdrawal (Verify Proof)
+    V->>D: Distribute Assets (No Link to User)
 ```
 
-#### Perform your first privacy scan
-```bash
-npx solvoid-scan protect <SOLANA_ADDRESS> --rpc https://api.mainnet-beta.solana.com
-```
+---
 
-#### Execute surgical rescue for leaked assets
-```bash
-npx solvoid-scan rescue <SOLANA_ADDRESS> --shadow-rpc
-```
+## [III] ENTERPRISE CLI REFERENCE
 
-#### Shielding an asset
+The `solvoid-scan` utility is the primary management interface.
+
+### CORE COMMANDS
+| Command | Usage | Description |
+| :--- | :--- | :--- |
+| **PROTECT** | `protect <ADDRESS>` | Executes forensic analysis and generates a Privacy Passport. |
+| **RESCUE** | `rescue <ADDRESS>` | Automated detection and shielding of all leaked assets. |
+| **SHIELD** | `shield <AMOUNT>` | Manual cryptographic commitment of SOL into the Vault. |
+| **WITHDRAW** | `withdraw <...>` | Executes a ZK-SNARK membership proof and withdrawal. |
+
+### SECURITY FLAGS
+*   `--shadow-rpc`: Routes all queries through encrypted relay hops to prevent IP logging.
+*   `--surgical`: Limits shielding operations strictly to assets with identified leakage history.
+*   `--relayer-auth`: Provides credentials for private enterprise relayer networks.
+
+---
+
+## [IV] INTEGRATION & SDK
+
+SolVoid is designed for protocol developers to bake privacy into their own applications.
+
 ```typescript
-import { SolVoidClient } from '@solvoid/sdk';
+import { SolVoidClient } from 'solvoid';
 
-const client = new SolVoidClient({ rpcUrl: process.env.RPC_URL });
-const { note, signature } = await client.rescue.shieldAsset(amount, mint);
-console.log(`Asset Shielded: ${signature}`);
+// Enterprise Client Configuration
+const client = new SolVoidClient({
+    rpcUrl: process.env.SOLANA_RPC_URL,
+    programId: process.env.SOLVOID_PROGRAM_ID,
+    relayerUrl: "https://relayer.internal.net",
+    stealthMode: true
+}, walletSigner);
+
+// Execute a privacy-preserving rescue operation
+const rescueResult = await client.rescue(targetAccount);
+if (rescueResult.status === 'SUCCESS') {
+    console.log(`[STATE] Assets Shielded. New Privacy Score: ${rescueResult.newScore}/100`);
+}
 ```
 
 ---
 
-### 💻 CLI Usage
+## [V] DOCUMENTATION HUB MAP
 
-The `solvoid-scan` CLI is the primary interface for terminal-based privacy management.
+For deep-dive technical specifications, refer to the following sub-directories:
 
-**Basic Commands:**
-- `protect <address>`: Scan address for leaks and view Privacy Passport.
-- `rescue <address>`: Atomic shielding of all leaked assets.
-- `shield <amount>`: Execute a private deposit (Surgical Shielding).
-- `withdraw <secret> <nullifier> <recipient>`: Unlinkable ZK withdrawal.
-
-**Global Flags:**
-- `--rpc <url>`: Solana RPC URL.
-- `--relayer <url>`: Relayer/Shadow RPC URL.
-- `--program <id>`: Solana program ID.
-- `--surgical`: Optimize shielding for leaked assets only.
-- `--shadow-rpc`: Broadcast via encrypted relay hops.
-- `--mock`: Enable simulated/mock mode for testing.
-
-For full details, see the [CLI Reference](./documentation/reference/CLI.md).
+*   **[Technical Architecture](./documentation/architecture/OVERVIEW.md)**: Deep dive into the Merkle Tree and ZK Circuits.
+*   **[SDK Reference](./documentation/reference/SDK.md)**: Exhaustive documentation of classes and methods.
+*   **[Relayer API](./documentation/reference/API.md)**: Specifications for building/running a relayer node.
+*   **[Development Guide](./documentation/reference/DEVELOPMENT.md)**: Instructions for compiling circuits and testing.
 
 ---
 
-### 📚 Documentation Hub
+## [VI] COMPLIANCE & SECURITY
 
-Explore our comprehensive technical resources:
+*   **Non-Custodial**: SolVoid never has access to user keys or unshielded secrets.
+*   **Verifiable**: All ZK circuits are open-source and deterministic.
+*   **Zero-Logging**: The CLI and official Relayers utilize ephemeral states with no persistent logging of user patterns.
 
-| Section | Description |
-| --- | --- |
-| [**System Introduction**](./documentation/INTRO.md) | Vision, Mission, and Core Pillars. |
-| [**Architecture Overview**](./documentation/architecture/OVERVIEW.md) | Deep dive into ZK circuits, program state, and scanner logic. |
-| [**Getting Started Guide**](./documentation/guides/GETTING_STARTED.md) | From zero to your first tactical scan. |
-| [**Shielding Workflow**](./documentation/guides/SHIELDING_WORKFLOW.md) | How to execute a successful surgical rescue operation. |
-| [**CLI Reference**](./documentation/reference/CLI.md) | Comprehensive list of commands, profiles, and enterprise flags. |
+**[!] DISCLAIMER**: SolVoid is an advanced security tool. On-chain privacy is a competitive game; ensure you understand the underlying mathematics before deploying to high-value production environments.
 
 ---
-
-### ☣️ Security & Trust
-
-**SolVoid is non-custodial.** Your secrets never leave your local environment. We do not track IPs, we do not log queries, and we do not hold your keys.
-
-- **Non-Custodial**: You are the sole owner of your ZK notes.
-- **Auditable**: Our ZK circuits and on-chain programs are open-source and verified.
-- **Relayer Isolation**: Anonymous relayers handle gas payments without ever seeing your signature or identity.
-
----
-
-### 🤝 Contributing
-
-We welcome contributions from protocol engineers and cryptography researchers. Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for our security-first contribution guidelines.
-
-### ⚖️ Disclaimer
-
-*Solana is a public and permanent ledger. SolVoid is a tool to help you manage your privacy footprint; it does not provide legal protection or complete anonymity against nation-state actors. Use with professional caution.*
-
----
-<p align="center">
-  <b>TERMINAL STATUS: ONLINE | ENCRYPTION: ACTIVE | PRIVACY: ENFORCED</b>
-</p>
+[SYSTEM_STATUS: OPERATIONAL] | [ENCRYPTION_ENGINE: GROTH16]

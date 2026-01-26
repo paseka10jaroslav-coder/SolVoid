@@ -1,7 +1,7 @@
 {
   "name": "solvoid",
   "version": "1.0.0",
-  "description": "Cryptographically enforced privacy protocol for Solana",
+  "description": "Enterprise-grade Privacy Lifecycle Management (PLM) platform for the Solana Ecosystem",
   "main": "dist/sdk/index.js",
   "types": "dist/sdk/index.d.ts",
   "bin": {
@@ -34,6 +34,7 @@
     "@solana/web3.js": "^1.98.0",
     "arg": "^5.0.2",
     "bs58": "^5.0.0",
+    "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.7",
     "cross-fetch": "^4.1.0",
     "dotenv": "^16.4.5",

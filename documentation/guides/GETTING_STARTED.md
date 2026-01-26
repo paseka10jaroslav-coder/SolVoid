@@ -1,48 +1,82 @@
-# Getting Started with SolVoid
+# GETTING STARTED WITH SOLVOID
 
-Setup your tactical privacy terminal in minutes.
+[DOCUMENT_CLASS: ONBOARDING_GUIDE] | [PREREQUISITE: NODEJS_16]
 
-## Prerequisites
-- Node.js >= 16.0.0
-- A private Solana RPC endpoint (recommended: Helius, Alchemy, or Triton)
+This document outlines the deployment and initial verification of the SolVoid privacy stack.
 
-## 1. Installation
+---
+
+## 1. INSTALLATION
+
+The SolVoid toolchain is distributed via NPM. You can install the core SDK and CLI utility using the following command:
 
 ```bash
 npm install solvoid
 ```
 
-## 2. Basic Configuration
-Create a `.env` file in your project root:
+---
+
+## 2. CONFIGURATION
+
+SolVoid utilizes an environment-based configuration system. Create a `.env` file in the root of your project directory to define the operational parameters:
 
 ```env
-SOLANA_RPC_URL=https://your-private-rpc.com
-RELAYER_URL=https://relayer.solvoid.io
+# Primary Solana RPC Endpoint
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+
+# Shadow Vault Program Address
+SOLVOID_PROGRAM_ID=Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i
+
+# Relayer Service URL
+SHADOW_RELAYER_URL=http://localhost:3000
 ```
 
-## 3. Your First Privacy Scan
-The CLI tool `solvoid-scan` is the fastest way to audit a wallet address.
+---
+
+## 3. INITIAL FORENSIC AUDIT
+
+The first step in securing a wallet is to generate its **Privacy Passport**. This identifies existing identity leaks that require remediation.
 
 ```bash
-# Scan a specific address
-npx solvoid-scan protect 7xKX...address...
-
-# Result:
-# [!] IDENTITY LEAK DETECTED (High Severity)
-# Address links your main wallet to a known CEX deposit address via funding.
-# Privacy Score: 42/100
+# Execute a deep-scan of a wallet address
+npx solvoid-scan protect <SOLANA_ADDRESS>
 ```
 
-## 4. Understanding the Score
-SolVoid uses a 5-point radar system to evaluate your health:
+**Expected Output Analysis:**
+The CLI will return a "Privacy Passport" report. Focus on any items marked with **[CRITICAL]** or **[HIGH]** severity. These typically represent direct links to your real-world identity or high-visibility metadata leaks.
 
-| Metric | Description |
-| --- | --- |
-| **Identity Linkage** | Direct connection to your real-world identity (KYC/Doxxed wallets). |
-| **Metadata Hygiene** | Leaks via memo fields, logs, or unencrypted metadata. |
-| **MEV Resilience** | Resistance to predatory bots in the public mempool. |
-| **State Exposure** | Permanent footprint in third-party program accounts. |
-| **Anonymity Set** | The mathematical "crowd" your assets are currently hidden in. |
+---
 
-## 5. Next Steps
-Once you've identified a leak, proceed to the [Shielding Workflow](./SHIELDING_WORKFLOW.md) to neutralize the threat.
+## 4. ASSET SHIELDING (FIRST DEPOSIT)
+
+Once a leak is identified, you can move assets into the Shadow Vault. This "shields" the assets, breaking their connection to the compromised history.
+
+```bash
+# Shield 1.0 SOL into the vault
+npx solvoid-scan shield 1.0
+```
+
+**[!] IMPORTANT**: Ensure you capture and securely store the **Secret** and **Nullifier** hex strings returned by the command. These are the singular keys to your shielded assets.
+
+---
+
+## 5. RECOVERY & WITHDRAWAL
+
+To recover your assets to a fresh, unlinkable address, execute the withdrawal command:
+
+```bash
+# Withdraw assets to a new recipient address
+npx solvoid-scan withdraw <SECRET> <NULLIFIER> <RECIPIENT_ADDRESS>
+```
+
+---
+
+## 6. NEXT STEPS
+
+For more advanced integration or automated recovery workflows, consult the following resources:
+*   **[Shielding Workflow](./SHIELDING_WORKFLOW.md)**: Logic for atomic multi-asset rescue.
+*   **[CLI Reference](../reference/CLI.md)**: Comprehensive guide to advanced flags and enterprise features.
+*   **[SDK Reference](../reference/SDK.md)**: Professional implementation details for protocol engineers.
+
+---
+[GUIDE_STATUS: VERIFIED] | [REVISION: 1.1]

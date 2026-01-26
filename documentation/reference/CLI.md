@@ -1,74 +1,94 @@
-# CLI Reference: solvoid-scan
+# CLI COMMAND REFERENCE: SOLVOID-SCAN
 
-The `solvoid-scan` utility is a high-performance terminal tool for on-chain identity forensics, asset shielding, and privacy recovery.
+[BINARY: solvoid-scan] | [VERSION: 1.2.4] | [PLATFORM: NODEJS]
 
-## Usage
+The `solvoid-scan` utility is a high-performance terminal interface for privacy forensics and cryptographic shielding on the Solana blockchain.
+
+---
+
+## [1] COMMAND STRUCTURE
 
 ```bash
-npx solvoid-scan <command> [arguments] [flags]
+npx solvoid-scan <COMMAND> [ARGUMENTS] [FLAGS]
 ```
 
-## Commands
+### [1.1] PROTECT
+Executes a forensic audit of a target wallet address.
 
-| Command | Description | Arguments |
-| --- | --- | --- |
-| `protect` | Scan a Solana address for privacy leaks and view its Privacy Passport. | `<address>` |
-| `rescue` | Execute an atomic shielding operation for all leaked assets associated with an address. | `<address>` |
-| `shield` | Manually execute a private deposit (Surgical Shielding) into the Shadow Vault. | `<amount>` |
-| `withdraw` | Perform an unlinkable ZK-SNARK withdrawal to a fresh recipient address. | `<secret> <nullifier> <recipient>` |
+*   **Syntax**: `npx solvoid-scan protect <ADDRESS>`
+*   **Logic**:
+    1.  Fetches the last 1000 transactions for the address.
+    2.  Runs the `PrivacyEngine` analysis loop.
+    3.  Scores identity linkage, metadata hygiene, and state exposure.
+    4.  Outputs a "Privacy Passport" with color-coded severity markers.
 
-## Global Flags
+---
 
-| Flag | Description | Default |
-| --- | --- | --- |
-| `--rpc <url>` | Custom Solana RPC endpoint. | `https://api.mainnet-beta.solana.com` |
-| `--relayer <url>` | Custom Relayer/Shadow RPC URL for ZK proof submission. | `http://localhost:3000` |
-| `--program <id>` | Override the default SolVoid program ID. | `Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i` |
-| `--surgical` | Optimize shielding logic to focus only on identified leaked assets. | `false` |
-| `--shadow-rpc` | Broadcast transactions via encrypted relay hops for maximum anonymity. | `false` |
-| `--mock` | Enable simulated mode for testing without real network interaction. | `false` |
-| `--help` | Display the help menu with all available commands and flags. | N/A |
+### [1.2] RESCUE
+Performs an automated identification and shielding of compromised assets.
 
-## Examples
+*   **Syntax**: `npx solvoid-scan rescue <ADDRESS>`
+*   **Workflow**:
+    *   **Audit Phase**: Scans the address for leaks.
+    *   **Selection Phase**: Identifies SOL and SPL balances with direct leakage history.
+    *   **Action Phase**: Generates commitment notes and deposits assets into the Shadow Vault.
+*   **Flags**:
+    *   `--surgical`: Only shield assets specifically linked to a detected leak.
 
-### 1. Auditing an Address
-Scan an address to identify privacy risks and view its Privacy Passport score:
-```bash
-npx solvoid-scan protect 7xKX...address...
-```
+---
 
-### 2. Atomic Asset Rescue
-Automatically shield all leaked assets from a compromised or public address:
-```bash
-npx solvoid-scan rescue 7xKX...address... --shadow-rpc
-```
+### [1.3] SHIELD
+Manually deposits assets (SOL) into the Shadow Vault to break on-chain history.
 
-### 3. Surgical Shielding
-Deposit 5 SOL into the Shadow Vault and receive a cryptographic note (secret/nullifier):
-```bash
-npx solvoid-scan shield 5
-```
+*   **Syntax**: `npx solvoid-scan shield <AMOUNT_IN_SOL>`
+*   **Output**: 
+    *   **Secret**: 256-bit entropy (hex).
+    *   **Nullifier**: 256-bit entropy (hex).
+*   **Important**: These values are printed only once. Users must back them up to a secure, offline location.
 
-### 4. Anonymous ZK Withdrawal
-Withdraw assets to a fresh address using the secrets generated during shielding:
-```bash
-npx solvoid-scan withdraw <secret> <nullifier> <recipient_address> --relayer https://my-relayer.com
-```
+---
 
-## Advanced Configuration
+### [1.4] WITHDRAW
+Executes a ZK-SNARK withdrawal to a fresh recipient.
 
-### Environment Variables
-The CLI respects the following environment variables if flags are not provided:
+*   **Syntax**: `npx solvoid-scan withdraw <SECRET> <NULLIFIER> <RECIPIENT_ADDRESS>`
+*   **Background**: 
+    *   The CLI generates a membership proof for the Shadow Vault commitment pool.
+    *   It communicates with the configured Relayer to broadcast the transaction.
 
-| Variable | Flag Equivalent | Description |
-| --- | --- | --- |
-| `RPC_URL` | `--rpc` | The Solana RPC endpoint. |
-| `PROGRAM_ID` | `--program` | The SolVoid on-chain program ID. |
-| `SHADOW_RELAYER_URL`| `--relayer` | The URL of the ZK relayer service. |
-| `ZK_WASM_PATH` | N/A | Local path to the ZK circuit WASM file. |
-| `ZK_ZKEY_PATH` | N/A | Local path to the ZK proving key (.zkey). |
+---
 
-### Exit Codes
-- `0`: Operation completed successfully.
-- `1`: Operation failed (e.g., critical leaks found, ZK proof generation error, or invalid input).
-- `130`: Process interrupted (Ctrl+C).
+## [2] GLOBAL FLAGS & CONFIGURATION
+
+| Flag | Argument | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `--rpc` | `<URL>` | Custom Solana RPC endpoint. | Mainnet Beta |
+| `--relayer`| `<URL>` | Custom Relayer API endpoint. | http://localhost:3000 |
+| `--program`| `<PUBKEY>`| Override the SolVoid Program ID. | [PriZero...5i] |
+| `--shadow` | `N/A` | Enables multi-hop relaying for broadcast. | FALSE |
+| `--mock` | `N/A` | Runs in simulated mode (no SOL spent). | FALSE |
+
+---
+
+## [3] EXIT CODES
+
+| Code | Status | Meaning |
+| :--- | :--- | :--- |
+| `0` | SUCCESS | Operation completed successfully. |
+| `1` | ERROR | General failure (see logs). |
+| `2` | LEAK_DETECTED | Scan completed; critical privacy leaks found. |
+| `401` | AUTH_FAIL | Relayer rejected request due to insufficient fee. |
+
+---
+
+## [4] ENVIRONMENT VARIABLES
+
+The CLI will automatically ingest the following variables from a `.env` file in the root directory:
+
+*   `SOLANA_RPC_URL`: Global RPC node.
+*   `SOLVOID_PROGRAM_ID`: The deployed program address.
+*   `ZK_WASM_PATH`: Path to the compiled circuit WASM.
+*   `ZK_ZKEY_PATH`: Path to the proving key file.
+
+---
+[CLI_STATUS: STABLE] | [FORENSICS_ENGINE: V2]

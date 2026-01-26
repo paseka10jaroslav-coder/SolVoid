@@ -1,47 +1,93 @@
-# System Architecture
+# TECHNICAL SPECIFICATION: SHADOW VAULT ARCHITECTURE
 
-SolVoid is built as a modular stack comprising an on-chain protocol, a deep-scanning engine, and a ZK-proving SDK.
+[DOCUMENT_CLASS: INTERNAL_TECH_SPEC] | [REVISION: 2.0]
 
-## 1. The On-chain Protocol (Solana Program)
-Built using Anchor, the program manages the global state of the "Shadow Vault".
+This document details the cryptographic and structural implementation of the SolVoid Shadow Vault.
 
-### Key Components:
-- **Merkle Tree State**: A persistent binary Merkle tree (depth 20) that stores hashes of deposited "notes".
-- **Nullifier Records**: Persistent PDA entries (`[b"nullifier", hash]`) that ensure a note can only be withdrawn once.
-- **Root History**: A ring buffer of the last 20 roots to allow for asynchronous proof generation.
+---
 
-## 2. Privacy Scan Engine (The SDK)
-The engine performs multi-layered forensic analysis of transaction data.
+## 1. CRYPTOGRAPHIC PRIMITIVES
 
-### Analysis Pipeline:
-1. **Instruction Dissection**: Decoding raw instruction data using on-chain IDLs.
-2. **Account Trace**: Mapping every account involved to known "Identity Sinks" (CEXs, Bridge Vaults, NFT Minting tools).
-3. **Inner Instruction Analysis**: Detecting CPI (Cross-Program Invocation) links that propagate identity secretly.
-4. **MEV Forensics**: Checking if the transaction was included in a block via Jito or other private bundles.
+### 1.1 ZERO-KNOWLEDGE PROOFS (GROTH16)
+SolVoid utilizes the Groth16 zk-SNARK protocol for its efficiency and minimal proof size (approximately 131 bytes). This is critical for Solana's transaction size constraints.
 
-## 3. ZK Shielding Pipeline (Cryptography)
-We use **Groth16** SNARKs for high performance and minimal on-chain verification costs.
+*   **Proving System**: R1CS (Rank-1 Constraint System).
+*   **Curve**: BN128 (Alt-Bn128).
+*   **Input Masking**: Computation is performed locally; the blockchain only receives the Proof `[A, B, C]` and the Public Signals (Nullifier Hash, Root).
 
-### The Proof Lifecycle:
-1. **Deposit**: User hashes `(secret, nullifier)` to create a leaf on-chain.
-2. **Scan**: User retrieves the Merkle Path (siblings) for their leaf from an indexer.
-3. **Prove**: The SDK generates a ZK proof that they know the `secret` for a leaf that exists in a valid Merkle Root, without revealing which leaf it is.
-4. **Relay**: The proof is sent to a **Shadow Relayer** who pays for the gas and submits the withdrawal on-chain.
+### 1.2 COMMITMENT SCHEME
+Deposits are represented as a leaf in the state tree.
+*   **Commitment** = `Poseidon(Secret, Nullifier)`
+*   **Nullifier Hash** = `Poseidon(Nullifier, Nullifier)` (used during withdrawal for double-spend prevention).
 
-## 4. Logical Interaction Flow
+---
+
+## 2. STATE MANAGEMENT
+
+### 2.1 INCREMENTAL MERKLE TREE
+The vault maintains a fixed-depth Merkle tree to track the history of all deposits.
+
+| Parameter | Value | Description |
+| :--- | :--- | :--- |
+| **Depth** | 20 | Supports ~1 million maximum deposits. |
+| **Hash Function** | Keccak-256 | Optimized for on-chain verification speed. |
+| **History Size** | 30 | Maintains the last 30 roots to allow for asynchronous proof submission. |
+
+### 2.2 LOGICAL FLOW: DEPOSIT
 
 ```mermaid
 graph TD
-    User[Main Wallet] -->|Scan| Engine[Privacy Engine]
-    Engine -->|Leak Detected!| User
-    User -->|Shield Asset| SDK[ZK SDK]
-    SDK -->|Proof Generation| Worker[Web Worker]
-    Worker -->|ZK Proof| Relayer[Shadow Relayer]
-    Relayer -->|Anonymous Tx| Chain[Solana Program]
-    Chain -->|Release Funds| ShadowWallet[Clean Wallet]
+    A[User Secret + Nullifier] --> B[Local Commitment Calc]
+    B --> C{Solana Program}
+    C --> D[Verify Denomination]
+    D --> E[Insert Leaf at next_index]
+    E --> F[Recompute Path to Root]
+    F --> G[Store New Root in History]
+    G --> H[Emit DepositEvent]
 ```
 
-## 5. Security Model
-- **Non-Custodial**: Neither the relayer nor the protocol ever has access to your `secret`.
-- **Double-Spend Protection**: Enforced by PDA-based nullifiers at the runtime level.
-- **Proof Composition**: Circuit constraints ensure the withdrawal address is bound to the proof, preventing "proof-stealing" front-running.
+### 2.3 LOGICAL FLOW: WITHDRAWAL
+
+```mermaid
+graph TD
+    A[Input: Proof, Root, NullifierHash] --> B{On-Chain Program}
+    B --> C[Check: Root exists in History?]
+    C -- No --> D[REJECT: Invalid Root]
+    C -- Yes --> E[Check: NullifierHash spent?]
+    E -- Yes --> F[REJECT: Already Spent]
+    E -- No --> G[Verify ZK-SNARK Proof]
+    G -- Invalid --> H[REJECT: Proof Verification Failed]
+    G -- Valid --> I[Mark Nullifier as Spent]
+    I --> J[Release Assets to Recipient]
+```
+
+---
+
+## 3. FORENSIC SCANNING ENGINE (PRIVACY PASSPORT)
+
+The scanning engine operates on a weighted penalty system to generate the **Privacy Score**.
+
+### 3.1 DETECTION LAYERS
+1.  **Transport Layer**: Analyzes RPC metadata and IP-RPC correlations (if available via Relayer logs).
+2.  **Instruction Layer**: Scans for serialized Pubkeys in `data` buffers.
+3.  **State Layer**: Traces ownership records across non-system programs (Metaplex, Jupiter, Phoenix).
+
+### 3.2 SCORING ALGORITHM
+The score `S` is calculated as:
+`S = 100 - Σ(Penalty_i * Multiplier_i)`
+Where:
+*   `Penalty_i` is the base deduction for a leak type (Identity: -30, Metadata: -15).
+*   `Multiplier_i` is the frequency amplifier (1.2x for recurring leaks).
+
+---
+
+## 4. RELAYER MASKING PROTOCOL
+
+To prevent IP-leakage during transaction broadcast, SolVoid utilizes a "Shadow Relay" pattern.
+
+1.  **Encrypted Tunneling**: The client encrypts the transaction payload using the Relayer's public key.
+2.  **Multi-Hop Routing**: Relayers can optionally route the transaction through multiple internal nodes before reaching the Solana TPU (Transaction Processing Unit).
+3.  **Bounty Settlement**: The Relayer deducts their fee directly from the withdrawal amount, removing the need for the user to fund the withdrawal gas from a linked wallet.
+
+---
+[ARCHITECTURE_VERIFIED] | [SECURITY_THRESHOLD: HIGH]

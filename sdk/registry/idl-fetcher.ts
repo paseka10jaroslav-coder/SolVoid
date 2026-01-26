@@ -21,6 +21,11 @@ export class OnChainIdlFetcher {
      */
     public async fetchIdl(programIdString: string): Promise<Idl | null> {
         try {
+            // Validate public key format before attempting fetch
+            if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(programIdString)) {
+                return null;
+            }
+
             const programId = new PublicKey(programIdString);
 
             // 1. Derive Address
@@ -34,14 +39,7 @@ export class OnChainIdlFetcher {
             if (!accountInfo) return null; // No IDL stored on chain
 
             // 3. Parse Data
-            // Anchor IDL Account Layout:
-            // Discriminator (8 bytes)
-            // Authority (32 bytes)
-            // Data Len (4 bytes u32)
-            // Compressed Data (zlib)
-
             const data = accountInfo.data;
-            // Skip 8 discriminator + 32 authority = 40 bytes
             const headerSize = 8 + 32;
             if (data.length < headerSize + 4) return null;
 
@@ -52,7 +50,6 @@ export class OnChainIdlFetcher {
             return new Promise((resolve) => {
                 zlib.inflate(compressedBytes, (err, buffer) => {
                     if (err) {
-                        console.warn("IDL Decompression failed:", err);
                         resolve(null);
                     } else {
                         try {
@@ -60,7 +57,6 @@ export class OnChainIdlFetcher {
                             const idl = JSON.parse(jsonString);
                             resolve(idl as Idl);
                         } catch (parseErr) {
-                            console.warn("IDL JSON Parse failed");
                             resolve(null);
                         }
                     }
@@ -68,7 +64,6 @@ export class OnChainIdlFetcher {
             });
 
         } catch (e) {
-            console.warn(`Failed to fetch on-chain IDL for ${programIdString}`, e);
             return null;
         }
     }

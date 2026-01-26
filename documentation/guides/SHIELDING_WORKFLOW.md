@@ -1,63 +1,62 @@
-# Shielding Workflow: Active Defense
+# SHIELDING WORKFLOW: SURGICAL RESCUE OPERATIONS
 
-The primary way to neutralize a privacy leak is to "shield" the compromised assets. This workflow moves assets from a public wallet to the **Shadow Vault**.
+[DOCUMENT_CLASS: OPERATIONAL_PROCEDURE] | [REVISION: 1.2]
 
-## The Surgical Rescue Process
+Surgical Rescue is an automated procedure designed to identify and neutralize identity leaks by migrating tainted assets into the SolVoid Shadow Vault.
 
-### Step 1: Detect & Select
-Identify compromised assets using the CLI or SDK.
+---
 
-**CLI:**
+## 1. WORKFLOW OVERVIEW
+
+The rescue operation follows a strict structural pipeline to ensure zero identity leakage during the transition phase.
+
+```mermaid
+graph LR
+    A[Scan History] --> B[Tag Tainted Assets]
+    B --> C[Atomic Shielding Tx]
+    C --> D[Relay Submission]
+    D --> E[Verification]
+```
+
+---
+
+## 2. STEP-BY-STEP EXECUTION
+
+### PHASE 1: FORENSIC IDENTIFICATION
+The system scans for "Entropy Markers"—transactions where the user's public key is permanently associated with a specific asset through instruction data or account state.
+
+### PHASE 2: ATOMIC BUNDLING
+Instead of multiple individual deposits, the Rescue engine bundles shielding operations to reduce the transaction footprint. This makes it harder for external observers to correlate volumes with specific shielding events.
+
+### PHASE 3: SHADOW BROADCAST
+All rescue transactions should ideally be broadcast via the **Shadow Relayer**. This prevents the user's IP address from being associated with the transaction at the RPC level.
+
 ```bash
-npx solvoid-scan protect <YOUR_ADDRESS>
+# Execute a full rescue with shadow broadcasting enabled
+npx solvoid-scan rescue <ADDRESS> --shadow-rpc
 ```
 
-**SDK:**
-```typescript
-const leaks = await client.protect(myWallet);
-const targets = leaks.filter(l => l.severity === 'CRITICAL');
-```
+---
 
-### Step 2: Initialize Shielding
-Initiate a ZK deposit. This generates a **Secret** and a **Nullifier** locally. **NEVER share these.**
+## 3. ASSET DENOMINATION & ANONYMITY
 
-**CLI:**
-```bash
-npx solvoid-scan shield 1.0
-```
+SolVoid utilizes a **Fixed-Denomination Architecture** to maximize the size of the Anonymity Set.
 
-**SDK:**
-```typescript
-const { commitmentData, txid } = await client.shield(1.0);
-console.log('Secret:', commitmentData.secret.toString('hex'));
-console.log('Nullifier:', commitmentData.nullifier.toString('hex'));
-```
+| Denomination | Use Case | Anonymity Multiplier |
+| :--- | :--- | :--- |
+| **0.1 SOL** | Micro-transfers / Testing | 1.0x |
+| **1.0 SOL** | Standard Retail Use | 2.5x |
+| **10.0 SOL** | Institutional / HNW | 5.0x |
+| **100.0 SOL** | Protocol-level Liquidity | 10.0x |
 
-### Step 3: Commit Transaction
-Submit the shielding instruction to the Solana network. Once confirmed, your assets are now part of the global Anonymity Set.
+**Note**: Using the standard 1.0 SOL denomination is recommended as it maintains the largest crowd of participants (Anonymity Set).
 
-### Step 4: Passive Waiting (Optional but Recommended)
-For maximum privacy, wait until several new deposits have occurred (increasing the Anonymity Set) before withdrawing.
+---
 
-### Step 5: Anonymous Withdrawal
-To move the assets to a clean, fresh wallet without any on-chain link:
+## 4. TROUBLESHOOTING & EDGE CASES
 
-1. Generate a ZK Proof using your secret and nullifier.
-2. Send the proof to a **Shadow Relayer**.
-3. The Relayer submits the withdrawal and sends the funds to your destination.
+*   **Broadcast Timeout**: If using `--shadow-rpc`, network latency may cause timeouts. Use a high-performance relay URL via `--relayer`.
+*   **Partial Shielding**: If an asset amount does not perfectly match a denomination, the remaining balance will be left in the public wallet unless the `--force-change` flag (experimental) is used.
 
-**CLI:**
-```bash
-npx solvoid-scan withdraw <secret> <nullifier> <destination_address>
-```
-
-**SDK:**
-```typescript
-const sig = await client.withdraw(secret, nullifier, destination, commitments, wasm, zkey, wallet);
-console.log(`Rescue Operation Complete: ${sig}`);
-```
-
-## Best Practices
-1. **Never Withdraw to a Doxxed Wallet**: Always use a fresh "burn" address for your rescued assets.
-2. **Beware of Timing Attacks**: Don't withdraw the exact same amount immediately after depositing.
-3. **Keep Your Notes Safe**: If you lose the note string, your assets are lost forever. SolVoid is non-custodial.
+---
+[PROCEDURE_VERIFIED] | [SECURITY_THRESHOLD: OPTIMAL]

@@ -1,7 +1,7 @@
 pragma circom 2.0.0;
 
-include "../node_modules/circomlib/circuits/poseidon.circom";
-include "../node_modules/circomlib/circuits/merkleTree.circom";
+include "circomlib/circuits/poseidon.circom";
+include "merkleTree.circom";
 
 // PrivacyZero Core Circuit
 // Proves: I know (secret, nullifier) such that:
