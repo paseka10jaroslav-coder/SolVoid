@@ -70,16 +70,32 @@ The SolVoid Scanner performs multi-layered telemetry analysis to identify identi
 *   **Layer 3: State Exposure**: Identifying footprints in third-party program accounts (e.g., ATA creation, Lending records).
 *   **Layer 4: MEV Resilience**: Analyzing vulnerability to predatory mempool agents based on transaction frequency and slippage.
 
-### 2.2 SCORING ALGORITHM
-The **Privacy Score** is a weighted metric (0-100) calculated as:
-`S = 100 - Σ(Leak_Penalty * Multiplier)`
 
-| SEVERITY | PENALTY | EXAMPLES |
+### 2.2 SCORING ALGORITHM
+The Privacy Score is a high-fidelity weighted metric (0-100) calculated using a base deduction model augmented by frequency and scope multipliers.
+
+**Core Formula**:
+`S = 100 - Σ(Base_Penalty * Frequency_Mult * Scope_Mult) + Remediation_Bonus - Correlation_Deduction`
+
+#### [A] BASE PENALTY RANGES
+| CATEGORY | RANGE (MIN-MAX) | EXAMPLES |
 | :--- | :--- | :--- |
-| **CRITICAL** | -40 | Direct link to CEX, Raw Pubkey in payload. |
-| **HIGH** | -25 | Funding from Doxxed wallet, State exposure. |
-| **MEDIUM** | -15 | Metadata hygiene issues, fingerprinting. |
-| **LOW** | -5 | RPC-level exposure, non-stealth broadcasting. |
+| **Identity** | 25 - 40 | CEX funding, Direct Doxxed linkage. |
+| **CPI-Linkage**| 20 - 35 | Cross-program state correlation. |
+| **State-Leak** | 15 - 25 | ATA creation, Program state footprint. |
+| **Metadata** | 10 - 20 | Serialized Pubkeys in payloads. |
+
+*Severity Weights: CRITICAL (100%), HIGH (75%), MEDIUM (50%), LOW (25%) of the specific range.*
+
+#### [B] MULTIPLIERS & BONUSES
+*   **Frequency Amplifier**: Penalties increase by **1.3x to 2.0x** based on recurring leak patterns of the same type.
+*   **Scope Amplifier**: Visibility impacts weight—**PUBLIC (1.5x)**, **PROGRAM (1.2x)**, **LOCAL (0.8x)**.
+*   **Correlation Deduction**: Simultaneous leak types (e.g., Identity + Metadata) trigger an additional **8-20 point** deduction due to higher deanonymization probability.
+*   **Remediation Refund**: Implementing suggested defensive actions (e.g., Tactical Shielding) recovers **30%** of the associated type penalty.
+
+#### [C] SYSTEM CONSTRAINTS
+*   **Remediation Cap**: Final score is architecturally capped at **80/100** if any deduction has occurred, maintaining a realistic security margin.
+*   **System Floor**: The score is floored at **15/100** if active remediation is identified, preventing total protocol isolation.
 
 ---
 

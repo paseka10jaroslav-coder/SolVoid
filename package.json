@@ -24,7 +24,10 @@
     "preversion": "npm test",
     "version": "npm run build && git add -A",
     "postversion": "git push && git push --tags",
-    "docs": "typedoc --out docs sdk/"
+    "docs": "typedoc --out docs sdk/",
+    "dashboard:dev": "npm run dev --prefix dashboard",
+    "dashboard:build": "npm run build --prefix dashboard",
+    "dashboard:start": "npm run start --prefix dashboard"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",

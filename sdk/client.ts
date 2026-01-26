@@ -6,7 +6,6 @@ import { RescueBuilder } from './rescue/builder';
 import { PassportManager } from './passport/manager';
 import { ShadowRPC } from './network/shadow-rpc';
 import * as crypto from 'crypto';
-import winston from 'winston';
 
 export interface SolVoidConfig {
     rpcUrl: string;
@@ -33,11 +32,7 @@ export class SolVoidClient {
         this.connection = new Connection(config.rpcUrl, 'confirmed');
         this.passport = new PassportManager();
 
-        const logger = winston.createLogger({
-            level: 'info',
-            transports: [new winston.transports.Console()]
-        });
-        this.shadow = new ShadowRPC(this.connection, logger);
+        this.shadow = new ShadowRPC(this.connection);
 
         const idl: any = {
             version: "0.1.0",
@@ -58,23 +53,6 @@ export class SolVoidClient {
      * Scans an address for privacy leaks and prepares remediation shielding.
      */
     public async protect(address: PublicKey) {
-        if (this.config.mock) {
-            const mockResult = [{
-                signature: '5Qw...zX9',
-                privacyScore: 42,
-                leaks: [
-                    {
-                        type: 'identity' as any,
-                        scope: 'funding',
-                        visibility: 'PUBLIC' as any,
-                        severity: 'CRITICAL' as any,
-                        description: 'Identity linked to Binance via Jupiter swap.'
-                    }
-                ]
-            }];
-            this.passport.updateScore(address.toBase58(), 42);
-            return mockResult as any;
-        }
         const results = await this.pipeline.processAddress(address);
 
         // Update passport score automatically
@@ -97,15 +75,6 @@ export class SolVoidClient {
      * Automatic scan and atomic shield for all tainted assets.
      */
     public async rescue(address: PublicKey) {
-        if (this.config.mock) {
-            return {
-                status: 'success',
-                txid: '5eYk...zVq',
-                leakedAssets: [{ mint: 'So111...112', amount: 1000000000 }],
-                oldScore: 42,
-                newScore: 95
-            };
-        }
         // 1. Scan for leaks
         const results = await this.protect(address);
         const allLeaks = results.flatMap((r: any) => r.leaks);
@@ -135,9 +104,6 @@ export class SolVoidClient {
      */
     public async shield(_amount: number) {
         const commitmentData = this.protocolShield.generateCommitment();
-        if (this.config.mock) {
-            return { txid: '4RzV...aB2', commitmentData };
-        }
         const txid = await this.protocolShield.deposit(commitmentData.commitment);
         return { txid, commitmentData };
     }
@@ -155,9 +121,6 @@ export class SolVoidClient {
         relayerSigner: any,
         fee: number = 0
     ) {
-        if (this.config.mock) {
-            return { status: 'success', signature: '3mKj...nP5' };
-        }
         const secret = Buffer.from(secretHex, 'hex');
         const nullifier = Buffer.from(nullifierHex, 'hex');
 

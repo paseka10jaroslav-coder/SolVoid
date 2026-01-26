@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 
 export interface ScoreSnapshot {
     timestamp: number;
@@ -20,21 +19,51 @@ export interface PrivacyPassport {
     recommendations: string[];
 }
 
+const isBrowser = typeof window !== 'undefined';
+
 export class PassportManager {
     private storagePath: string;
+    private memoryCache: Record<string, any> = {};
 
     constructor(storagePath: string = './privacy-passport.json') {
         this.storagePath = storagePath;
+    }
+
+    private readStorage(): any {
+        if (isBrowser) {
+            const data = localStorage.getItem('solvoid_passport');
+            return data ? JSON.parse(data) : {};
+        } else {
+            try {
+                const fs = require('fs');
+                if (fs.existsSync(this.storagePath)) {
+                    return JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
+                }
+            } catch (e) {
+                // fs not available or file error
+            }
+            return this.memoryCache;
+        }
+    }
+
+    private writeStorage(data: any) {
+        if (isBrowser) {
+            localStorage.setItem('solvoid_passport', JSON.stringify(data));
+        } else {
+            try {
+                const fs = require('fs');
+                fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+            } catch (e) {
+                this.memoryCache = data;
+            }
+        }
     }
 
     /**
      * Load or create a new privacy passport for the given wallet.
      */
     public getPassport(address: string): PrivacyPassport {
-        if (!fs.existsSync(this.storagePath)) {
-            return this.initializePassport(address);
-        }
-        const data = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
+        const data = this.readStorage();
         return data[address] || this.initializePassport(address);
     }
 
@@ -91,11 +120,8 @@ export class PassportManager {
     }
 
     private savePassport(address: string, passport: PrivacyPassport) {
-        let allData: any = {};
-        if (fs.existsSync(this.storagePath)) {
-            allData = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
-        }
+        const allData = this.readStorage();
         allData[address] = passport;
-        fs.writeFileSync(this.storagePath, JSON.stringify(allData, null, 2));
+        this.writeStorage(allData);
     }
 }

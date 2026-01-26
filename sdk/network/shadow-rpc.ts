@@ -3,18 +3,27 @@ import {
     VersionedTransaction,
     Transaction
 } from '@solana/web3.js';
-import winston from 'winston';
+
+export interface Logger {
+    info: (msg: string) => void;
+    warn: (msg: string) => void;
+    error: (msg: string) => void;
+}
 
 /**
  * Mask tx metadata from RPC providers by routing through multiple hops.
  */
 export class ShadowRPC {
     private connection: Connection;
-    private logger: winston.Logger;
+    private logger: Logger;
 
-    constructor(connection: Connection, logger: winston.Logger) {
+    constructor(connection: Connection, logger?: Logger) {
         this.connection = connection;
-        this.logger = logger;
+        this.logger = logger || {
+            info: (m) => console.log(m),
+            warn: (m) => console.warn(m),
+            error: (m) => console.error(m)
+        };
     }
 
     /**

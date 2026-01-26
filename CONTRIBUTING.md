@@ -1,73 +1,79 @@
-# Contributing to SolVoid
+# CONTRIBUTING TO SOLVOID
 
-Thank you for your interest in contributing to SolVoid! This project helps identifying privacy leaks in Solana transactions.
+[DOCUMENT_CLASS: PROTOCOL_CONTRIBUTION_GUIDE] | [REVISION: 2.1]
 
-## Development Setup
+Thank you for your interest in contributing to the **SolVoid** Privacy Lifecycle Management (PLM) infrastructure. This document outlines the standards and procedures for submitting code to the protocol.
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/solvoid/solvoid.git
-   cd solvoid
-   ```
+---
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+## 1. ENVIRONMENT SETUP
 
-3. **Build the project**
-   ```bash
-   npm run build
-   ```
+Engage the development environment by following these steps:
 
-4. **Run tests**
-   ```bash
-   npm test
-   ```
+1.  **Clone Source**
+    ```bash
+    git clone https://github.com/brainless3178/SolVoid.git
+    cd SolVoid
+    ```
 
-## Running the CLI Locally
+2.  **Initialize Node Stack**
+    ```bash
+    npm install
+    ```
 
-You can run the CLI directly from the source code without installing it globally:
+3.  **Build Binary Objects**
+    ```bash
+    npm run build
+    ```
 
+4.  **Execute Verify Node (Tests)**
+    ```bash
+    npm test
+    ```
+
+---
+
+## 2. DEVELOPMENT WORKFLOWS
+
+### [A] CLI TOOLING
+To test the forensic scanner directly from source:
 ```bash
-# Scan a transaction signature
-npm run dev -- <transaction-signature>
-# Example
-npm run dev -- 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc...
+npx ts-node cli/solvoid-scan.ts protect [ADDRESS] --mock
 ```
 
-For custom RPC endpoints (recommended for privacy):
+### [B] TACTICAL DASHBOARD
+To develop the high-fidelity web interface:
 ```bash
-npm run dev -- <sig> --rpc https://your-private-rpc.com
+npm run dashboard:dev
 ```
+The interface is located in the `/dashboard` directory but controllable from the root workspace.
 
-## Code Style
+---
 
-- **TypeScript Standard**: We use strict TypeScript configuration. Avoid `any` types whenever possible.
-- **Linting**: Run `npm run lint` before committing to ensure code style compliance.
-- **Documentation**: All public functions and classes must have JSDoc comments explaining parameters and return values.
+## 3. CODE ARCHITECTURE STANDARDS
 
-## Submitting Changes
+To maintain the integrity of the "Digital Fortress," all contributions must adhere to the following:
 
-1. **Fork** the repository on GitHub.
-2. Create a **feature branch** (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'Add some amazing feature'`).
-4. **Add tests** for your new feature. PRs without tests will not be merged.
-5. Ensure all tests pass (`npm test`).
-6. Push to the branch (`git push origin feature/amazing-feature`).
-7. Open a **Pull Request**.
+*   **Type Rigor**: Strict TypeScript enforcement. Explicit types are required for all public SDK interfaces.
+*   **Privacy-First Logic**: No logic should ever log sensitive buffers (Secrets/Nullifiers) to standard output.
+*   **Browser Safety**: SDK modules must remain environment-agnostic (using the `isBrowser` check for storage/logging).
+*   **Merkle Integrity**: Changes to the `PrivacyShield` class must be verified against current on-chain Merkle tree math.
 
-## Reporting Issues
+---
 
-If you find a bug or have a feature request, please use the [GitHub Issues](https://github.com/solvoid/solvoid/issues) tracker.
+## 4. SUBMISSION PIPELINE
 
-Include:
-- Clear description of the issue
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment details (OS, Node version)
+1.  **Fork \& Branch**: Create a feature-specific branch (`feature/zk-optimizations`).
+2.  **Lint \& Audit**: Run `npm run lint` before submission.
+3.  **Test Coverage**: New features must include unit tests in `/tests/unit`.
+4.  **Documentation**: Update `README.md` or relevant sub-specs in `/documentation` if API surfaces change.
+5.  **Pull Request**: Submit a detailed PR describing the architectural impact of the change.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability, please **DO NOT** open a public issue.
-See [SECURITY.md](SECURITY.md) for reporting instructions.
+## 5. SECURITY DISCLOSURE
+
+If you identify a cryptographic vulnerability or a leakage bug, **DO NOT** open a public issue. Please follow the instructions in **[SECURITY.md](./SECURITY.md)** to ensure a coordinated disclosure.
+
+---
+[CONTRIBUTION_STATUS: OPEN] | [PR_POLICY: RIGOROUS]
