@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../dist/cli/privacy-scan.js');
+require('../dist/cli/solvoid-scan.js');

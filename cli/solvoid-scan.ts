@@ -7,6 +7,9 @@
 
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SolVoidClient } from '../sdk/client';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 async function main() {
     const args = process.argv.slice(2);
@@ -24,7 +27,8 @@ Commands:
   
 Flags:
   --rpc <url>         Solana RPC URL
-  --relayer <url>     Relayer/Shadow RPC URL
+  --relayer <url>     Relayer/Shadow RPC URL (or SHADOW_RELAYER_URL env)
+  --program <id>      Override SolVoid Program ID
   --surgical          Optimize shielding for leaked assets only
   --shadow-rpc        Broadcast via encrypted relay hops
   --mock              Enable simulated/mock mode for testing
@@ -32,9 +36,9 @@ Flags:
         process.exit(0);
     }
 
-    const rpcUrl = args.includes('--rpc') ? args[args.indexOf('--rpc') + 1] : 'https://api.mainnet-beta.solana.com';
-    const programId = args.includes('--program') ? args[args.indexOf('--program') + 1] : 'Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i';
-    const relayerUrl = args.includes('--relayer') ? args[args.indexOf('--relayer') + 1] : 'http://localhost:3000';
+    const rpcUrl = args.includes('--rpc') ? args[args.indexOf('--rpc') + 1] : (process.env.RPC_URL || 'https://api.mainnet-beta.solana.com');
+    const programId = args.includes('--program') ? args[args.indexOf('--program') + 1] : (process.env.PROGRAM_ID || 'Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i');
+    const relayerUrl = args.includes('--relayer') ? args[args.indexOf('--relayer') + 1] : (process.env.SHADOW_RELAYER_URL || 'http://localhost:3000');
     const mock = args.includes('--mock');
 
     const wallet = Keypair.generate();

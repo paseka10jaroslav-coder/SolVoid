@@ -5,24 +5,32 @@ The primary way to neutralize a privacy leak is to "shield" the compromised asse
 ## The Surgical Rescue Process
 
 ### Step 1: Detect & Select
-Use the `SolVoidClient` to identify compromised assets.
+Identify compromised assets using the CLI or SDK.
 
+**CLI:**
+```bash
+npx solvoid-scan protect <YOUR_ADDRESS>
+```
+
+**SDK:**
 ```typescript
-const leaks = await client.scanner.findLeaks(myWallet);
+const leaks = await client.protect(myWallet);
 const targets = leaks.filter(l => l.severity === 'CRITICAL');
 ```
 
 ### Step 2: Initialize Shielding
 Initiate a ZK deposit. This generates a **Secret** and a **Nullifier** locally. **NEVER share these.**
 
-```typescript
-const { note, instruction } = await client.shield.createDeposit({
-    amount: 1.0, // SOL
-    mint: 'So11111111111111111111111111111111111111112'
-});
+**CLI:**
+```bash
+npx solvoid-scan shield 1.0
+```
 
-// Save your note securely
-localStorage.setItem('pz_note_1', note);
+**SDK:**
+```typescript
+const { commitmentData, txid } = await client.shield(1.0);
+console.log('Secret:', commitmentData.secret.toString('hex'));
+console.log('Nullifier:', commitmentData.nullifier.toString('hex'));
 ```
 
 ### Step 3: Commit Transaction
@@ -34,13 +42,18 @@ For maximum privacy, wait until several new deposits have occurred (increasing t
 ### Step 5: Anonymous Withdrawal
 To move the assets to a clean, fresh wallet without any on-chain link:
 
-1. Generate a ZK Proof using your note.
+1. Generate a ZK Proof using your secret and nullifier.
 2. Send the proof to a **Shadow Relayer**.
 3. The Relayer submits the withdrawal and sends the funds to your destination.
 
+**CLI:**
+```bash
+npx solvoid-scan withdraw <secret> <nullifier> <destination_address>
+```
+
+**SDK:**
 ```typescript
-const proof = await client.shield.generateProof(note, destinationWallet);
-const sig = await client.relayer.submitWithdraw(proof);
+const sig = await client.withdraw(secret, nullifier, destination, commitments, wasm, zkey, wallet);
 console.log(`Rescue Operation Complete: ${sig}`);
 ```
 

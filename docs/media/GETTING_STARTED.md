@@ -16,20 +16,20 @@ npm install solvoid
 Create a `.env` file in your project root:
 
 ```env
-SOLANA_RPC_URL=https://your-private-rpc.com
-RELAYER_URL=https://relayer.solvoid.io
+RPC_URL=https://your-private-rpc.com
+SHADOW_RELAYER_URL=https://relayer.solvoid.io
 ```
 
 ## 3. Your First Privacy Scan
-The CLI tool `privacy-scan` is the fastest way to audit a transaction.
+The CLI tool `solvoid-scan` is the fastest way to audit a wallet address.
 
 ```bash
-# Scan a specific transaction
-npx privacy-scan 5Qw...zX9
+# Scan a specific address
+npx solvoid-scan protect 7xKX...address...
 
 # Result:
 # [!] IDENTITY LEAK DETECTED (High Severity)
-# Transaction links your main wallet to a known CEX deposit address.
+# Address links your main wallet to a known CEX deposit address via funding.
 # Privacy Score: 42/100
 ```
 

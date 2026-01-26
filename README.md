@@ -34,9 +34,14 @@ A cryptographically enforced privacy protocol using **Groth16 ZK-SNARKs**. Break
 npm install @solvoid/sdk
 ```
 
-#### Perform your first scan
+#### Perform your first privacy scan
 ```bash
-npx solvoid-scan <TRANSACTION_SIGNATURE> --enterprise
+npx solvoid-scan protect <SOLANA_ADDRESS> --rpc https://api.mainnet-beta.solana.com
+```
+
+#### Execute surgical rescue for leaked assets
+```bash
+npx solvoid-scan rescue <SOLANA_ADDRESS> --shadow-rpc
 ```
 
 #### Shielding an asset
@@ -47,6 +52,28 @@ const client = new SolVoidClient({ rpcUrl: process.env.RPC_URL });
 const { note, signature } = await client.rescue.shieldAsset(amount, mint);
 console.log(`Asset Shielded: ${signature}`);
 ```
+
+---
+
+### 💻 CLI Usage
+
+The `solvoid-scan` CLI is the primary interface for terminal-based privacy management.
+
+**Basic Commands:**
+- `protect <address>`: Scan address for leaks and view Privacy Passport.
+- `rescue <address>`: Atomic shielding of all leaked assets.
+- `shield <amount>`: Execute a private deposit (Surgical Shielding).
+- `withdraw <secret> <nullifier> <recipient>`: Unlinkable ZK withdrawal.
+
+**Global Flags:**
+- `--rpc <url>`: Solana RPC URL.
+- `--relayer <url>`: Relayer/Shadow RPC URL.
+- `--program <id>`: Solana program ID.
+- `--surgical`: Optimize shielding for leaked assets only.
+- `--shadow-rpc`: Broadcast via encrypted relay hops.
+- `--mock`: Enable simulated/mock mode for testing.
+
+For full details, see the [CLI Reference](./documentation/reference/CLI.md).
 
 ---
 
