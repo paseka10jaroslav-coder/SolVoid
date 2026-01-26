@@ -1,118 +1,90 @@
-:root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --accent-cyan: #00f0ff;
-  --accent-red: #ff003c;
-  --accent-purple: #b000ff;
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(20px);
-  --font-tactical: 'Outfit', sans-serif;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+
+  --color-tactical-cyan: #00f0ff;
+  --color-tactical-red: #ff003c;
+  --color-tactical-purple: #b000ff;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-tactical-cyan/30;
+    font-feature-settings: "ss01", "ss02", "cv01";
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-tactical);
-  overflow-x: hidden;
-  min-height: 100vh;
+@layer components {
+  .tactical-glass {
+    @apply bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl;
+    @apply transition-all duration-300 shadow-[20px_20px_50px_rgba(0, 0, 0, 0.5)];
+  }
+
+  .glow-cyan {
+    @apply shadow-[0_0_20px_rgba(0, 240, 255, 0.15)];
+  }
+
+  .glow-red {
+    @apply shadow-[0_0_20px_rgba(255, 0, 60, 0.15)];
+  }
+
+  .text-glow-cyan {
+    @apply drop-shadow-[0_0_8px_rgba(0, 240, 255, 0.8)];
+  }
 }
 
-/* Glassmorphism Utility */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-}
-
-/* Neon Glows */
-.glow-cyan {
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-}
-
-.glow-red {
-  box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
-}
-
-.text-glow-cyan {
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
-}
-
-/* Custom Scrollbar */
+/* Custom Scrollbar Modern */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
-  border-radius: 3px;
+  @apply bg-tactical-cyan/10 rounded-full transition-colors hover:bg-tactical-cyan/40;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-cyan);
+/* Advanced Background Graphics */
+.bg-grid {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
 }
 
-/* Base Animations */
-@keyframes pulse-cyan {
+.bg-radial {
+  background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.03) 0%, transparent 80%);
+}
+
+@keyframes scan-line {
   0% {
-    opacity: 0.1;
-  }
-
-  50% {
-    opacity: 0.3;
+    transform: translateY(-100%);
   }
 
   100% {
-    opacity: 0.1;
+    transform: translateY(100vh);
   }
 }
 
-.bg-pulse {
+.scanner-overlay {
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--color-tactical-cyan), transparent);
+  opacity: 0.1;
   pointer-events: none;
-  z-index: -1;
-  animation: pulse-cyan 5s infinite ease-in-out;
-}
-
-/* Wallet Adapter Overrides */
-.wallet-adapter-button {
-  background: var(--glass-bg) !important;
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border) !important;
-  color: var(--accent-cyan) !important;
-  font-family: var(--font-tactical) !important;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.1em !important;
-  height: 36px !important;
-  line-height: 36px !important;
-  border-radius: 8px !important;
-  transition: all 0.2s !important;
-}
-
-.wallet-adapter-button:hover {
-  background: rgba(0, 240, 255, 0.1) !important;
-  border-color: rgba(0, 240, 255, 0.3) !important;
-}
-
-.wallet-adapter-button-trigger {
-  background-color: transparent !important;
+  animation: scan-line 8s linear infinite;
 }

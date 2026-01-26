@@ -9,7 +9,8 @@ import { MerkleTree3D } from "@/components/MerkleTree3D";
 import { CeremonyMonitor } from "@/components/CeremonyMonitor";
 import { TacticalTerminal } from "@/components/TacticalTerminal";
 import { useSolVoid } from "@/hooks/useSolVoid";
-import { Terminal, Shield, AlertCircle, Search } from "lucide-react";
+import { Terminal, Shield, AlertCircle, Search, Crosshair } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -29,179 +30,148 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col relative overflow-x-hidden selection:bg-tactical-cyan/20">
+      {/* Background FX Layer */}
+      <div className="fixed inset-0 bg-grid pointer-events-none opacity-20" />
+      <div className="fixed inset-0 bg-radial pointer-events-none" />
+      <div className="scanner-overlay" />
+
       <Header score={passport?.overallScore} loading={loading} />
 
-      {/* ADDRESS SEARCH BAR */}
-      <div className="mx-6 mb-2">
-        <form onSubmit={handleScan} className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-            <input
-              type="text"
-              placeholder="ENTER SOLANA ADDRESS FOR DEEP SCAN..."
-              className="w-full glass-panel py-3 pl-12 pr-4 bg-black/40 text-xs font-mono text-accent-cyan outline-none border-white/5 focus:border-accent-cyan/50 transition-all"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="glass-panel px-8 bg-accent-cyan/10 border-accent-cyan/20 text-accent-cyan text-[10px] font-bold uppercase tracking-widest hover:bg-accent-cyan/20 transition-all disabled:opacity-50"
-          >
-            {loading ? "SCANNING..." : "INITIATE SCAN"}
-          </button>
-        </form>
-        {error && <p className="text-[10px] text-accent-red mt-2 uppercase">Scan Error: {error}</p>}
-      </div>
+      {/* TACTICAL INTERFACE CONTAINER */}
+      <div className="flex-1 flex flex-col p-4 pt-2 gap-6 relative z-10 max-w-screen-2xl mx-auto w-full">
 
-      <div className="flex-1 grid grid-cols-12 gap-6 p-6">
-        {/* LEFT COLUMN: Radar & Stats */}
-        <div className="col-span-12 lg:col-span-3 space-y-6">
-          <PrivacyRadar score={passport?.overallScore} />
-
-          <div className="glass-panel p-6 bg-accent-cyan/5 border-accent-cyan/10">
-            <div className="flex items-center gap-2 mb-4">
-              <Terminal className="w-4 h-4 text-accent-cyan" />
-              <h4 className="text-[10px] uppercase font-bold text-white/70">System Diagnostics</h4>
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between text-[10px]">
-                <span className="text-white/40">Zk-Proving:</span>
-                <span className="text-accent-cyan font-mono">Standby</span>
-              </div>
-              <div className="flex justify-between text-[10px]">
-                <span className="text-white/40">Shadow-RPC:</span>
-                <span className="text-accent-cyan font-mono">Active [3 Hops]</span>
-              </div>
-              <div className="flex justify-between text-[10px]">
-                <span className="text-white/40">Active Wallet:</span>
-                <span className="text-accent-cyan font-mono">{address ? address.slice(0, 8) + '...' : 'NONE'}</span>
+        {/* SEARCH BAR SECTION */}
+        <motion.div
+          initial={{ y: -10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="px-2"
+        >
+          <form onSubmit={handleScan} className="flex gap-4">
+            <div className="flex-1 relative group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-tactical-cyan group-focus-within:opacity-100 transition-all duration-500" />
+              <input
+                type="text"
+                placeholder="TARGET_ADDRESS_FOR_DEEP_INSPECTOR..."
+                className="w-full tactical-glass py-4 pl-14 pr-6 bg-black/40 text-[11px] font-mono text-tactical-cyan/80 outline-none border-white/5 focus:border-tactical-cyan/30 transition-all duration-500 placeholder:text-white/10 uppercase tracking-[0.2em]"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 group-focus-within:opacity-30 transition-opacity">
+                <Crosshair className="w-5 h-5 text-tactical-cyan" />
               </div>
             </div>
-          </div>
-        </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading}
+              className="tactical-glass px-10 bg-tactical-cyan/10 border-tactical-cyan/20 text-tactical-cyan text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-tactical-cyan/20 transition-all disabled:opacity-50 font-mono shadow-[0_0_15px_rgba(0,240,255,0.1)] outline-none"
+            >
+              {loading ? "SEARCHING..." : "SCAN_CLUSTER"}
+            </motion.button>
+          </form>
+          {error && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 mt-3 ml-2 text-tactical-red opacity-60">
+              <AlertCircle className="w-3 h-3" />
+              <p className="text-[9px] font-mono uppercase tracking-widest">Protocol error: {error}</p>
+            </motion.div>
+          )}
+        </motion.div>
 
-        {/* CENTER COLUMN: Forensic Analysis */}
-        <div className="col-span-12 lg:col-span-6">
-          <ForensicFeed leaks={leaks} onRescue={executeRescue} loading={loading} />
-        </div>
+        {/* PRIMARY HUD GRID */}
+        <div className="grid grid-cols-12 gap-6 flex-1 px-2">
 
-        {/* RIGHT COLUMN: Shadow Vault */}
-        <div className="col-span-12 lg:col-span-3 space-y-6">
-          <ShadowVault commitments={[]} />
+          {/* COLUMN LEFT: Intelligence Metrics */}
+          <div className="col-span-12 lg:col-span-3 space-y-6">
+            <PrivacyRadar score={passport?.overallScore} />
 
-          <div className={`glass-panel p-6 bg-accent-red/5 border-accent-red/10 ${passport?.overallScore < 50 ? 'animate-pulse' : ''}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-accent-red" />
-              <h4 className="text-[10px] uppercase font-bold text-accent-red">System Intelligence</h4>
+            <div className="tactical-glass p-6 bg-tactical-cyan/[0.03] border-tactical-cyan/10">
+              <div className="flex items-center gap-3 mb-5">
+                <Terminal className="w-4 h-4 text-tactical-cyan opacity-60" />
+                <h4 className="text-[10px] uppercase font-bold text-white/40 tracking-[0.3em] font-mono">Diagnostics</h4>
+              </div>
+              <div className="space-y-4 font-mono">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-white/20 uppercase tracking-tighter">Zk_Session:</span>
+                  <span className="text-tactical-cyan opacity-80 font-bold">READY</span>
+                </div>
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-white/20 uppercase tracking-tighter">Chain_Latency:</span>
+                  <span className="text-tactical-cyan opacity-80 font-bold">14ms</span>
+                </div>
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-white/20 uppercase tracking-tighter">Target_Node:</span>
+                  <span className="text-tactical-cyan opacity-80 font-bold truncate max-w-[120px]">{address || 'GHOST'}</span>
+                </div>
+              </div>
             </div>
-            <p className="text-[10px] text-white/50 leading-relaxed uppercase">
-              {passport?.overallScore < 50
-                ? "Critical identity leaks detected. Surgical Rescue recommended immediately."
-                : passport
-                  ? "Identity posture is acceptable. Continue monitoring for metadata leaks."
-                  : "No telemetry data available. Connect wallet or scan address to begin."}
-            </p>
+
+            <div className={`tactical-glass p-5 bg-tactical-red/[0.02] border-tactical-red/5 ${passport?.overallScore < 50 ? 'animate-pulse' : 'opacity-40'}`}>
+              <div className="flex items-center gap-3 mb-2">
+                <AlertCircle className="w-4 h-4 text-tactical-red" />
+                <h4 className="text-[9px] uppercase font-bold text-tactical-red opacity-80 tracking-widest font-mono">Neural Warning</h4>
+              </div>
+              <p className="text-[9px] text-white/30 leading-relaxed uppercase font-mono tracking-tight">
+                {passport?.overallScore < 50
+                  ? "Critical leakage identified in instruction history. immediate surgical rescue required."
+                  : "No critical zero-day leaks identified in current session."}
+              </p>
+            </div>
+          </div>
+
+          {/* COLUMN CENTER: Real-time Analysis */}
+          <div className="col-span-12 lg:col-span-6">
+            <ForensicFeed leaks={leaks} onRescue={executeRescue} loading={loading} />
+          </div>
+
+          {/* COLUMN RIGHT: Shadow Vault Node Control */}
+          <div className="col-span-12 lg:col-span-3 space-y-6">
+            <ShadowVault commitments={[]} />
+
+            <div className="tactical-glass p-6 border-white/5 opacity-60">
+              <div className="flex items-center gap-3 mb-4">
+                <Shield className="w-4 h-4 text-tactical-cyan opacity-50" />
+                <span className="text-[9px] font-bold uppercase tracking-[0.3em] font-mono text-white/40">Status_Optimal</span>
+              </div>
+              <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-tactical-cyan w-full opacity-30" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION FOOTER: 3D Visualization & Ceremony Status */}
+        <div className="grid grid-cols-12 gap-6 px-2 mb-20 md:mb-10">
+          <div className="col-span-12 lg:col-span-7 tactical-glass h-[480px] relative overflow-hidden group border-white/5">
+            <MerkleTree3D />
+          </div>
+          <div className="col-span-12 lg:col-span-5 h-[480px]">
+            <CeremonyMonitor />
           </div>
         </div>
       </div>
 
-      {/* STATE VISUALIZATION & CEREMONY ROW */}
-      <div className="grid grid-cols-12 gap-6 px-6 mb-6">
-        <div className="col-span-12 lg:col-span-7 glass-panel h-[450px] relative overflow-hidden">
-          <MerkleTree3D />
+      {/* SYSTEM STATUS BAR */}
+      <footer className="tactical-glass m-4 mt-0 mb-32 p-3.5 flex justify-between items-center bg-black/60 relative z-50 border-white/5">
+        <div className="flex gap-10 items-center">
+          <div className="flex flex-col">
+            <span className="text-[8px] text-white/20 uppercase tracking-[0.4em] font-mono">Sector_Alpha</span>
+            <span className="text-[9px] text-white/40 font-mono tracking-widest">34.0522° N • 118.2437° W</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-tactical-cyan shadow-[0_0_10px_rgba(0,240,255,1)]" />
+            <span className="text-[9px] text-tactical-cyan uppercase tracking-[0.2em] font-bold font-mono">Engine_Synchronized</span>
+          </div>
         </div>
-        <div className="col-span-12 lg:col-span-5 h-[450px]">
-          <CeremonyMonitor />
-        </div>
-      </div>
 
-      {/* FOOTER BAR */}
-      <footer className="glass-panel m-4 mt-0 mb-32 p-3 flex justify-between items-center bg-black/40">
-        <div className="flex gap-4">
-          <span className="text-[9px] text-white/40 uppercase tracking-widest">Lat: 34.0522° N</span>
-          <span className="text-[9px] text-white/40 uppercase tracking-widest">Lon: 118.2437° W</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Shield className="w-3 h-3 text-accent-cyan" />
-          <span className="text-[9px] text-accent-cyan uppercase tracking-widest font-bold">Protocol Status: Optimal</span>
-        </div>
-        <div className="text-[9px] text-white/40 uppercase tracking-widest">
-          SolVoid Tactical Command | v1.2.4
+        <div className="text-[9px] text-white/10 uppercase tracking-[0.5em] font-mono hover:text-white/30 transition-colors cursor-default">
+          SOLVOID_PLATFORM_V.1.2.4_STABLE
         </div>
       </footer>
 
       <TacticalTerminal />
-
-      <style jsx>{`
-        .min-h-screen { min-height: 100vh; }
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .flex-1 { flex: 1; }
-        .grid { display: grid; }
-        .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-        .col-span-12 { grid-column: span 12 / span 12; }
-        .gap-6 { gap: 24px; }
-        .gap-4 { gap: 16px; }
-        .gap-2 { gap: 8px; }
-        .mx-6 { margin-left: 24px; margin-right: 24px; }
-        .mb-2 { margin-bottom: 8px; }
-        .mt-2 { margin-top: 8px; }
-        .pl-12 { padding-left: 48px; }
-        .p-6 { padding: 24px; }
-        .p-3 { padding: 12px; }
-        .px-8 { padding-left: 32px; padding-right: 32px; }
-        .py-3 { padding-top: 12px; padding-bottom: 12px; }
-        .m-4 { margin: 16px; }
-        .mt-0 { margin-top: 0; }
-        .space-y-6 > * + * { margin-top: 24px; }
-        .space-y-3 > * + * { margin-top: 12px; }
-        .mb-4 { margin-bottom: 16px; }
-        .mb-2 { margin-bottom: 8px; }
-        .justify-between { justify-content: space-between; }
-        .items-center { align-items: center; }
-        .relative { position: relative; }
-        .absolute { position: absolute; }
-        .left-4 { left: 16px; }
-        .top-1/2 { top: 50%; }
-        .-translate-y-1/2 { transform: translateY(-50%); }
-        .text-[10px] { font-size: 10px; }
-        .text-[9px] { font-size: 9px; }
-        .font-bold { font-weight: 700; }
-        .font-mono { font-family: monospace; }
-        .uppercase { text-transform: uppercase; }
-        .tracking-widest { letter-spacing: 0.1em; }
-        .leading-relaxed { line-height: 1.625; }
-        .text-accent-cyan { color: #00f0ff; }
-        .text-accent-red { color: #ff003c; }
-        .text-white\/30 { color: rgba(255, 255, 255, 0.3); }
-        .text-white\/40 { color: rgba(255, 255, 255, 0.4); }
-        .text-white\/50 { color: rgba(255, 255, 255, 0.5); }
-        .text-white\/70 { color: rgba(255, 255, 255, 0.7); }
-        .bg-accent-cyan\/5 { background-color: rgba(0, 240, 255, 0.05); }
-        .bg-accent-cyan\/10 { background-color: rgba(0, 240, 255, 0.1); }
-        .bg-accent-red\/5 { background-color: rgba(255, 0, 60, 0.05); }
-        .bg-black\/40 { background-color: rgba(0, 0, 0, 0.4); }
-        .border-white\/5 { border-color: rgba(255, 255, 255, 0.05); }
-        .border-accent-cyan\/20 { border-color: rgba(0, 240, 255, 0.2); }
-        .border-accent-cyan\/10 { border-color: rgba(0, 240, 255, 0.1); }
-        .border-accent-red\/10 { border-color: rgba(255, 0, 60, 0.1); }
-
-        @media (min-width: 1024px) {
-          .lg\:col-span-3 { grid-column: span 3 / span 3; }
-          .lg\:col-span-6 { grid-column: span 6 / span 6; }
-        }
-
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
-        }
-      `}</style>
     </main>
   );
 }
