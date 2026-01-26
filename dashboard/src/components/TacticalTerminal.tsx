@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal as TerminalIcon, ChevronUp, ChevronDown, Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EventBus, ForensicEvent } from 'solvoid';
+import { EventBus, ForensicEvent } from '../../../sdk/events/bus';
 
 interface LogEntry {
     id: string;

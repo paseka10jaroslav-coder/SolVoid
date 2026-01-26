@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Users, Binary, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EventBus, ForensicEvent } from 'solvoid';
+import { EventBus, ForensicEvent } from '../../../sdk/events/bus';
 
 interface Contribution {
     id: string;
@@ -63,8 +63,8 @@ export const CeremonyMonitor = () => {
                     </div>
                 </div>
                 <div className={`px-2 py-1 rounded text-[10px] font-medium font-mono ${ceremonyStatus === 'ACTIVE' ? 'bg-green-500/10 text-green-500' :
-                        ceremonyStatus === 'COMPLETE' ? 'bg-tactical-purple/10 text-tactical-purple' :
-                            'bg-white/5 text-white/40'
+                    ceremonyStatus === 'COMPLETE' ? 'bg-tactical-purple/10 text-tactical-purple' :
+                        'bg-white/5 text-white/40'
                     }`}>
                     {ceremonyStatus}
                 </div>

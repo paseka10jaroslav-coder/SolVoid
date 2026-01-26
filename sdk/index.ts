@@ -5,22 +5,20 @@ export * from './types';
 export { PrivacyEngine } from './privacy-engine';
 export { PrivacyPipeline } from './pipeline';
 
-// Export Privacy Core (Production)
+// Export Privacy Core (browser-safe)
 export { PrivacyShield } from './privacy/shield';
-export { PrivacyRelayer } from './privacy/relayer';
 
-// Export client (main entry point)
+// Export client (main entry point - browser safe)
 export { SolVoidClient, SolVoidConfig } from './client';
 
-// Export registry utilities (needed for decoding for the pipeline)
-export { OnChainIdlFetcher } from './registry/idl-fetcher';
+// Export registry utilities
 export { KNOWN_PROGRAMS, identifyProgram, isSwapProgram } from './registry/programs';
 
-// Export configuration utilities
-export { ConfigLoader, EnvConfig } from './utils/config';
-
-// Export event system
+// Export event system (browser-safe)
 export { EventBus, ForensicEvent } from './events/bus';
 
-// Export shadow relay network
-export { ShadowRPC, ShadowNode, RelayOptions } from './network/shadow-rpc';
+// Note: The following are server-side only and should be imported directly:
+// - PrivacyRelayer from './privacy/relayer'
+// - ShadowRPC from './network/shadow-rpc'
+// - ConfigLoader from './utils/config'
+// - OnChainIdlFetcher from './registry/idl-fetcher'
