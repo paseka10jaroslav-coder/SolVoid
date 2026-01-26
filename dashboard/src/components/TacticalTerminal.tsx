@@ -58,20 +58,14 @@ export const TacticalTerminal = () => {
     return (
         <div className={`fixed bottom-4 left-6 right-6 transition-all duration-500 z-50 ${isMaximized ? 'h-[400px]' : 'h-[120px]'}`}>
             <div className="glass-panel h-full flex flex-col bg-black/80 border-cyan-500/20 overflow-hidden shadow-2xl">
-                {/* TERMINAL HEADER */}
                 <div
                     className="flex justify-between items-center px-4 py-2 border-b border-white/5 bg-white/5 cursor-pointer"
                     onClick={() => setIsMaximized(!isMaximized)}
                 >
                     <div className="flex items-center gap-3">
                         <TerminalIcon className="w-3 h-3 text-accent-cyan" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Tactical Forensic Terminal v2.1</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse"></div>
-                            <span className="text-[9px] text-accent-cyan font-bold uppercase">Streaming Live</span>
-                        </div>
                         {isMaximized ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
                     </div>
                 </div>
@@ -85,9 +79,9 @@ export const TacticalTerminal = () => {
                         <div key={index} className="flex gap-4 group hover:bg-white/5 py-0.5 px-1 rounded transition-colors">
                             <span className="text-white/20 whitespace-nowrap">[{log.timestamp}]</span>
                             <span className={`font-bold whitespace-nowrap ${log.type === 'ERROR' ? 'text-accent-red' :
-                                    log.type === 'WARNING' ? 'text-yellow-500' :
-                                        log.type === 'SYSTEM' ? 'text-accent-purple' :
-                                            'text-accent-cyan'
+                                log.type === 'WARNING' ? 'text-yellow-500' :
+                                    log.type === 'SYSTEM' ? 'text-accent-purple' :
+                                        'text-accent-cyan'
                                 }`}>
                                 [{log.type}]
                             </span>
