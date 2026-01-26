@@ -24,20 +24,20 @@
 
 @layer components {
   .tactical-glass {
-    @apply bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl;
-    @apply transition-all duration-300 shadow-[20px_20px_50px_rgba(0, 0, 0, 0.5)];
+    @apply bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl transition-all duration-300;
+    box-shadow: 20px 20px 50px rgba(0, 0, 0, 0.5);
   }
 
   .glow-cyan {
-    @apply shadow-[0_0_20px_rgba(0, 240, 255, 0.15)];
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
   }
 
   .glow-red {
-    @apply shadow-[0_0_20px_rgba(255, 0, 60, 0.15)];
+    box-shadow: 0 0 20px rgba(255, 0, 60, 0.15);
   }
 
   .text-glow-cyan {
-    @apply drop-shadow-[0_0_8px_rgba(0, 240, 255, 0.8)];
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.8));
   }
 }
 
