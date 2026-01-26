@@ -6,6 +6,7 @@ import { PrivacyRadar } from "@/components/PrivacyRadar";
 import { ForensicFeed } from "@/components/ForensicFeed";
 import { ShadowVault } from "@/components/ShadowVault";
 import { MerkleTree3D } from "@/components/MerkleTree3D";
+import { CeremonyMonitor } from "@/components/CeremonyMonitor";
 import { TacticalTerminal } from "@/components/TacticalTerminal";
 import { useSolVoid } from "@/hooks/useSolVoid";
 import { Terminal, Shield, AlertCircle, Search } from "lucide-react";
@@ -107,10 +108,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* STATE VISUALIZATION ROW */}
-      <div className="px-6 mb-6">
-        <div className="glass-panel h-[400px] relative overflow-hidden">
+      {/* STATE VISUALIZATION & CEREMONY ROW */}
+      <div className="grid grid-cols-12 gap-6 px-6 mb-6">
+        <div className="col-span-12 lg:col-span-7 glass-panel h-[450px] relative overflow-hidden">
           <MerkleTree3D />
+        </div>
+        <div className="col-span-12 lg:col-span-5 h-[450px]">
+          <CeremonyMonitor />
         </div>
       </div>
 
