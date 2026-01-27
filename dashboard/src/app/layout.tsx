@@ -1,11 +1,27 @@
-import type { Metadata } from "next";
+import "./polyfills";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 import { WalletContextProvider } from "@/components/WalletContextProvider";
+import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
-  title: "SolVoid | Tactical Command Center",
-  description: "Enterprise-grade privacy forensic dashboard for the Solana ecosystem.",
+  title: "SolVoid | Privacy Infrastructure for Solana",
+  description: "Enterprise-grade privacy forensic dashboard with ZK-proof shielding, anonymous transactions, and wallet protection for the Solana ecosystem.",
+  keywords: ["solana", "privacy", "zk-proof", "cryptocurrency", "wallet", "security"],
+  authors: [{ name: "SolVoid Team" }],
+  openGraph: {
+    title: "SolVoid | Privacy Infrastructure",
+    description: "Protect your Solana wallet with ZK-proof privacy shielding",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -18,12 +34,17 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body>
-        <div className="bg-pulse"></div>
+      <body className="font-sans">
         <WalletContextProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </WalletContextProvider>
       </body>
     </html>

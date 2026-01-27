@@ -1,238 +1,133 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Wifi, WifiOff, Globe, Activity, RefreshCw, DollarSign, Clock, Zap, Server } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Globe, RefreshCw, Server, Activity, Shield, SignalHigh, SignalLow, Lock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SHADOW_NODES } from '../../../sdk/network/shadow-rpc';
 
 interface ShadowNode {
     id: string;
     region: string;
     latency?: number;
     isHealthy: boolean;
-    successRate?: number;
-    bountyRate?: number;
-    relayed?: number;
-}
-
-interface NetworkStats {
-    totalNodes: number;
-    healthyNodes: number;
-    avgLatency: number;
-    totalRelayed: number;
-    avgBounty: number;
 }
 
 export const ShadowNetwork = () => {
-    const [mounted, setMounted] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     const [nodes, setNodes] = useState<ShadowNode[]>([]);
-    const [stats, setStats] = useState<NetworkStats>({
-        totalNodes: 0,
-        healthyNodes: 0,
-        avgLatency: 0,
-        totalRelayed: 0,
-        avgBounty: 0.001
-    });
+    const [loading, setLoading] = useState(false);
+
+    const refresh = async () => {
+        setLoading(true);
+        const results = await Promise.all(SHADOW_NODES.map(async (node) => {
+            const start = performance.now();
+            let isHealthy = false;
+            try {
+                const res = await fetch(node.url, { method: 'HEAD', mode: 'no-cors' });
+                isHealthy = true;
+            } catch (e) {
+                isHealthy = false;
+            }
+            return {
+                id: node.id,
+                region: node.region,
+                latency: isHealthy ? Math.round(performance.now() - start) : undefined,
+                isHealthy
+            };
+        }));
+        setNodes(results);
+        setLoading(false);
+    };
 
     useEffect(() => {
-        setMounted(true);
-        loadDefaultNodes();
+        refresh();
+        const interval = setInterval(refresh, 60000); // Sync every minute
+        return () => clearInterval(interval);
     }, []);
 
-    const loadDefaultNodes = () => {
-        // Default shadow node configuration
-        const defaultNodes: ShadowNode[] = [
-            {
-                id: 'shadow-us-east',
-                region: 'US-EAST',
-                isHealthy: true,
-                latency: 45,
-                successRate: 0.98,
-                bountyRate: 0.001,
-                relayed: 1247
-            },
-            {
-                id: 'shadow-us-west',
-                region: 'US-WEST',
-                isHealthy: true,
-                latency: 62,
-                successRate: 0.96,
-                bountyRate: 0.001,
-                relayed: 892
-            },
-            {
-                id: 'shadow-eu-central',
-                region: 'EU-CENTRAL',
-                isHealthy: true,
-                latency: 120,
-                successRate: 0.94,
-                bountyRate: 0.0012,
-                relayed: 543
-            },
-            {
-                id: 'shadow-asia-pacific',
-                region: 'ASIA-PAC',
-                isHealthy: true,
-                latency: 180,
-                successRate: 0.92,
-                bountyRate: 0.0015,
-                relayed: 321
-            },
-        ];
-
-        setNodes(defaultNodes);
-        calculateStats(defaultNodes);
-    };
-
-    const calculateStats = (nodeList: ShadowNode[]) => {
-        const healthy = nodeList.filter(n => n.isHealthy);
-        const avgLat = healthy.reduce((sum, n) => sum + (n.latency || 0), 0) / (healthy.length || 1);
-        const totalRel = nodeList.reduce((sum, n) => sum + (n.relayed || 0), 0);
-        const avgBounty = nodeList.reduce((sum, n) => sum + (n.bountyRate || 0), 0) / (nodeList.length || 1);
-
-        setStats({
-            totalNodes: nodeList.length,
-            healthyNodes: healthy.length,
-            avgLatency: Math.round(avgLat),
-            totalRelayed: totalRel,
-            avgBounty
-        });
-    };
-
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-
-        // Simulate health check
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Randomly update latencies
-        const updated = nodes.map(n => ({
-            ...n,
-            latency: n.latency ? n.latency + Math.floor(Math.random() * 20) - 10 : undefined,
-            relayed: (n.relayed || 0) + Math.floor(Math.random() * 5)
-        }));
-
-        setNodes(updated);
-        calculateStats(updated);
-        setIsRefreshing(false);
-    };
-
-    if (!mounted) return <div className="tactical-glass p-6 h-full bg-black/40" />;
+    const healthyCount = nodes.filter(n => n.isHealthy).length;
 
     return (
-        <motion.div
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="tactical-glass p-6 flex flex-col bg-black/40 h-full"
-        >
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-tactical-purple" />
+        <div className="tactical-glass p-0 h-full flex flex-col bg-black/40 border-white/5 overflow-hidden group">
+            <div className="p-6 pb-4 flex items-center justify-between border-b border-white/5 bg-white/[0.01]">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-tactical-cyan/10 border border-tactical-cyan/20 flex items-center justify-center relative">
+                        <Globe className="w-5 h-5 text-tactical-cyan" />
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-tactical-cyan rounded-full animate-ping" />
+                    </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-white/90">Shadow Relay Network</h3>
-                        <p className="text-xs text-white/40 mt-0.5">IP Anonymization Infrastructure</p>
+                        <h3 className="text-xs font-bold text-white tracking-[0.2em] uppercase">Shadow Relay</h3>
+                        <p className="text-[9px] text-white/30 font-mono mt-0.5">IP_ANONYMIZATION_ACTIVE</p>
                     </div>
                 </div>
                 <button
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="p-2 hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+                    onClick={refresh}
+                    className="p-2 hover:bg-white/5 rounded-lg transition-all"
                 >
-                    <RefreshCw className={`w-4 h-4 text-white/40 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-3.5 h-3.5 text-white/30 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
-            {/* Network Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl text-center">
-                    <Server className="w-4 h-4 text-tactical-cyan mx-auto mb-1 opacity-60" />
-                    <span className="text-[10px] text-white/40 block">Active Nodes</span>
-                    <span className="text-lg font-semibold text-white">
-                        {stats.healthyNodes}/{stats.totalNodes}
-                    </span>
+            <div className="p-6 grid grid-cols-2 gap-4 border-b border-white/5 bg-white/[0.02]">
+                <div className="space-y-1">
+                    <span className="text-[8px] text-white/20 uppercase font-mono tracking-widest">Availability</span>
+                    <div className="text-lg font-bold text-white tabular-nums">{healthyCount} / {SHADOW_NODES.length}</div>
                 </div>
-                <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl text-center">
-                    <Clock className="w-4 h-4 text-tactical-purple mx-auto mb-1 opacity-60" />
-                    <span className="text-[10px] text-white/40 block">Avg Latency</span>
-                    <span className="text-lg font-semibold text-white">{stats.avgLatency}ms</span>
-                </div>
-                <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl text-center">
-                    <Zap className="w-4 h-4 text-amber-500 mx-auto mb-1 opacity-60" />
-                    <span className="text-[10px] text-white/40 block">Relayed</span>
-                    <span className="text-lg font-semibold text-white">{stats.totalRelayed.toLocaleString()}</span>
-                </div>
-                <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl text-center">
-                    <DollarSign className="w-4 h-4 text-green-500 mx-auto mb-1 opacity-60" />
-                    <span className="text-[10px] text-white/40 block">Avg Bounty</span>
-                    <span className="text-lg font-semibold text-white">{stats.avgBounty.toFixed(4)}</span>
+                <div className="space-y-1">
+                    <span className="text-[8px] text-white/20 uppercase font-mono tracking-widest">Privacy Hops</span>
+                    <div className="text-lg font-bold text-tactical-purple tabular-nums">3 (AES-256)</div>
                 </div>
             </div>
 
-            {/* Node List */}
-            <div className="flex-1 overflow-y-auto space-y-2">
-                <h4 className="text-xs font-medium text-white/40 mb-3">Relay Nodes</h4>
-                {nodes.map((node) => (
-                    <div
-                        key={node.id}
-                        className="p-3 border border-white/5 bg-white/[0.01] rounded-lg"
-                    >
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                                {node.isHealthy ? (
-                                    <Wifi className="w-3.5 h-3.5 text-green-500" />
-                                ) : (
-                                    <WifiOff className="w-3.5 h-3.5 text-tactical-red" />
-                                )}
-                                <div>
-                                    <span className="text-xs font-medium text-white/70">{node.region}</span>
-                                    <span className="text-[10px] text-white/30 block font-mono">{node.id}</span>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide py-6">
+                <AnimatePresence mode="popLayout">
+                    {nodes.map((node, i) => (
+                        <motion.div
+                            key={node.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="p-3 border border-white/5 bg-white/[0.01] rounded-xl hover:bg-white/[0.03] transition-colors"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-1.5 rounded-lg ${node.isHealthy ? 'bg-tactical-green/10 text-tactical-green' : 'bg-tactical-red/10 text-tactical-red'}`}>
+                                        <Server className="w-3 h-3" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold text-white/80 font-mono">{node.region}</div>
+                                        <div className="text-[8px] text-white/20 font-mono">NODE_{node.id.split('-').pop()?.toUpperCase()}</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className={`text-[9px] font-bold font-mono ${node.isHealthy ? 'text-tactical-green' : 'text-tactical-red'}`}>
+                                        {node.isHealthy ? 'OPERATIONAL' : 'OFFLINE'}
+                                    </div>
+                                    {node.latency && (
+                                        <div className="flex items-center justify-end gap-1 mt-1">
+                                            <SignalHigh className="w-2.5 h-2.5 text-white/10" />
+                                            <span className="text-[8px] text-white/40 font-mono">{node.latency}ms</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <span className={`text-[10px] font-mono ${node.isHealthy ? 'text-green-500' : 'text-tactical-red'}`}>
-                                    {node.isHealthy ? 'ONLINE' : 'OFFLINE'}
-                                </span>
-                                {node.latency && (
-                                    <span className="text-[10px] text-white/30 block">{node.latency}ms</span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Node Metrics */}
-                        <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-white/5">
-                            <div className="text-center">
-                                <span className="text-[9px] text-white/30 block">Success</span>
-                                <span className="text-xs text-white/70">{((node.successRate || 0) * 100).toFixed(0)}%</span>
-                            </div>
-                            <div className="text-center">
-                                <span className="text-[9px] text-white/30 block">Bounty</span>
-                                <span className="text-xs text-white/70">{node.bountyRate?.toFixed(4)}</span>
-                            </div>
-                            <div className="text-center">
-                                <span className="text-[9px] text-white/30 block">Relayed</span>
-                                <span className="text-xs text-white/70">{node.relayed?.toLocaleString()}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
 
-            {/* Footer Info */}
-            <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/30">Encryption</span>
-                    <span className="text-[10px] text-tactical-cyan font-mono">Noise Protocol NK</span>
+            <div className="p-4 border-t border-white/5 bg-white/[0.01] flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                    <Lock className="w-3 h-3 text-tactical-cyan/40" />
+                    <span className="text-[8px] font-mono text-white/20 uppercase">Onion Routing Protocol V1</span>
                 </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/30">Routing</span>
-                    <span className="text-[10px] text-tactical-purple font-mono">Onion (3-hop)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/30">Uptime</span>
-                    <span className="text-[10px] text-green-500 font-mono">99.7%</span>
+                <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                        className="h-full bg-tactical-cyan"
+                        animate={{ width: ['0%', '100%'] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                    />
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 };

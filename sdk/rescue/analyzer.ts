@@ -2,40 +2,34 @@ import { Leak } from '../types';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { EventBus } from '../events/bus';
+import { z } from 'zod';
+import {
+    LeakedAssetSchema,
+    RescueAnalysisSchema,
+    enforce,
+    DataOrigin,
+    DataTrust
+} from '../integrity';
 
-export interface LeakedAsset {
-    mint: string;
-    mintName?: string;
-    amount: number;
-    decimals: number;
-    reason: string;
-    severity: string;
-    isNative: boolean;
-    ataAddress?: string;
-}
+/**
+ * Validated Leaked Asset
+ */
+export type LeakedAsset = z.infer<typeof LeakedAssetSchema>;
 
-export interface RescueAnalysis {
-    leakedAssets: LeakedAsset[];
-    totalValueLamports: number;
-    splTokenCount: number;
-    nativeSOL: number;
-    riskScore: number;
-    estimatedFee: number;
-}
+/**
+ * Validated Rescue Analysis
+ */
+export type RescueAnalysis = z.infer<typeof RescueAnalysisSchema>;
 
 const NATIVE_SOL_MINT = '11111111111111111111111111111111';
 
 export class RescueAnalyzer {
-    private connection: Connection;
+    private readonly connection: Connection;
 
     constructor(connection: Connection) {
         this.connection = connection;
     }
 
-    /**
-     * Comprehensive multi-asset rescue analysis
-     * Identifies all compromised assets: SPL tokens + native SOL
-     */
     public async analyzeWallet(walletAddress: PublicKey, leaks: Leak[]): Promise<RescueAnalysis> {
         EventBus.info('Analyzing wallet for multi-asset rescue...');
 
@@ -45,7 +39,6 @@ export class RescueAnalyzer {
         let splTokenCount = 0;
         let nativeSOL = 0;
 
-        // Get all token accounts for the wallet
         const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
             walletAddress,
             { programId: TOKEN_PROGRAM_ID }
@@ -53,11 +46,9 @@ export class RescueAnalyzer {
 
         EventBus.info(`Found ${tokenAccounts.value.length} token accounts`);
 
-        // Analyze leaks to find affected mints
         for (const leak of leaks) {
             let mint = NATIVE_SOL_MINT;
 
-            // Extract mint from scope (e.g., "ata_link:MintAddress")
             if (leak.scope.includes(':')) {
                 const parts = leak.scope.split(':');
                 if (parts[1] && parts[1].length >= 32) {
@@ -65,21 +56,15 @@ export class RescueAnalyzer {
                 }
             }
 
-            // Check for token-specific leaks
-            if (leak.type === 'token' && leak.scope.includes('mint:')) {
-                mint = leak.scope.split('mint:')[1]?.slice(0, 44) || NATIVE_SOL_MINT;
-            }
-
             if (!seenMints.has(mint)) {
                 seenMints.add(mint);
 
                 if (mint === NATIVE_SOL_MINT) {
-                    // Native SOL
                     const balance = await this.connection.getBalance(walletAddress);
                     nativeSOL = balance;
                     totalValueLamports += balance;
 
-                    leakedAssets.push({
+                    leakedAssets.push(enforce(LeakedAssetSchema, {
                         mint,
                         mintName: 'SOL',
                         amount: balance,
@@ -87,11 +72,15 @@ export class RescueAnalyzer {
                         reason: leak.description,
                         severity: leak.severity,
                         isNative: true
-                    });
+                    }, {
+                        origin: DataOrigin.CHAIN,
+                        trust: DataTrust.TRUSTED,
+                        createdAt: Date.now(),
+                        owner: 'RescueAnalyzer'
+                    }).value);
 
                     EventBus.leakDetected('Native SOL', leak.severity, `${balance / 1e9} SOL exposed`);
                 } else {
-                    // SPL Token
                     const tokenAccount = tokenAccounts.value.find(
                         ta => ta.account.data.parsed.info.mint === mint
                     );
@@ -102,7 +91,7 @@ export class RescueAnalyzer {
                         const decimals = info.tokenAmount.decimals;
                         splTokenCount++;
 
-                        leakedAssets.push({
+                        leakedAssets.push(enforce(LeakedAssetSchema, {
                             mint,
                             amount,
                             decimals,
@@ -110,7 +99,12 @@ export class RescueAnalyzer {
                             severity: leak.severity,
                             isNative: false,
                             ataAddress: tokenAccount.pubkey.toBase58()
-                        });
+                        }, {
+                            origin: DataOrigin.CHAIN,
+                            trust: DataTrust.TRUSTED,
+                            createdAt: Date.now(),
+                            owner: 'RescueAnalyzer'
+                        }).value);
 
                         EventBus.leakDetected('SPL Token', leak.severity,
                             `${amount / Math.pow(10, decimals)} tokens (${mint.slice(0, 8)}...)`);
@@ -119,13 +113,12 @@ export class RescueAnalyzer {
             }
         }
 
-        // If no specific leaks, but wallet has assets, flag as potentially exposed
         if (leakedAssets.length === 0 && leaks.length > 0) {
             const balance = await this.connection.getBalance(walletAddress);
             if (balance > 0) {
                 nativeSOL = balance;
                 totalValueLamports += balance;
-                leakedAssets.push({
+                leakedAssets.push(enforce(LeakedAssetSchema, {
                     mint: NATIVE_SOL_MINT,
                     mintName: 'SOL',
                     amount: balance,
@@ -133,19 +126,19 @@ export class RescueAnalyzer {
                     reason: 'General privacy leak affecting wallet',
                     severity: leaks[0]?.severity || 'MEDIUM',
                     isNative: true
-                });
+                }, {
+                    origin: DataOrigin.CHAIN,
+                    trust: DataTrust.TRUSTED,
+                    createdAt: Date.now(),
+                    owner: 'RescueAnalyzer'
+                }).value);
             }
         }
 
-        // Calculate risk score
-        const riskScore = this.calculateRiskScore(leaks, leakedAssets);
-
-        // Estimate rescue transaction fee
+        const riskScore = this.calculateRiskScore(leaks);
         const estimatedFee = this.estimateRescueFee(leakedAssets);
 
-        EventBus.info(`Rescue analysis complete: ${leakedAssets.length} assets, risk score ${riskScore}`);
-
-        return {
+        const analysis = {
             leakedAssets,
             totalValueLamports,
             splTokenCount,
@@ -153,45 +146,18 @@ export class RescueAnalyzer {
             riskScore,
             estimatedFee
         };
+
+        EventBus.info(`Rescue analysis complete: ${leakedAssets.length} assets, risk score ${riskScore}`);
+
+        return enforce(RescueAnalysisSchema, analysis, {
+            origin: DataOrigin.INTERNAL_LOGIC,
+            trust: DataTrust.TRUSTED,
+            createdAt: Date.now(),
+            owner: 'RescueAnalyzer'
+        }).value;
     }
 
-    /**
-     * Static method for backwards compatibility
-     */
-    public static identifyLeakedAssets(leaks: Leak[]): LeakedAsset[] {
-        const leakedAssets: LeakedAsset[] = [];
-        const seenMints = new Set<string>();
-
-        for (const leak of leaks) {
-            let mint = NATIVE_SOL_MINT;
-
-            if (leak.scope.includes(':')) {
-                const parts = leak.scope.split(':');
-                if (parts[1] && parts[1].length >= 32) {
-                    mint = parts[1];
-                }
-            }
-
-            if (!seenMints.has(mint)) {
-                leakedAssets.push({
-                    mint,
-                    amount: 0,
-                    decimals: 9,
-                    reason: leak.description,
-                    severity: leak.severity,
-                    isNative: mint === NATIVE_SOL_MINT
-                });
-                seenMints.add(mint);
-            }
-        }
-
-        return leakedAssets;
-    }
-
-    /**
-     * Calculate aggregate risk score based on leak severity
-     */
-    private calculateRiskScore(leaks: Leak[], assets: LeakedAsset[]): number {
+    private calculateRiskScore(leaks: Leak[]): number {
         const severityWeights: Record<string, number> = {
             'CRITICAL': 40,
             'HIGH': 25,
@@ -204,23 +170,13 @@ export class RescueAnalyzer {
             score += severityWeights[leak.severity] || 10;
         }
 
-        // Cap at 100
         return Math.min(100, score);
     }
 
-    /**
-     * Estimate total rescue transaction fee
-     */
-    private estimateRescueFee(assets: LeakedAsset[]): number {
-        // Base fee: 5000 lamports
+    private estimateRescueFee(assets: readonly LeakedAsset[]): number {
         let fee = 5000;
-
-        // Add per-asset fee (each token transfer = ~5000 lamports)
         fee += assets.length * 5000;
-
-        // ZK proof verification fee (estimate)
         fee += 50000;
-
         return fee;
     }
 }

@@ -2,64 +2,50 @@
 
 /**
  * SolVoid Shadow Relayer Service
- * 
- * Standalone Node.js microservice for IP-anonymous transaction broadcasting.
- * Implements onion-style routing between multiple relay nodes.
- * 
- * Usage:
- *   npx ts-node relayer/service.ts --port 8080
  */
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 import { Connection, VersionedTransaction } from '@solana/web3.js';
+import {
+    DataOrigin,
+    DataTrust,
+    Unit,
+    RelayRequestSchema,
+    RelayResponseSchema,
+    OnionLayerSchema,
+    enforce,
+    DataMetadata,
+    RelayResponse,
+    RelayRequest,
+    OnionLayer
+} from '../sdk/integrity';
+import fetch from 'cross-fetch';
 
 // Configuration
 const PORT = parseInt(process.env.PORT || '8080');
 const RPC_ENDPOINT = process.env.RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com';
 const NODE_ID = process.env.NODE_ID || `shadow-${crypto.randomBytes(4).toString('hex')}`;
-const BOUNTY_RATE = parseFloat(process.env.BOUNTY_RATE || '0.001'); // SOL per relay
+const BOUNTY_RATE_SOL = parseFloat(process.env.BOUNTY_RATE || '0.001'); // Unit: SOL
 
 interface RelayerNode {
-    id: string;
-    endpoint: string;
-    publicKey: string;
+    readonly id: string;
+    readonly endpoint: string;
+    readonly publicKey: string;
     lastSeen: number;
-    bountyRate: number;
     successRate: number;
-    region: string;
+    readonly region: string;
 }
 
-interface RelayRequest {
-    transaction: string; // Base64 encoded
-    hops: number;
-    targetNode?: string;
-    encryptedPayload?: string;
-}
-
-interface RelayResponse {
-    success: boolean;
-    txid?: string;
-    hopCount?: number;
-    error?: string;
-    relayPath?: string[];
-}
-
-interface OnionLayer {
-    nextHop: string;
-    payload: string;
-    nonce: string;
-}
-
-// In-memory peer registry (would be distributed in production)
+// In-memory peer registry
 const peerRegistry: Map<string, RelayerNode> = new Map();
 
 // Transaction metrics
 const metrics = {
     relayed: 0,
     failed: 0,
-    totalBounty: 0,
+    totalBountySOL: 0,
     uptime: Date.now()
 };
 
@@ -69,6 +55,13 @@ app.use(express.json({ limit: '1mb' }));
 
 // Solana connection
 const connection = new Connection(RPC_ENDPOINT, 'confirmed');
+
+const API_METADATA: DataMetadata = {
+    origin: DataOrigin.API_PAYLOAD,
+    trust: DataTrust.UNTRUSTED,
+    createdAt: Date.now(),
+    owner: 'External API Client'
+};
 
 /**
  * Health check endpoint
@@ -82,32 +75,19 @@ app.get('/health', (_req: Request, res: Response) => {
             relayed: metrics.relayed,
             failed: metrics.failed,
             successRate: metrics.relayed / (metrics.relayed + metrics.failed || 1),
-            totalBounty: metrics.totalBounty
+            totalBountySOL: metrics.totalBountySOL
         },
         peers: peerRegistry.size,
-        bountyRate: BOUNTY_RATE
+        bountyRate: BOUNTY_RATE_SOL,
+        units: { bounty: Unit.SOL }
     });
-});
-
-/**
- * Get list of known relay peers
- */
-app.get('/peers', (_req: Request, res: Response) => {
-    const peers = Array.from(peerRegistry.values()).map(p => ({
-        id: p.id,
-        region: p.region,
-        bountyRate: p.bountyRate,
-        successRate: p.successRate,
-        online: Date.now() - p.lastSeen < 60000
-    }));
-    res.json({ peers });
 });
 
 /**
  * Register as a peer relay
  */
 app.post('/register', (req: Request, res: Response) => {
-    const { endpoint, publicKey, region, bountyRate } = req.body;
+    const { endpoint, publicKey, region } = req.body;
 
     if (!endpoint || !publicKey) {
         res.status(400).json({ error: 'Missing endpoint or publicKey' });
@@ -121,12 +101,10 @@ app.post('/register', (req: Request, res: Response) => {
         endpoint,
         publicKey,
         lastSeen: Date.now(),
-        bountyRate: bountyRate || BOUNTY_RATE,
         successRate: 1.0,
         region: region || 'UNKNOWN'
     });
 
-    console.log(`[REGISTRY] Peer registered: ${nodeId} (${region})`);
     res.json({ registered: true, nodeId });
 });
 
@@ -134,52 +112,50 @@ app.post('/register', (req: Request, res: Response) => {
  * Relay transaction through onion routing
  */
 app.post('/relay', async (req: Request, res: Response) => {
-    const { transaction, hops, targetNode, encryptedPayload } = req.body as RelayRequest;
-
-    console.log(`[RELAY] Incoming request - hops: ${hops}`);
-
     try {
-        // Handle onion-encrypted payload
-        if (encryptedPayload) {
-            const result = await handleOnionRelay(encryptedPayload);
+        // Boundary Enforcement: API -> Service (Rule 10)
+        const enforcedRequest = enforce(RelayRequestSchema, req.body, {
+            ...API_METADATA,
+            createdAt: Date.now()
+        });
+        const relayReq = enforcedRequest.value;
+
+        if (relayReq.encryptedPayload) {
+            const result = await handleOnionRelay(relayReq.encryptedPayload);
             res.json(result);
             return;
         }
 
-        // Direct relay
-        if (!transaction) {
+        if (!relayReq.transaction) {
             res.status(400).json({ error: 'Missing transaction data' });
             return;
         }
 
-        // Decode transaction
-        const txBuffer = Buffer.from(transaction, 'base64');
+        const txBuffer = Buffer.from(relayReq.transaction, 'base64');
         const tx = VersionedTransaction.deserialize(txBuffer);
 
-        let result: RelayResponse;
+        let response: RelayResponse;
 
-        if (hops > 1 && peerRegistry.size > 0) {
-            // Multi-hop relay
-            result = await multiHopRelay(tx, hops - 1, targetNode);
+        if (relayReq.hops > 1 && peerRegistry.size > 0) {
+            response = await multiHopRelay(tx, relayReq.hops - 1, relayReq.targetNode);
         } else {
-            // Final hop - broadcast to Solana
-            result = await broadcastTransaction(tx);
+            response = await broadcastTransaction(tx);
         }
 
-        if (result.success) {
+        if (response.success) {
             metrics.relayed++;
-            metrics.totalBounty += BOUNTY_RATE;
+            metrics.totalBountySOL += BOUNTY_RATE_SOL;
         } else {
             metrics.failed++;
         }
 
-        res.json(result);
-    } catch (error) {
+        res.json(response);
+    } catch (error: unknown) {
         metrics.failed++;
-        console.error('[RELAY] Error:', error);
-        res.status(500).json({
+        const errorMsg = error instanceof Error ? error.message : 'Internal Relay Error';
+        res.status(errorMsg.includes('Data Integrity') ? 400 : 500).json({
             success: false,
-            error: (error as Error).message
+            error: errorMsg
         });
     }
 });
@@ -189,46 +165,42 @@ app.post('/relay', async (req: Request, res: Response) => {
  */
 async function handleOnionRelay(encryptedPayload: string): Promise<RelayResponse> {
     try {
-        // Decrypt current layer
-        const layer = decryptOnionLayer(encryptedPayload);
+        const decoded = Buffer.from(encryptedPayload, 'base64').toString('utf-8');
+        const layerUnvalidated = JSON.parse(decoded);
+
+        const enforcedLayer = enforce(OnionLayerSchema, layerUnvalidated, {
+            origin: DataOrigin.INTERNAL_LOGIC,
+            trust: DataTrust.TRUSTED,
+            createdAt: Date.now(),
+            owner: 'Relayer'
+        });
+        const layer = enforcedLayer.value;
 
         if (layer.nextHop === 'FINAL') {
-            // This is the final hop, broadcast
             const txBuffer = Buffer.from(layer.payload, 'base64');
             const tx = VersionedTransaction.deserialize(txBuffer);
             return broadcastTransaction(tx);
         } else {
-            // Forward to next hop
             const peer = peerRegistry.get(layer.nextHop);
-            if (!peer) {
-                return { success: false, error: 'Next hop peer not found' };
-            }
+            if (!peer) return { success: false, error: 'Next hop peer not found' };
 
             const response = await fetch(`${peer.endpoint}/relay`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ encryptedPayload: layer.payload })
+                body: JSON.stringify({ encryptedPayload: layer.payload, hops: 1 } as RelayRequest)
             });
 
-            return await response.json();
+            const rawJson = await response.json();
+            const enforcedResponse = enforce(RelayResponseSchema, rawJson, {
+                origin: DataOrigin.API_PAYLOAD,
+                trust: DataTrust.SEMI_TRUSTED,
+                createdAt: Date.now(),
+                owner: peer.id
+            });
+            return enforcedResponse.value;
         }
-    } catch (error) {
-        return { success: false, error: (error as Error).message };
-    }
-}
-
-/**
- * Decrypt one layer of onion encryption
- */
-function decryptOnionLayer(encrypted: string): OnionLayer {
-    // In production, this would use proper asymmetric encryption
-    // For now, we use a simple encoding scheme
-    try {
-        const decoded = Buffer.from(encrypted, 'base64').toString('utf-8');
-        return JSON.parse(decoded);
-    } catch {
-        // Treat as final payload
-        return { nextHop: 'FINAL', payload: encrypted, nonce: '' };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Onion relay failed' };
     }
 }
 
@@ -240,13 +212,11 @@ async function multiHopRelay(
     remainingHops: number,
     preferredNode?: string
 ): Promise<RelayResponse> {
-    // Select next peer
     let nextPeer: RelayerNode | undefined;
 
     if (preferredNode && peerRegistry.has(preferredNode)) {
         nextPeer = peerRegistry.get(preferredNode);
     } else {
-        // Random selection weighted by success rate
         const activePeers = Array.from(peerRegistry.values())
             .filter(p => Date.now() - p.lastSeen < 60000);
 
@@ -264,15 +234,8 @@ async function multiHopRelay(
         }
     }
 
-    if (!nextPeer) {
-        // No peers available, broadcast directly
-        console.log('[RELAY] No peers available, broadcasting directly');
-        return broadcastTransaction(tx);
-    }
+    if (!nextPeer) return broadcastTransaction(tx);
 
-    console.log(`[RELAY] Forwarding to peer: ${nextPeer.id}`);
-
-    // Forward to next peer
     try {
         const response = await fetch(`${nextPeer.endpoint}/relay`, {
             method: 'POST',
@@ -280,12 +243,18 @@ async function multiHopRelay(
             body: JSON.stringify({
                 transaction: Buffer.from(tx.serialize()).toString('base64'),
                 hops: remainingHops
-            })
+            } as RelayRequest)
         });
 
-        const result: RelayResponse = await response.json();
+        const rawJson = await response.json();
+        const enforcedResponse = enforce(RelayResponseSchema, rawJson, {
+            origin: DataOrigin.API_PAYLOAD,
+            trust: DataTrust.SEMI_TRUSTED,
+            createdAt: Date.now(),
+            owner: nextPeer.id
+        });
+        const result = enforcedResponse.value;
 
-        // Update peer success rate
         if (result.success) {
             nextPeer.successRate = Math.min(1, nextPeer.successRate + 0.01);
         } else {
@@ -298,9 +267,7 @@ async function multiHopRelay(
             relayPath: [NODE_ID, ...(result.relayPath || [])]
         };
     } catch (error) {
-        // Peer failed, try direct broadcast
-        console.log(`[RELAY] Peer ${nextPeer.id} failed, broadcasting directly`);
-        nextPeer.successRate = Math.max(0.5, nextPeer.successRate - 0.2);
+        if (nextPeer) nextPeer.successRate = Math.max(0.5, nextPeer.successRate - 0.2);
         return broadcastTransaction(tx);
     }
 }
@@ -310,9 +277,8 @@ async function multiHopRelay(
  */
 async function broadcastTransaction(tx: VersionedTransaction): Promise<RelayResponse> {
     try {
-        // Add random jitter for timing correlation protection
-        const jitter = Math.floor(Math.random() * 200) + 50;
-        await new Promise(resolve => setTimeout(resolve, jitter));
+        const jitterMs = Math.floor(Math.random() * 200) + 50;
+        await new Promise(resolve => setTimeout(resolve, jitterMs));
 
         const rawTransaction = tx.serialize();
         const txid = await connection.sendRawTransaction(rawTransaction, {
@@ -320,19 +286,16 @@ async function broadcastTransaction(tx: VersionedTransaction): Promise<RelayResp
             maxRetries: 3
         });
 
-        console.log(`[BROADCAST] Success: ${txid}`);
-
         return {
             success: true,
             txid,
             hopCount: 1,
             relayPath: [NODE_ID]
         };
-    } catch (error) {
-        console.error('[BROADCAST] Failed:', error);
+    } catch (error: unknown) {
         return {
             success: false,
-            error: (error as Error).message
+            error: error instanceof Error ? error.message : 'Broadcast failed'
         };
     }
 }
@@ -341,7 +304,7 @@ async function broadcastTransaction(tx: VersionedTransaction): Promise<RelayResp
  * Build onion-encrypted payload for multi-hop routing
  */
 app.post('/encrypt-route', (req: Request, res: Response) => {
-    const { transaction, route } = req.body; // route = array of node IDs
+    const { transaction, route } = req.body;
 
     if (!transaction || !route || route.length === 0) {
         res.status(400).json({ error: 'Missing transaction or route' });
@@ -350,7 +313,6 @@ app.post('/encrypt-route', (req: Request, res: Response) => {
 
     let payload = transaction;
 
-    // Wrap in onion layers (reverse order)
     for (let i = route.length - 1; i >= 0; i--) {
         const layer: OnionLayer = {
             nextHop: i === route.length - 1 ? 'FINAL' : route[i + 1],
@@ -371,14 +333,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log('═'.repeat(60));
-    console.log(`  🛡️  SolVoid Shadow Relayer`);
-    console.log(`  Node ID: ${NODE_ID}`);
-    console.log(`  Port: ${PORT}`);
-    console.log(`  RPC: ${RPC_ENDPOINT.slice(0, 40)}...`);
-    console.log(`  Bounty Rate: ${BOUNTY_RATE} SOL/relay`);
-    console.log('═'.repeat(60));
-    console.log('Ready for anonymous transaction relay...\n');
+    console.log(`🛡️  SolVoid Relayer Ready on ${PORT}`);
 });
 
 export { app, peerRegistry, metrics };

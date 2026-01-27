@@ -2,337 +2,305 @@
 
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Float, Text, MeshDistortMaterial, Line } from '@react-three/drei';
+import {
+    OrbitControls,
+    PerspectiveCamera,
+    Environment,
+    ContactShadows,
+    Float,
+    Text,
+    AdaptiveDpr,
+    Preload
+} from '@react-three/drei';
 import * as THREE from 'three';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { EventBus, ForensicEvent } from '../../../sdk/events/bus';
 
-interface TreeLevelProps {
-    level: number;
-    nodesPerLevel: number;
-    highlightedPath?: number[];
-    highlightLevel?: number;
-}
+// --- 1. GPU Powered Core (Cinematic Shader) ---
 
-const TreeLevel = ({ level, nodesPerLevel, highlightedPath, highlightLevel }: TreeLevelProps) => {
-    const groupRef = useRef<THREE.Group>(null);
+function Core({ active }: { active: boolean }) {
+    const mesh = useRef<THREE.Mesh>(null);
+    const materialRef = useRef<THREE.ShaderMaterial>(null);
 
-    const nodePositions = useMemo(() => {
-        const pos = [];
-        const radius = level * 2.5;
-        const count = Math.min(nodesPerLevel, 24);
-        for (let i = 0; i < count; i++) {
-            const angle = (i / count) * Math.PI * 2;
-            pos.push({
-                position: [
-                    Math.cos(angle) * radius,
-                    -level * 2,
-                    Math.sin(angle) * radius
-                ] as [number, number, number],
-                index: i,
-                isHighlighted: highlightedPath?.includes(i) && level === highlightLevel
-            });
-        }
-        return pos;
-    }, [level, nodesPerLevel, highlightedPath, highlightLevel]);
+    // Stable uniforms to avoid re-creations
+    const uniforms = useMemo(() => ({
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color('#00f0ff') },
+        uActiveColor: { value: new THREE.Color('#ff6b00') },
+        uIsActive: { value: 0.0 }
+    }), []);
 
-    useFrame((state) => {
-        if (groupRef.current) {
-            groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.1 * level) * 0.1;
+    const targetColor = useMemo(() => new THREE.Color(active ? '#ff6b00' : '#00f0ff'), [active]);
+
+    useFrame(({ clock }) => {
+        if (!materialRef.current) return;
+        materialRef.current.uniforms.uTime.value = clock.elapsedTime;
+
+        // Smooth transition between states
+        materialRef.current.uniforms.uIsActive.value = THREE.MathUtils.lerp(
+            materialRef.current.uniforms.uIsActive.value,
+            active ? 1.0 : 0.0,
+            0.05
+        );
+
+        materialRef.current.uniforms.uColor.value.lerp(targetColor, 0.05);
+
+        if (mesh.current) {
+            mesh.current.rotation.y += 0.005;
+            mesh.current.rotation.z += 0.002;
         }
     });
 
     return (
-        <group ref={groupRef}>
-            {nodePositions.map((node, i) => (
-                <group key={i} position={node.position}>
-                    {/* Node sphere */}
-                    <mesh>
-                        <sphereGeometry args={[node.isHighlighted ? 0.15 : 0.08, 16, 16]} />
-                        <meshBasicMaterial
-                            color={node.isHighlighted ? "#ff6b00" : "#00f0ff"}
-                            transparent
-                            opacity={node.isHighlighted ? 1 : 0.8}
-                        />
-                    </mesh>
+        <group>
+            <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+                <mesh ref={mesh}>
+                    <icosahedronGeometry args={[1.6, 64]} />
+                    <shaderMaterial
+                        ref={materialRef}
+                        transparent
+                        uniforms={uniforms}
+                        vertexShader={`
+                        varying vec3 vNormal;
+                        varying vec3 vPosition;
+                        uniform float uTime;
 
-                    {/* Glow effect for highlighted nodes */}
-                    {node.isHighlighted && (
-                        <mesh>
-                            <sphereGeometry args={[0.25, 16, 16]} />
-                            <meshBasicMaterial color="#ff6b00" transparent opacity={0.3} />
-                        </mesh>
-                    )}
+                        void main() {
+                            vNormal = normal;
+                            vPosition = position;
+                            // GPU-driven deformation
+                            float distortion = sin(uTime * 1.5 + position.y * 3.0) * 0.12;
+                            vec3 pos = position + normal * distortion;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                        }
+                    `}
+                        fragmentShader={`
+                        varying vec3 vNormal;
+                        varying vec3 vPosition;
+                        uniform vec3 uColor;
+                        uniform float uTime;
+                        uniform float uIsActive;
 
-                    {/* Connection line to parent */}
-                    <mesh position={[0, level, 0]}>
-                        <boxGeometry args={[0.01, level * 2, 0.01]} />
-                        <meshBasicMaterial
-                            color={node.isHighlighted ? "#ff6b00" : "#00f0ff"}
-                            transparent
-                            opacity={node.isHighlighted ? 0.6 : 0.15}
-                        />
-                    </mesh>
-                </group>
-            ))}
+                        void main() {
+                            // Cinematic Fresnel Glow
+                            float fresnel = pow(1.0 - dot(vNormal, vec3(0, 0, 1)), 3.0);
+                            
+                            // Tactical Scanlines
+                            float scanline = sin(vPosition.y * 15.0 - uTime * 3.0) * 0.05 + 0.95;
+                            
+                            // Pulse logic
+                            float pulse = sin(uTime * 4.0) * 0.1 * uIsActive;
+                            
+                            vec3 finalColor = uColor * scanline + (fresnel * 0.4);
+                            gl_FragColor = vec4(finalColor + pulse, 0.85);
+                        }
+                    `}
+                    />
+                </mesh>
+
+                <Text
+                    position={[0, 2.6, 0]}
+                    fontSize={0.18}
+                    color={active ? "#ff6b00" : "#00f0ff"}
+                    maxWidth={2}
+                    textAlign="center"
+                >
+                    {active ? "AUTHENTICATING_COMMITMENT" : "ROOT_STATE_OBSERVER"}
+                </Text>
+            </Float>
         </group>
     );
-};
-
-interface HighlightedPathProps {
-    path: Array<{ level: number; indices: number[] }>;
 }
 
-const HighlightedPath = ({ path }: HighlightedPathProps) => {
-    const lineRef = useRef<any>(null);
+// --- 2. Instanced Node Matrix (High-Performance Tree) ---
 
-    const points = useMemo(() => {
-        if (path.length === 0) return [];
+function NodeMatrix({ activePath }: { activePath: Array<{ level: number, index: number }> | null }) {
+    const meshRef = useRef<THREE.InstancedMesh>(null);
+    const dummy = useMemo(() => new THREE.Object3D(), []);
+    const baseColor = useMemo(() => new THREE.Color('#000000'), []);
+    const glowColor = useMemo(() => new THREE.Color('#00f0ff'), []);
+    const activeColor = useMemo(() => new THREE.Color('#ff6b00'), []);
 
-        const pathPoints: THREE.Vector3[] = [];
-
-        // Start from root
-        pathPoints.push(new THREE.Vector3(0, 0, 0));
-
-        // Trace through path
-        for (const segment of path) {
-            const level = segment.level;
-            const nodeIndex = segment.indices[0];
-            const nodesAtLevel = Math.pow(2, level);
-            const radius = level * 2.5;
-            const angle = (nodeIndex / nodesAtLevel) * Math.PI * 2;
-
-            pathPoints.push(new THREE.Vector3(
-                Math.cos(angle) * radius,
-                -level * 2,
-                Math.sin(angle) * radius
-            ));
+    // Pre-calculate tree positions
+    const nodes = useMemo(() => {
+        const list = [];
+        for (let l = 1; l <= 4; l++) {
+            const count = Math.pow(2, l);
+            const radius = l * 3.5;
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                list.push({
+                    idx: list.length,
+                    level: l,
+                    id: i,
+                    pos: new THREE.Vector3(
+                        Math.cos(angle) * radius,
+                        -l * 2.5,
+                        Math.sin(angle) * radius
+                    )
+                });
+            }
         }
-
-        return pathPoints;
-    }, [path]);
+        return list;
+    }, []);
 
     useFrame((state) => {
-        if (lineRef.current) {
-            // Pulse animation
-            lineRef.current.material.opacity = 0.5 + Math.sin(state.clock.elapsedTime * 4) * 0.3;
-        }
-    });
+        if (!meshRef.current) return;
 
-    if (points.length < 2) return null;
+        nodes.forEach((node, i) => {
+            const isActive = activePath?.some(p => p.level === node.level && p.index === node.id);
 
-    return (
-        <Line
-            ref={lineRef}
-            points={points}
-            color="#ff6b00"
-            lineWidth={3}
-            transparent
-            opacity={0.8}
-        />
-    );
-};
+            dummy.position.copy(node.pos);
 
-const MerkleRoot = ({ isHighlighted }: { isHighlighted?: boolean }) => {
-    const meshRef = useRef<THREE.Mesh>(null);
+            // Subtle levitation
+            dummy.position.y += Math.sin(state.clock.elapsedTime + i) * 0.05;
 
-    useFrame((state) => {
-        if (meshRef.current) {
-            meshRef.current.rotation.y += 0.01;
-            meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime) * 0.2;
-        }
+            const scale = isActive ? 0.2 + Math.sin(state.clock.elapsedTime * 10) * 0.05 : 0.08;
+            dummy.scale.setScalar(scale);
+
+            dummy.updateMatrix();
+            meshRef.current?.setMatrixAt(i, dummy.matrix);
+            meshRef.current?.setColorAt(i, isActive ? activeColor : glowColor);
+        });
+
+        meshRef.current.instanceMatrix.needsUpdate = true;
+        if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
     });
 
     return (
-        <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
-            <mesh ref={meshRef}>
-                <octahedronGeometry args={[1, 0]} />
-                <MeshDistortMaterial
-                    color={isHighlighted ? "#ff6b00" : "#00f0ff"}
-                    speed={3}
-                    distort={0.4}
-                    radius={1}
-                    metalness={0.8}
-                    roughness={0.2}
-                />
-            </mesh>
-            {isHighlighted && (
-                <mesh>
-                    <sphereGeometry args={[1.5, 32, 32]} />
-                    <meshBasicMaterial color="#ff6b00" transparent opacity={0.2} />
-                </mesh>
-            )}
-            <Text
-                position={[0, 1.8, 0]}
-                fontSize={0.25}
-                color={isHighlighted ? "#ff6b00" : "#00f0ff"}
-                anchorX="center"
-                anchorY="middle"
-                maxWidth={2}
-                textAlign="center"
-            >
-                {isHighlighted ? "COMMITMENT_ADDED" : "MERKLE_ROOT"}
-            </Text>
-        </Float>
+        <instancedMesh ref={meshRef} args={[undefined, undefined, nodes.length]}>
+            <icosahedronGeometry args={[1, 2]} />
+            <meshStandardMaterial
+                emissiveIntensity={2.5}
+                toneMapped={false}
+                metalness={1}
+                roughness={0}
+            />
+        </instancedMesh>
     );
 }
 
-interface MerkleTree3DProps {
-    highlightedCommitment?: string;
-}
+// --- 3. Scene Orchestration ---
 
-export const MerkleTree3D = ({ highlightedCommitment }: MerkleTree3DProps) => {
+export const MerkleTree3D = () => {
     const [mounted, setMounted] = useState(false);
     const [activeDeposit, setActiveDeposit] = useState<{
         commitment: string;
-        path: Array<{ level: number; indices: number[] }>;
-        timestamp: number;
+        path: Array<{ level: number; index: number }>;
     } | null>(null);
 
     useEffect(() => {
         setMounted(true);
-    }, []);
-
-    // Subscribe to commitment events
-    useEffect(() => {
-        if (!mounted) return;
-
         const handleEvent = (event: ForensicEvent) => {
             if (event.type === 'COMMITMENT_CREATED') {
-                // Generate random path for visualization
-                const randomPath = [
-                    { level: 1, indices: [Math.floor(Math.random() * 2)] },
-                    { level: 2, indices: [Math.floor(Math.random() * 4)] },
-                    { level: 3, indices: [Math.floor(Math.random() * 12)] },
-                    { level: 4, indices: [Math.floor(Math.random() * 24)] },
-                ];
-
-                setActiveDeposit({
-                    commitment: event.hex || event.data?.commitment as string || 'unknown',
-                    path: randomPath,
-                    timestamp: Date.now()
-                });
-
-                // Clear after animation
-                setTimeout(() => setActiveDeposit(null), 5000);
+                const hex = event.hex || (event.data?.commitment as string) || '00';
+                const path = [];
+                for (let i = 1; i <= 4; i++) {
+                    const levelNodes = Math.pow(2, i);
+                    const index = parseInt(hex.slice(i * 2, i * 2 + 2), 16) % levelNodes;
+                    path.push({ level: i, index });
+                }
+                setActiveDeposit({ commitment: hex, path });
+                setTimeout(() => setActiveDeposit(null), 10000);
             }
         };
-
         const unsubscribe = EventBus.onAll(handleEvent);
         return () => unsubscribe();
-    }, [mounted]);
+    }, []);
 
-    // Also respond to prop-based highlighting
-    useEffect(() => {
-        if (highlightedCommitment) {
-            const randomPath = [
-                { level: 1, indices: [Math.floor(Math.random() * 2)] },
-                { level: 2, indices: [Math.floor(Math.random() * 4)] },
-                { level: 3, indices: [Math.floor(Math.random() * 12)] },
-                { level: 4, indices: [Math.floor(Math.random() * 24)] },
-            ];
-
-            setActiveDeposit({
-                commitment: highlightedCommitment,
-                path: randomPath,
-                timestamp: Date.now()
-            });
-        }
-    }, [highlightedCommitment]);
-
-    if (!mounted) return (
-        <div className="w-full h-full bg-black/40 rounded-xl" />
-    );
+    if (!mounted) return <div className="w-full h-full bg-black/40 rounded-3xl" />;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full h-full relative"
-        >
-            <Canvas camera={{ position: [0, 8, 15], fov: 45 }}>
-                <color attach="background" args={['#000000']} />
-                <fog attach="fog" args={['#000000', 10, 30]} />
-                <ambientLight intensity={0.4} />
-                <pointLight position={[10, 10, 10]} intensity={2} color="#00f0ff" />
-                {activeDeposit && (
-                    <pointLight position={[0, 0, 0]} intensity={3} color="#ff6b00" />
-                )}
+        <div className="w-full h-full relative group">
+            <Canvas shadows={false} dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
+                <AdaptiveDpr pixelated />
+                <PerspectiveCamera makeDefault position={[18, 14, 22]} fov={30} />
+                <OrbitControls
+                    enableDamping
+                    autoRotate={!activeDeposit}
+                    autoRotateSpeed={0.4}
+                    maxPolarAngle={Math.PI / 1.8}
+                    minPolarAngle={Math.PI / 6}
+                    enableZoom={false}
+                />
 
-                <Stars radius={100} depth={50} count={6000} factor={6} saturation={0} fade speed={1.5} />
+                <color attach="background" args={['#010305']} />
+                <fog attach="fog" args={['#010305', 20, 50]} />
 
-                <group position={[0, 2, 0]}>
-                    <MerkleRoot isHighlighted={!!activeDeposit} />
+                <ambientLight intensity={0.3} />
+                <spotLight position={[10, 20, 10]} intensity={1.5} angle={0.3} penumbra={1} color="#00f0ff" />
+                <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
 
-                    {/* Highlighted path line */}
-                    {activeDeposit && <HighlightedPath path={activeDeposit.path} />}
-
-                    <TreeLevel
-                        level={1}
-                        nodesPerLevel={2}
-                        highlightedPath={activeDeposit?.path[0]?.indices}
-                        highlightLevel={1}
-                    />
-                    <TreeLevel
-                        level={2}
-                        nodesPerLevel={4}
-                        highlightedPath={activeDeposit?.path[1]?.indices}
-                        highlightLevel={2}
-                    />
-                    <TreeLevel
-                        level={3}
-                        nodesPerLevel={12}
-                        highlightedPath={activeDeposit?.path[2]?.indices}
-                        highlightLevel={3}
-                    />
-                    <TreeLevel
-                        level={4}
-                        nodesPerLevel={24}
-                        highlightedPath={activeDeposit?.path[3]?.indices}
-                        highlightLevel={4}
-                    />
+                <group position={[0, 4, 0]}>
+                    <Core active={!!activeDeposit} />
+                    <NodeMatrix activePath={activeDeposit?.path || null} />
                 </group>
 
-                <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.3} />
+                <Environment preset="night" />
+                <ContactShadows position={[0, -10, 0]} opacity={0.3} scale={50} blur={2.5} far={20} />
+                <Preload all />
             </Canvas>
 
-            {/* Overlay UI */}
-            <div className="absolute top-6 left-6 pointer-events-none space-y-1">
-                <div className="flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${activeDeposit ? 'bg-orange-500' : 'bg-tactical-cyan'}`} />
-                    <p className={`text-xs font-medium ${activeDeposit ? 'text-orange-500' : 'text-tactical-cyan'}`}>
-                        {activeDeposit ? 'Deposit Active' : 'State Explorer'}
-                    </p>
-                </div>
-                <p className="text-[10px] text-white/40 ml-4">
-                    {activeDeposit
-                        ? `Path: Root → L${activeDeposit.path.map(p => p.indices[0]).join(' → ')}`
-                        : 'ZK Commitment Tree Visualization'}
-                </p>
-            </div>
+            {/* Tactical Overlay */}
+            <div className="absolute inset-0 pointer-events-none p-8 flex flex-col justify-between select-none">
+                <div className="flex justify-between items-start">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="space-y-1"
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-3 bg-tactical-cyan" />
+                            <h2 className="text-[10px] font-bold text-white tracking-[0.5em] uppercase font-mono">
+                                Nexus_Core_V2
+                            </h2>
+                        </div>
+                        <p className="text-[8px] text-white/20 font-mono">ZKP_CIRCUIT_DENSE // MAINNET_SYNC</p>
+                    </motion.div>
 
-            {/* Active deposit indicator */}
-            {activeDeposit && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute bottom-6 left-6 pointer-events-none"
-                >
-                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2">
-                        <p className="text-xs text-orange-500 font-medium">New Commitment</p>
-                        <p className="text-[10px] text-white/50 font-mono mt-1">
-                            {activeDeposit.commitment.slice(0, 16)}...
-                        </p>
+                    <div className="text-right font-mono text-[8px] text-white/10 uppercase tracking-[0.2em] leading-relaxed">
+                        TELEMETRY_STATUS: <span className="text-tactical-green">SYNC</span><br />
+                        RECURSIVE_PROVING: <span className="text-tactical-cyan">ON</span>
                     </div>
-                </motion.div>
-            )}
+                </div>
 
-            <div className="absolute bottom-6 right-6 pointer-events-none text-right">
-                <p className="text-[10px] text-white/20 font-mono">
-                    Protocol v1.0
-                </p>
+                <AnimatePresence>
+                    {activeDeposit && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="bg-black/80 backdrop-blur-2xl border-r-2 border-tactical-orange p-6 max-w-sm mr-auto rounded-xl"
+                        >
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-2 h-2 rounded-full bg-tactical-orange shadow-[0_0_10px_#ff6b00]" />
+                                <span className="text-[11px] font-bold text-tactical-orange uppercase tracking-widest">Commitment_Detected</span>
+                            </div>
+                            <div className="font-mono space-y-3">
+                                <div className="text-[10px] text-white/60 break-all leading-tight bg-white/[0.03] p-2 rounded">
+                                    {activeDeposit.commitment}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {activeDeposit.path.map((p, i) => (
+                                        <div key={i} className="px-2 py-0.5 border border-white/5 rounded text-[8px] text-white/40">
+                                            L{p.level}:N{p.index}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex justify-between items-end">
+                    <div className="px-4 py-2 border border-white/5 bg-black/40 rounded-lg">
+                        <span className="text-[8px] font-mono text-white/20 tracking-widest uppercase flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-tactical-green animate-pulse" />
+                            State_Persistence: <span className="text-white/60">Verified</span>
+                        </span>
+                    </div>
+                </div>
             </div>
-        </motion.div>
+        </div>
     );
 };

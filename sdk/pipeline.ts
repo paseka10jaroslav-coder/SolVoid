@@ -2,11 +2,30 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { PrivacyEngine } from './privacy-engine';
 import { PrivacyShield } from './privacy/shield';
 import { EventBus } from './events/bus';
+import { Leak } from './types';
+import {
+    DataOrigin,
+    DataTrust,
+    TransactionJSONSchema,
+    enforce,
+    DataMetadata
+} from './integrity';
+
+export interface ScanResult {
+    readonly signature: string;
+    readonly leaks: readonly Leak[];
+    readonly remediation: {
+        readonly action: string;
+        readonly data: Record<string, unknown>;
+        readonly description: string;
+    } | null;
+    readonly privacyScore: number; // Unit: PERCENT
+}
 
 export class PrivacyPipeline {
-    private connection: Connection;
-    private engine: PrivacyEngine;
-    private shield: PrivacyShield;
+    private readonly connection: Connection;
+    private readonly engine: PrivacyEngine;
+    private readonly shield: PrivacyShield;
 
     constructor(connection: Connection, shield: PrivacyShield) {
         this.connection = connection;
@@ -14,82 +33,109 @@ export class PrivacyPipeline {
         this.shield = shield;
     }
 
-    /**
-     * Map web3.js signatures to privacy results by analyzing the last 10 txs.
-     */
-    public async processAddress(address: PublicKey) {
-        EventBus.scanStart(address.toBase58());
+    public async processAddress(address: PublicKey | string): Promise<ScanResult[]> {
+        // Explicit conversion (Rule 6)
+        const pubkey = typeof address === 'string' ? new PublicKey(address) : address;
+        const addressStr = pubkey.toBase58();
+
+        EventBus.scanStart(addressStr);
         EventBus.info('Fetching transaction history from Solana cluster...');
 
-        const signatures = await this.connection.getSignaturesForAddress(address);
+        const signatures = await this.connection.getSignaturesForAddress(pubkey, { limit: 10 });
         EventBus.info(`Found ${signatures.length} transactions. Analyzing latest 10...`);
 
-        const results = [];
-        let totalLeaks = 0;
+        const results: ScanResult[] = [];
+        let totalLeaksCount = 0;
 
         for (const sig of signatures.slice(0, 10)) {
-            const tx: any = await this.connection.getTransaction(sig.signature, {
+            const rawTx = await this.connection.getTransaction(sig.signature, {
                 maxSupportedTransactionVersion: 0,
             });
 
-            if (tx) {
-                // Emit transaction parsed event
-                const programId = tx.transaction.message.staticAccountKeys[
-                    tx.transaction.message.compiledInstructions[0]?.programIdIndex || 0
-                ]?.toBase58() || 'Unknown';
-                EventBus.transactionParsed(sig.signature, programId);
+            if (!rawTx) {
+                // Explicit failure behavior (Rule 9)
+                EventBus.error(`Transaction not found: ${sig.signature}`);
+                continue;
+            }
 
-                // Parse standard Solana tx structure into ours
-                const txData: any = {
-                    message: {
-                        accountKeys: tx.transaction.message.staticAccountKeys.map((k: any) => k.toBase58()),
-                        header: tx.transaction.message.header,
-                        instructions: tx.transaction.message.compiledInstructions.map((ix: any) => ({
+            // Data Transformation: External (Solana SDK) -> Internal (Rule 6)
+            const txDataUnvalidated = {
+                message: {
+                    accountKeys: rawTx.transaction.message.staticAccountKeys.map((k) => k.toBase58()),
+                    header: {
+                        numRequiredSignatures: rawTx.transaction.message.header.numRequiredSignatures,
+                    },
+                    instructions: rawTx.transaction.message.compiledInstructions.map((ix) => ({
+                        programIdIndex: ix.programIdIndex,
+                        accounts: ix.accountKeyIndexes,
+                        data: Buffer.from(ix.data).toString('base64')
+                    }))
+                },
+                meta: {
+                    innerInstructions: rawTx.meta?.innerInstructions?.map(ii => ({
+                        index: ii.index,
+                        instructions: ii.instructions.map(ix => ({
                             programIdIndex: ix.programIdIndex,
-                            accounts: ix.accountKeyIndexes,
+                            accounts: ix.accounts,
                             data: Buffer.from(ix.data).toString('base64')
                         }))
-                    },
-                    meta: {
-                        innerInstructions: tx.meta?.innerInstructions || [],
-                        logMessages: tx.meta?.logMessages || []
-                    },
-                    signatures: [sig.signature]
-                };
+                    })) ?? null,
+                    logMessages: rawTx.meta?.logMessages ?? null
+                },
+                signatures: rawTx.transaction.signatures
+            };
 
-                const leaks = this.engine.analyzeTransaction(txData);
-                const privacyScore = this.engine.calculateScore(leaks);
+            // Boundary Enforcement: External -> Internal (Rule 10)
+            const metadata: DataMetadata = {
+                origin: DataOrigin.CHAIN,
+                trust: DataTrust.TRUSTED,
+                createdAt: Date.now(),
+                owner: 'Solana RPC'
+            };
 
-                // Emit leak events
-                for (const leak of leaks) {
-                    EventBus.leakDetected(leak.type, leak.severity, leak.description, sig.signature);
-                    totalLeaks++;
-                }
+            const enforcedTx = enforce(TransactionJSONSchema, txDataUnvalidated, metadata);
+            const txData = enforcedTx.value;
 
-                if (leaks.length > 0) {
-                    const remediation = await this.generateRemediation(address, leaks);
-                    results.push({
-                        signature: sig.signature,
-                        leaks,
-                        remediation,
-                        privacyScore
-                    });
-                } else {
-                    results.push({
-                        signature: sig.signature,
-                        leaks: [],
-                        privacyScore: 100
-                    });
-                }
+            // Emit transaction parsed event
+            const programId = txData.message.accountKeys[
+                txData.message.instructions[0]?.programIdIndex ?? 0
+            ] ?? 'Unknown';
+
+            EventBus.transactionParsed(sig.signature, programId);
+
+            const leaks = this.engine.analyzeTransaction(txData);
+            const privacyScore = this.engine.calculateScore(leaks);
+
+            // Explicitly handle leaks (Rule 3)
+            for (const leak of leaks) {
+                EventBus.leakDetected(leak.type, leak.severity, leak.description, sig.signature);
+                totalLeaksCount++;
+            }
+
+            if (leaks.length > 0) {
+                const remediation = await this.generateRemediation(pubkey, leaks);
+                results.push({
+                    signature: sig.signature,
+                    leaks,
+                    remediation,
+                    privacyScore
+                });
+            } else {
+                results.push({
+                    signature: sig.signature,
+                    leaks: [],
+                    remediation: null,
+                    privacyScore: 100
+                });
             }
         }
 
-        // Calculate final score
+        // Calculate final score with unit enforcement (Rule 6)
         const avgScore = results.length > 0
             ? Math.round(results.reduce((acc, r) => acc + r.privacyScore, 0) / results.length)
             : 100;
 
-        EventBus.scanComplete(address.toBase58(), totalLeaks, avgScore);
+        EventBus.scanComplete(addressStr, totalLeaksCount, avgScore);
 
         return results;
     }
@@ -97,7 +143,7 @@ export class PrivacyPipeline {
     /**
      * Suggest specific fixes like shielding if we hit critical leak thresholds.
      */
-    private async generateRemediation(_user: PublicKey, leaks: any[]) {
+    private async generateRemediation(_user: PublicKey, leaks: readonly Leak[]) {
         const criticalLeaks = leaks.filter(l => l.severity === 'CRITICAL' || l.severity === 'HIGH');
 
         if (criticalLeaks.length > 0) {
@@ -108,7 +154,7 @@ export class PrivacyPipeline {
                 action: 'SHIELD_BALANCE',
                 data: {
                     commitment: commitmentData.commitmentHex,
-                    nullifierHash: commitmentData.nullifierHash.toString('hex'),
+                    nullifierHash: commitmentData.nullifierHash,
                 },
                 description: `High risk leaks found. Shielding recommended to break clear identity links.`,
             };

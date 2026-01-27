@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { IdlRegistry } from '../../sdk/semantics/idl-registry';
+import { Idl } from '../../sdk/semantics/types';
 
 describe('IdlRegistry', () => {
     let registry: IdlRegistry;
@@ -10,20 +11,26 @@ describe('IdlRegistry', () => {
 
     it('should load pre-seeded system program IDL', async () => {
         const idl = await registry.fetchIdl('11111111111111111111111111111111');
-        expect(idl.name).toBe('system_program');
+        expect(idl?.name).toBe('system_program');
     });
 
     it('should load pre-seeded SPL token IDL', async () => {
         const idl = await registry.fetchIdl('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-        expect(idl.name).toBe('spl_token');
+        expect(idl?.name).toBe('spl_token');
     });
 
     it('should register custom IDLs', () => {
-        const mockIdl = { name: 'mock' };
-        registry.registerIdl('Mock111111111111111111111111111111111', mockIdl);
-        // Using any cast to avoid TS issues in mock test
-        const saved: any = (registry as any).cache.get('Mock111111111111111111111111111111111');
-        expect(saved.name).toBe('mock');
+        const mockIdl: Idl = {
+            version: '0.1.0',
+            name: 'mock',
+            instructions: []
+        };
+        const mockProgramId = 'Mock111111111111111111111111111111111';
+        registry.registerIdl(mockProgramId, mockIdl);
+
+        // Using any cast to access private cache for test verification
+        const saved = (registry as any).cache.get(mockProgramId);
+        expect(saved?.name).toBe('mock');
     });
 
     it('should return null for unknown programs', async () => {
@@ -31,9 +38,8 @@ describe('IdlRegistry', () => {
         expect(idl).toBeNull();
     });
 
-    it('fix parameter implicit any error', () => {
-        // This addresses the "Parameter 'res' implicitly has an 'any' type" error
-        const mockFn = (res: any) => res;
-        expect(mockFn('test')).toBe('test');
+    it('should handle invalid public keys gracefully in fetchIdl', async () => {
+        // Since IdlRegistry.fetchIdl calls enforce(PublicKeySchema), it should throw
+        await expect(registry.fetchIdl('invalid-key')).rejects.toThrow(/Invalid Base58 Public Key/);
     });
 });

@@ -1,59 +1,28 @@
+import { z } from 'zod';
+import {
+    LeakSchema,
+    LeakTypeSchema,
+    VisibilityScopeSchema,
+    TransactionJSONSchema
+} from './integrity';
 
-export type LeakType =
-    | "identity"
-    | "metadata"
-    | "state-leak"
-    | "cpi-linkage";
-
-export type VisibilityScope = "PUBLIC" | "PROGRAM" | "LOCAL";
-
-export interface Leak {
-    type: LeakType;
-    scope: string; // Detail scope (e.g. 'funding', 'ata_link')
-    visibility: VisibilityScope;
-    description: string;
-    remediation?: string;
-    severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
-    programName?: string;
-}
+export type LeakType = z.infer<typeof LeakTypeSchema>;
+export type VisibilityScope = z.infer<typeof VisibilityScopeSchema>;
+export type Leak = z.infer<typeof LeakSchema>;
 
 export interface GovernanceResult {
-    status: "SURFACE_SCAN_PASSED" | "REGRESSION";
-    unacceptedLiabilities: { leak: Leak; reason: string }[];
-    remediationHints: string[];
-    privacyScore: number;
+    readonly status: "SURFACE_SCAN_PASSED" | "REGRESSION";
+    readonly unacceptedLiabilities: { readonly leak: Leak; readonly reason: string }[];
+    readonly remediationHints: readonly string[];
+    readonly privacyScore: number; // 0-100
 }
 
-export interface TransactionJSON {
-    message: {
-        accountKeys: string[];
-        header: {
-            numRequiredSignatures: number;
-        };
-        instructions: {
-            programIdIndex: number;
-            accounts: number[];
-            data: string;
-        }[];
-    };
-    meta?: {
-        innerInstructions?: {
-            index: number;
-            instructions: {
-                programIdIndex: number;
-                accounts: number[];
-                data: string;
-            }[];
-        }[];
-        logMessages?: string[];
-    };
-    signatures: string[];
-}
+export type TransactionJSON = z.infer<typeof TransactionJSONSchema>;
 
 export interface GeyserTransactionEvents {
-    signature: string;
-    accountUpdates: {
-        pubkey: string;
-        data: string;
+    readonly signature: string;
+    readonly accountUpdates: {
+        readonly pubkey: string;
+        readonly data: string; // Hex or Base64
     }[];
 }

@@ -1,8 +1,16 @@
 import { logger } from '../utils/logger';
 import { OnChainIdlFetcher } from '../registry/idl-fetcher';
+import {
+    IdlSchema,
+    enforce,
+    DataOrigin,
+    DataTrust,
+    PublicKeySchema
+} from '../integrity';
+import { Idl } from './types';
 
-// Mock IDL suitable for System Program transfers
-const SYSTEM_IDL = {
+// Reference IDL suitable for System Program transfers
+const SYSTEM_IDL: Idl = {
     version: "0.1.0",
     name: "system_program",
     instructions: [
@@ -20,8 +28,8 @@ const SYSTEM_IDL = {
     ]
 };
 
-// Mock IDL for SPL Token
-const SPL_TOKEN_IDL = {
+// Reference IDL for SPL Token
+const SPL_TOKEN_IDL: Idl = {
     version: "0.1.0",
     name: "spl_token",
     instructions: [
@@ -40,8 +48,8 @@ const SPL_TOKEN_IDL = {
     ]
 };
 
-// Mock IDL for a generic DeFi swap
-const DEFI_SWAP_IDL = {
+// Reference IDL for a generic DeFi swap
+const DEFI_SWAP_IDL: Idl = {
     version: "1.0.0",
     name: "super_swap",
     instructions: [
@@ -64,7 +72,7 @@ const DEFI_SWAP_IDL = {
 };
 
 export class IdlRegistry {
-    private cache: Map<string, any>;
+    private readonly cache: Map<string, Idl>;
 
     constructor() {
         this.cache = new Map();
@@ -73,27 +81,45 @@ export class IdlRegistry {
         this.cache.set("DeFi111111111111111111111111111111111111111", DEFI_SWAP_IDL);
     }
 
-    public async fetchIdl(programId: string): Promise<any | null> {
+    public async fetchIdl(programId: string): Promise<Idl | null> {
+        // Boundary check (Rule 10)
+        enforce(PublicKeySchema, programId, {
+            origin: DataOrigin.INTERNAL_LOGIC,
+            trust: DataTrust.TRUSTED,
+            createdAt: Date.now(),
+            owner: 'IdlRegistry'
+        });
+
         if (this.cache.has(programId)) {
-            return this.cache.get(programId);
+            return this.cache.get(programId) ?? null;
         }
 
         try {
             const fetcher = new OnChainIdlFetcher("https://api.mainnet-beta.solana.com");
-            const idl = await fetcher.fetchIdl(programId);
-            if (idl) {
+            const rawIdl = await fetcher.fetchIdl(programId);
+
+            if (rawIdl) {
+                // Boundary Enforcement: Chain -> Logic (Rule 10)
+                const enforced = enforce(IdlSchema, rawIdl, {
+                    origin: DataOrigin.CHAIN,
+                    trust: DataTrust.SEMI_TRUSTED,
+                    createdAt: Date.now(),
+                    owner: 'Solana RPC'
+                });
+
+                const idl = enforced.value as unknown as Idl;
                 this.cache.set(programId, idl);
                 return idl;
             }
         } catch (e) {
-            // Fallback to null
+            logger.error(`[IdlRegistry] Failed to fetch IDL for ${programId}:`, e);
         }
 
         logger.debug(`[IdlRegistry] IDL not found on-chain for ${programId}`);
         return null;
     }
 
-    public registerIdl(programId: string, idl: any): void {
+    public registerIdl(programId: string, idl: Idl): void {
         this.cache.set(programId, idl);
     }
 }

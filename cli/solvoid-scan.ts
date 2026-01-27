@@ -2,14 +2,27 @@
 
 /**
  * SolVoid CLI
- * Utility for shielding assets and auditing privacy leaks on Solana.
  */
 
 import { PublicKey, Keypair } from '@solana/web3.js';
-import { SolVoidClient } from '../sdk/client';
+import { SolVoidClient, WalletAdapter } from '../sdk/client';
+import {
+    enforce,
+    DataOrigin,
+    DataTrust,
+    PublicKeySchema
+} from '../sdk/integrity';
 import * as dotenv from 'dotenv';
+import fetch from 'cross-fetch';
 
 dotenv.config();
+
+const CLI_METADATA = {
+    origin: DataOrigin.CLI_ARG,
+    trust: DataTrust.UNTRUSTED,
+    createdAt: Date.now(),
+    owner: 'CLI User'
+};
 
 async function main() {
     const args = process.argv.slice(2);
@@ -24,14 +37,6 @@ Commands:
   rescue <address>     Atomic shielding of all leaked assets
   shield <amount>      Execute a private deposit (Surgical Shielding)
   withdraw <secret> <nullifier> <recipient>   Unlinkable ZK withdrawal
-  
-Flags:
-  --rpc <url>         Solana RPC URL
-  --relayer <url>     Relayer/Shadow RPC URL (or SHADOW_RELAYER_URL env)
-  --program <id>      Override SolVoid Program ID
-  --surgical          Optimize shielding for leaked assets only
-  --shadow-rpc        Broadcast via encrypted relay hops
-  --mock              Enable simulated/mock mode for testing
 `);
         process.exit(0);
     }
@@ -39,15 +44,27 @@ Flags:
     const rpcUrl = args.includes('--rpc') ? args[args.indexOf('--rpc') + 1] : (process.env.RPC_URL || 'https://api.mainnet-beta.solana.com');
     const programId = args.includes('--program') ? args[args.indexOf('--program') + 1] : (process.env.PROGRAM_ID || 'Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i');
     const relayerUrl = args.includes('--relayer') ? args[args.indexOf('--relayer') + 1] : (process.env.SHADOW_RELAYER_URL || 'http://localhost:3000');
-    const mock = args.includes('--mock');
+
+    // Rule 10: Validate Config Boundary
+    if (!rpcUrl || !programId) throw new Error("Missing required configuration (RPC_URL or PROGRAM_ID)");
 
     const wallet = Keypair.generate();
-    const client = new SolVoidClient({ rpcUrl, programId, relayerUrl, mock }, wallet);
+    const client = new SolVoidClient({
+        rpcUrl: rpcUrl ?? '',
+        programId: programId ?? '',
+        relayerUrl: relayerUrl ?? ''
+    }, wallet as unknown as WalletAdapter);
 
     try {
         switch (command) {
             case 'protect': {
-                const address = new PublicKey(args[1]);
+                const rawAddress = args[1];
+                if (!rawAddress) throw new Error("Missing address");
+
+                // Boundary Enforcement: CLI -> Logic (Rule 10)
+                const enforcedAddr = enforce(PublicKeySchema, rawAddress, CLI_METADATA);
+                const address = new PublicKey(enforcedAddr.value);
+
                 console.log(`\nScanning ${address.toBase58()}...`);
 
                 const passport = await client.getPassport(address.toBase58());
@@ -58,11 +75,11 @@ Flags:
                 console.log(`Overall Score: ${scoreColor}${passport.overallScore}/100\x1b[0m`);
                 console.log(`Badges: ${passport.badges.map(b => b.icon + ' ' + b.name).join(', ') || 'None'}`);
 
-                results.forEach((res: any) => {
+                results.forEach((res) => {
                     console.log(`\n---------------------------------------------------------`);
                     console.log(`Signature: ${res.signature}`);
                     if (res.leaks.length > 0) {
-                        res.leaks.forEach((leak: any) => {
+                        res.leaks.forEach((leak) => {
                             const sevColor = leak.severity === 'CRITICAL' ? '\x1b[31m' : '\x1b[33m';
                             console.log(`  - [${sevColor}${leak.severity}\x1b[0m] ${leak.description}`);
                         });
@@ -72,15 +89,19 @@ Flags:
             }
 
             case 'rescue': {
-                const address = new PublicKey(args[1]);
+                const rawAddress = args[1];
+                if (!rawAddress) throw new Error("Missing address");
+
+                const enforcedAddr = enforce(PublicKeySchema, rawAddress, CLI_METADATA);
+                const address = new PublicKey(enforcedAddr.value);
+
                 console.log(`\nExecuting rescue for: ${address.toBase58()}`);
                 const result = await client.rescue(address);
 
-                if (result.status === 'success') {
-                    console.log(`\nRescue successful.`);
-                    console.log(`Leaked assets shielded and mixed via relay.`);
-                    console.log(`TX Signature: ${result.txid}`);
-                    console.log(`Score improved: ${result.oldScore} -> ${result.newScore}`);
+                if (result.status === 'analysis_complete') {
+                    console.log(`\nRescue analysis complete.`);
+                    console.log(`Leaks found: ${result.leakCount}`);
+                    console.log(`Current Score: ${result.currentScore} -> Potential: ${result.potentialScore}`);
                 } else {
                     console.log(`\n${result.message}`);
                 }
@@ -88,42 +109,56 @@ Flags:
             }
 
             case 'shield': {
-                const amount = parseFloat(args[1]) * 1e9;
-                console.log(`Shielding ${args[1]} SOL...`);
-                const { txid, commitmentData } = await client.shield(amount);
-                console.log('TX Signature:', txid);
-                console.log('--- SAVE THESE SECRETS ---');
-                console.log('Secret:', commitmentData.secret.toString('hex'));
-                console.log('Nullifier:', commitmentData.nullifier.toString('hex'));
+                const amountSolRaw = args[1];
+                if (!amountSolRaw) throw new Error("Missing amount");
+
+                const amountSol = parseFloat(amountSolRaw);
+                if (isNaN(amountSol) || amountSol <= 0) throw new Error("Invalid amount");
+
+                // Rule 6: Explicit Transformation - SOL to LAMPORT
+                const amountLamports = Math.floor(amountSol * 1_000_000_000);
+
+                console.log(`Shielding ${amountSol} SOL (${amountLamports} Lamports)...`);
+                const { commitmentData } = await client.shield(amountLamports);
+
+                console.log('\n--- SAVE THESE SECRETS ---');
+                console.log('Secret:', commitmentData.secret);
+                console.log('Nullifier:', commitmentData.nullifier);
+                console.log('Commitment:', commitmentData.commitmentHex);
                 break;
             }
 
             case 'withdraw': {
                 const secret = args[1];
                 const nullifier = args[2];
-                const recipient = new PublicKey(args[3]);
-                let commitmentBuffers: Buffer[] = [];
+                const rawRecipient = args[3];
 
-                if (!mock) {
-                    console.log(`Fetching commitments from: ${relayerUrl}...`);
-                    const response = await fetch(`${relayerUrl}/commitments`);
-                    const { commitments } = (await response.json()) as any;
-                    commitmentBuffers = commitments.map((c: string) => Buffer.from(c, 'hex'));
-                } else {
-                    console.log(`[MOCK] Skipping commitment fetch...`);
-                }
+                if (!secret || !nullifier || !rawRecipient) throw new Error("Missing withdrawal params");
 
-                console.log(`Generating ZK proof and submitting withdrawal...`);
-                const result = await client.withdraw(
+                const enforcedRecipient = enforce(PublicKeySchema, rawRecipient, CLI_METADATA);
+                const recipient = new PublicKey(enforcedRecipient.value);
+
+                console.log(`Fetching commitments from: ${relayerUrl}...`);
+                const response = await fetch(`${relayerUrl}/commitments`);
+                if (!response.ok) throw new Error(`Relayer error: ${response.statusText}`);
+
+                const data = (await response.json()) as { commitments: string[] };
+                const commitmentsHex = data.commitments;
+
+                console.log(`Generating ZK proof...`);
+                const result = await client.prepareWithdrawal(
                     secret,
                     nullifier,
                     recipient,
-                    commitmentBuffers,
+                    commitmentsHex,
                     './withdraw.wasm',
-                    './withdraw.zkey',
-                    wallet
+                    './withdraw.zkey'
                 );
-                console.log('Result:', result);
+
+                console.log('\nWithdrawal Proof Ready:');
+                console.log('Nullifier Hash:', result.nullifierHash);
+                console.log('Root:', result.root);
+                console.log('Proof Size:', result.proof.length, 'bytes');
                 break;
             }
 
@@ -131,33 +166,11 @@ Flags:
                 console.error(`Unknown command: ${command}`);
                 process.exit(1);
         }
-    } catch (e: any) {
-        console.error('Error:', e.message);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        console.error('\x1b[31mError:\x1b[0m', msg);
         process.exit(1);
     }
-}
-
-/**
- * Basic input validation for signatures vs file paths.
- */
-export function validateInput(input: string): { type: 'file' | 'signature'; path?: string } {
-    if (!input || input.trim().length === 0) {
-        throw new Error('Input cannot be empty');
-    }
-
-    if (input.endsWith('.json')) {
-        if (require('fs').existsSync(input)) {
-            return { type: 'file', path: input };
-        }
-        throw new Error('File not found');
-    }
-
-    // Base58 check for Solana signatures
-    if (/^[1-9A-HJ-NP-Za-km-z]{32,88}$/.test(input)) {
-        return { type: 'signature' };
-    }
-
-    throw new Error('Invalid format');
 }
 
 if (require.main === module) {

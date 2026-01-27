@@ -33,7 +33,7 @@ module.exports = {
     testTimeout: 10000,
     transformIgnorePatterns: [
         // Allow transformation of ESM modules
-        "node_modules/(?!(p-retry|@coral-xyz/borsh|@solana|fetch-retry|is-network-error)/)"
+        "node_modules/(?!(p-retry|@coral-xyz/borsh|@solana|fetch-retry|is-network-error|chai)/)"
     ],
     verbose: true,
     clearMocks: true,

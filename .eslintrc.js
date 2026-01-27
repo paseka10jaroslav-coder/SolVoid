@@ -11,7 +11,7 @@ module.exports = {
     rules: {
         '@typescript-eslint/no-explicit-any': 'off', // Allow any for complex decoding/mocks
         '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-        'no-console': ['warn', { allow: ['warn', 'error'] }],
+        'no-console': 'off',
         '@typescript-eslint/ban-ts-comment': 'off',
         '@typescript-eslint/no-var-requires': 'off', // Allow dynamic requires for optional modules
         'no-empty': 'off' // Allow empty catch blocks (swallows errors intentionally)

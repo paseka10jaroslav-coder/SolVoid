@@ -1,58 +1,64 @@
+import { z } from 'zod';
+import {
+    PrivacyPassportSchema,
+    ScoreSnapshotSchema,
+    PrivacyBadgeSchema,
+    enforce,
+    DataOrigin,
+    DataTrust
+} from '../integrity';
 
-export interface ScoreSnapshot {
-    timestamp: number;
-    score: number;
-}
+export type ScoreSnapshot = z.infer<typeof ScoreSnapshotSchema>;
+export type PrivacyBadge = z.infer<typeof PrivacyBadgeSchema>;
+export type PrivacyPassport = z.infer<typeof PrivacyPassportSchema>;
 
-export interface PrivacyBadge {
-    name: string;
-    icon: string;
-    description: string;
-    dateEarned: number;
-}
-
-export interface PrivacyPassport {
-    walletAddress: string;
-    overallScore: number;
-    scoreHistory: ScoreSnapshot[];
-    badges: PrivacyBadge[];
-    recommendations: string[];
-}
-
-const isBrowser = typeof window !== 'undefined';
+const isBrowser = typeof globalThis !== 'undefined' && (globalThis as any).document !== undefined;
 
 export class PassportManager {
-    private storagePath: string;
-    private memoryCache: Record<string, any> = {};
+    private readonly storagePath: string;
+    private memoryCache: Record<string, unknown> = {};
 
     constructor(storagePath: string = './privacy-passport.json') {
         this.storagePath = storagePath;
     }
 
-    private readStorage(): any {
+    private readStorage(): Record<string, unknown> {
+        let rawData: string | null = null;
         if (isBrowser) {
-            const data = localStorage.getItem('solvoid_passport');
-            return data ? JSON.parse(data) : {};
+            rawData = localStorage.getItem('solvoid_passport');
         } else {
             try {
-                const fs = require('fs');
-                if (fs.existsSync(this.storagePath)) {
-                    return JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
+                // Shield requiring 'fs' from static bundlers like Webpack/Turbopack
+                const nodeFs = typeof require !== 'undefined' ? eval('require')('fs') : null;
+                if (nodeFs && nodeFs.existsSync(this.storagePath)) {
+                    rawData = nodeFs.readFileSync(this.storagePath, 'utf8');
                 }
             } catch (e) {
-                // fs not available or file error
+                // Fallback to memory
             }
-            return this.memoryCache;
+        }
+
+        if (!rawData) return (this.memoryCache as Record<string, unknown>) || {};
+
+        try {
+            const parsed = JSON.parse(rawData);
+            return typeof parsed === 'object' && parsed !== null ? parsed : {};
+        } catch {
+            return {};
         }
     }
 
-    private writeStorage(data: any) {
+    private writeStorage(data: Record<string, unknown>) {
         if (isBrowser) {
             localStorage.setItem('solvoid_passport', JSON.stringify(data));
         } else {
             try {
-                const fs = require('fs');
-                fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+                const nodeFs = typeof require !== 'undefined' ? eval('require')('fs') : null;
+                if (nodeFs) {
+                    nodeFs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+                } else {
+                    this.memoryCache = data;
+                }
             } catch (e) {
                 this.memoryCache = data;
             }
@@ -64,22 +70,45 @@ export class PassportManager {
      */
     public getPassport(address: string): PrivacyPassport {
         const data = this.readStorage();
-        return data[address] || this.initializePassport(address);
+        const passportData = data[address];
+
+        if (!passportData) {
+            return this.initializePassport(address);
+        }
+
+        // Boundary Enforcement: Storage -> Logic (Rule 10)
+        const enforced = enforce(PrivacyPassportSchema, passportData, {
+            origin: isBrowser ? DataOrigin.CACHE : DataOrigin.DB,
+            trust: DataTrust.SEMI_TRUSTED,
+            createdAt: Date.now(),
+            owner: 'Passport Storage'
+        });
+
+        return enforced.value;
     }
 
     /**
      * Update history and trigger badge checks based on latest audit.
      */
     public updateScore(address: string, newScore: number) {
-        const passport = this.getPassport(address);
-        passport.overallScore = newScore;
-        passport.scoreHistory.push({
-            timestamp: Date.now(),
-            score: newScore
-        });
+        if (!Number.isInteger(newScore) || newScore < 0 || newScore > 100) {
+            throw new Error(`Invalid score: ${newScore}. Must be 0-100 integer.`);
+        }
 
-        this.checkBadges(passport);
-        this.savePassport(address, passport);
+        const passport = this.getPassport(address);
+
+        // Mutating a copy for safety
+        const updatedPassport: PrivacyPassport = {
+            ...passport,
+            overallScore: newScore,
+            scoreHistory: [
+                ...passport.scoreHistory,
+                { timestamp: Date.now(), score: newScore }
+            ]
+        };
+
+        this.checkBadges(updatedPassport);
+        this.savePassport(address, updatedPassport);
     }
 
     private initializePassport(address: string): PrivacyPassport {
@@ -121,7 +150,16 @@ export class PassportManager {
 
     private savePassport(address: string, passport: PrivacyPassport) {
         const allData = this.readStorage();
-        allData[address] = passport;
+
+        // Final validation before write
+        const enforced = enforce(PrivacyPassportSchema, passport, {
+            origin: DataOrigin.INTERNAL_LOGIC,
+            trust: DataTrust.TRUSTED,
+            createdAt: Date.now(),
+            owner: 'PassportManager'
+        });
+
+        allData[address] = enforced.value;
         this.writeStorage(allData);
     }
 }
