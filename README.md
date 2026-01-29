@@ -6,21 +6,24 @@
 
 SolVoid is an open-source privacy protocol that enables confidential transactions on the Solana blockchain using zero-knowledge proofs. The project provides tools and libraries for developers to integrate privacy features into their Solana applications.
 
-## 🛠️ What's Included
+## 🛠️ Features
 
-### Open Source Components
-- **Documentation**: Complete documentation for the protocol
-- **Configuration**: Build and deployment configurations
-- **Scripts**: Build and automation scripts
-- **Tests**: Test suites for validation
-- **Examples**: Integration examples and demos
+### Privacy Features
+- **Zero-Knowledge Proofs**: Complete transaction privacy using Groth16 proofs
+- **Privacy Scoring**: Real-time privacy assessment based on blockchain analysis
+- **Transaction Shielding**: Confidential transaction generation
+- **Atomic Recovery**: Secure wallet recovery mechanisms
 
-### Private Components
-- **Core Implementation**: Privacy protocol implementation
-- **CLI Tools**: Command-line interface
-- **SDK**: Software development kit
+### Developer Tools
+- **CLI Tools**: Command-line interface for privacy operations
+- **SDK**: TypeScript/JavaScript SDK for integration
 - **Mobile Apps**: Android and iOS applications
-- **CI/CD**: Continuous integration and deployment
+- **API**: RESTful API for privacy services
+
+### Smart Contracts
+- **Solana Programs**: On-chain privacy protocol implementation
+- **ZK Circuits**: Circom circuits for zero-knowledge proofs
+- **Merkle Trees**: Efficient commitment schemes
 
 ## 🚀 Quick Start
 
@@ -58,10 +61,10 @@ npm run dev
 
 ## 📚 Documentation
 
-- **[System Overview](./SYSTEM_OVERVIEW.md)**: Complete system architecture
-- **[Command Reference](./COMMAND_REFERENCE.md)**: CLI command documentation
-- **[Integration Examples](./INTEGRATION_EXAMPLES.md)**: Integration examples
-- **[Developer Guide](./DEVELOPER_GUIDE.md)**: Developer documentation
+- **[System Architecture](./docs/ARCHITECTURE.md)**: Complete system architecture
+- **[API Documentation](./docs/API.md)**: API reference and examples
+- **[Security Guide](./docs/SECURITY.md)**: Security best practices
+- **[Developer Guide](./docs/DEVELOPER.md)**: Development setup and guidelines
 
 ## 🔧 Development
 
@@ -110,6 +113,37 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## 🔒 Security
 
 For security concerns, please report them privately to our security team at security@solvoid.dev.
+
+## 🏗️ Project Structure
+
+```
+solvoid/
+├── cli/                 # Command-line tools
+├── sdk/                 # TypeScript SDK
+├── dashboard/           # Web dashboard
+├── mobile/              # Mobile applications
+├── programs/           # Solana smart contracts
+├── circuits/           # ZK circuits
+├── docs/               # Documentation
+└── tests/              # Test suites
+```
+
+## 🎯 Use Cases
+
+### Privacy Transactions
+- Send confidential transactions on Solana
+- Shield transaction amounts and recipients
+- Generate zero-knowledge proofs
+
+### Privacy Analysis
+- Analyze transaction privacy
+- Calculate privacy scores
+- Identify privacy vulnerabilities
+
+### Integration
+- Add privacy features to dApps
+- Integrate with existing wallets
+- Build privacy-focused applications
 
 ---
 
