@@ -1,144 +1,196 @@
 # SolVoid: Privacy Protocol for Solana
 
-**A comprehensive zero-knowledge privacy protocol for the Solana blockchain.**
+**A zero-knowledge privacy protocol for Solana blockchain.**
 
-## 🎯 Overview
+## ⚠️ HONEST STATUS
 
-SolVoid is an open-source privacy protocol that enables confidential transactions on the Solana blockchain using zero-knowledge proofs. The project provides tools and libraries for developers to integrate privacy features into their Solana applications.
+This is an active development project. Some features are complete, others are in progress.
 
-## 🛠️ Features
+## ✅ WHAT ACTUALLY EXISTS
 
-### Privacy Features
-- **Zero-Knowledge Proofs**: Complete transaction privacy using Groth16 proofs
-- **Privacy Scoring**: Real-time privacy assessment based on blockchain analysis
-- **Transaction Shielding**: Confidential transaction generation
-- **Atomic Recovery**: Secure wallet recovery mechanisms
+### CLI Tools (Working)
+- Privacy scanning commands
+- Transaction analysis tools
+- Network monitoring utilities
+- Privacy shield generation
+- **Location**: `cli/` directory
+- **Count**: 28+ TypeScript files
 
-### Developer Tools
-- **CLI Tools**: Command-line interface for privacy operations
-- **SDK**: TypeScript/JavaScript SDK for integration
-- **API**: RESTful API for privacy services
+### SDK (Working)
+- TypeScript/JavaScript SDK
+- Privacy engine implementation
+- ZK circuit integration
+- **Location**: `sdk/` directory
+- **Count**: 32+ TypeScript files
 
-### Smart Contracts
-- **Solana Programs**: On-chain privacy protocol implementation
-- **ZK Circuits**: Circom circuits for zero-knowledge proofs
-- **Merkle Trees**: Efficient commitment schemes
+### Smart Contracts (Working)
+- Solana programs (Rust)
+- ZK circuit implementations
+- Privacy protocol logic
+- **Location**: `programs/solvoid-zk/`
+- **Count**: 16+ Rust files
 
-## 🚀 Quick Start
+### ZK Circuits (Working)
+- Circom circuits for privacy
+- Withdraw circuits
+- Merkle tree circuits
+- **Location**: `circuits/` directory
+- **Count**: 6+ circuit files
 
-### Prerequisites
-- Node.js 18+
-- Solana CLI
-- Git
+### CI/CD Scripts (Working)
+- Build automation scripts
+- Deployment scripts
+- **Location**: `scripts/` directory
+- **Count**: 30+ shell scripts
 
-### Installation
+### Tests (Working)
+- Unit tests
+- Integration tests
+- **Location**: `tests/` directory
+- **Count**: 27+ test files
 
+## ❌ WHAT DOESN'T EXIST
+
+### Documentation
+- No API documentation
+- No security guides
+- No contributing guides
+- No architecture docs
+
+### Mobile Apps
+- No Android APK
+- No iOS apps
+- No React Native code
+
+### Web Dashboard
+- Dashboard code exists but not production-ready
+- Located in `dashboard/` directory
+- Not recommended for production use
+
+### Build Commands
+- `npm run build:docs` - doesn't exist
+- `npm run build:sdk` - doesn't exist
+- `npm run build:cli` - doesn't exist
+
+## 🛠️ HOW TO USE WHAT EXISTS
+
+### CLI Tools
 ```bash
-# Clone the repository
-git clone https://github.com/privacy-zero/solvoid.git
-cd solvoid
-
 # Install dependencies
 npm install
 
-# Build the project
-npm run build
+# Run CLI commands
+cd cli
+node solvoid-scan.js --help
+node enhanced-privacy-scan.js --help
 ```
 
-### Usage
-
+### SDK
 ```bash
-# Run tests
-npm test
-
-# Build documentation
-npm run docs
-
-# Start development server
-npm run dev
-```
-
-## 📚 Documentation
-
-- **[API Documentation](./docs/API.md)**: API reference and examples
-- **[Security Guide](./docs/SECURITY.md)**: Security best practices
-
-## 🔧 Development
-
-### Build System
-```bash
-# Build all components
+# Build SDK
+cd sdk
 npm run build
 
-# Build specific component
-npm run build:sdk
-npm run build:cli
-
-# Run tests
-npm test
-npm run test:unit
-npm run test:integration
+# Use in your project
+import { SolVoidClient } from './dist/index.js';
 ```
 
-### Code Quality
+### Smart Contracts
 ```bash
-# Lint code
-npm run lint
-
-# Format code
-npm run format
-
-# Type checking
-npm run type-check
+# Build Solana programs
+cd programs/solvoid-zk
+cargo build
 ```
 
-## 🌐 Community
+### ZK Circuits
+```bash
+# Compile circuits
+cd circuits
+npm install
+npx circom withdraw.circom
+```
 
-### Contributing
-We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) for details.
-
-### Support
-- **Issues**: [GitHub Issues](https://github.com/privacy-zero/solvoid/issues)
-- **Discord**: Community discussions
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
-## 🔒 Security
-
-For security concerns, please report them privately to our security team at security@solvoid.dev.
-
-## 🏗️ Project Structure
+## 📁 PROJECT STRUCTURE
 
 ```
 solvoid/
-├── cli/                 # Command-line tools
-├── sdk/                 # TypeScript SDK
-├── dashboard/           # Web dashboard
-├── programs/           # Solana smart contracts
-├── circuits/           # ZK circuits
-├── docs/               # Documentation
-└── tests/              # Test suites
+├── cli/                 # ✅ CLI tools (28+ files)
+├── sdk/                 # ✅ TypeScript SDK (32+ files)
+├── programs/           # ✅ Solana programs (16+ files)
+├── circuits/           # ✅ ZK circuits (6+ files)
+├── scripts/            # ✅ Build scripts (30+ files)
+├── tests/              # ✅ Tests (27+ files)
+├── tools/              # ✅ Utility tools (4+ files)
+├── relayer/            # ✅ Relayer implementation (6+ files)
+└── dashboard/          # ⚠️ Web dashboard (not production-ready)
 ```
 
-## 🎯 Use Cases
+## 🚀 GETTING STARTED
 
-### Privacy Transactions
-- Send confidential transactions on Solana
-- Shield transaction amounts and recipients
-- Generate zero-knowledge proofs
+### Prerequisites
+- Node.js 18+
+- Rust (for smart contracts)
+- Solana CLI
 
-### Privacy Analysis
-- Analyze transaction privacy
-- Calculate privacy scores
-- Identify privacy vulnerabilities
+### Installation
+```bash
+git clone https://github.com/privacy-zero/solvoid.git
+cd solvoid
+npm install
+```
 
-### Integration
-- Add privacy features to dApps
-- Integrate with existing wallets
-- Build privacy-focused applications
+### Build CLI Tools
+```bash
+cd cli
+npm install
+node solvoid-scan.js --address YOUR_ADDRESS
+```
+
+### Build SDK
+```bash
+cd sdk
+npm run build
+```
+
+### Build Smart Contracts
+```bash
+cd programs/solvoid-zk
+cargo build
+```
+
+## 🔧 DEVELOPMENT STATUS
+
+### ✅ Working
+- CLI privacy scanning tools
+- TypeScript SDK core functionality
+- ZK circuit compilation
+- Smart contract compilation
+- Basic test suite
+
+### 🚧 In Progress
+- Web dashboard completion
+- API documentation
+- Integration testing
+- Production deployment
+
+### ❌ Not Started
+- Mobile applications
+- Production documentation
+- CI/CD pipeline
+- Security audit
+
+## 📄 License
+
+MIT License - see [LICENSE](./LICENSE) file.
+
+## 🔒 Security
+
+This is experimental software. Use at your own risk.
+
+## 🤝 Contributing
+
+Contributions welcome. See existing code for patterns.
 
 ---
 
-**Built with ❤️ by the SolVoid Community**
+**Status: Active Development - Not Production Ready**
