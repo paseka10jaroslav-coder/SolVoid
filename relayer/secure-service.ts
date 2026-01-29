@@ -13,25 +13,31 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
+import * as tweetnacl from 'tweetnacl';
 import { Connection, VersionedTransaction, PublicKey } from '@solana/web3.js';
-import { nacl } from 'tweetnacl';
 import { KeyManager } from './key-manager';
 import { ReplayProtection, TransactionData } from './replay-protection';
 import {
-    DataOrigin,
-    DataTrust,
-    Unit,
-    RelayRequestSchema,
-    RelayResponseSchema,
-    OnionLayerSchema,
-    enforce,
-    DataMetadata,
-    RelayResponse,
-    RelayRequest,
-    OnionLayer
-} from '../sdk/integrity';
+  DataOrigin,
+  DataTrust,
+  Unit,
+  RelayRequestSchema,
+  RelayResponseSchema,
+  OnionLayerSchema,
+  enforce,
+  DataMetadata,
+  RelayResponse,
+  RelayRequest,
+  OnionLayer
+} from '../sdk/index';
 import fetch from 'cross-fetch';
+
+// FIXED: Extended Request interface with additional properties
+interface AuthenticatedRequest extends Request {
+  authenticatedPublicKey?: string;
+  rawBody?: Buffer;
+}
 
 // Configuration
 const PORT = parseInt(process.env.PORT || '8080');
@@ -112,7 +118,7 @@ class SecureRelayerService {
 
         this.app.use(express.json({ 
             limit: '1mb',
-            verify: (req, res, buf) => {
+            verify: (req: any, res: any, buf: Buffer) => {
                 try {
                     JSON.parse(buf.toString());
                 } catch (e) {
@@ -168,6 +174,28 @@ class SecureRelayerService {
         });
     }
 
+    // FIXED: Add missing getNetworkStatus method
+    private async getNetworkStatus(req: Request, res: Response) {
+        try {
+            const slot = await this.connection.getSlot();
+            const blockHeight = await this.connection.getBlockHeight();
+            
+            res.json({
+                status: 'connected',
+                slot,
+                blockHeight,
+                cluster: this.connection.rpcEndpoint,
+                timestamp: new Date().toISOString(),
+            });
+        } catch (error) {
+            res.status(500).json({
+                status: 'error',
+                error: error instanceof Error ? error.message : 'Unknown error',
+                timestamp: new Date().toISOString(),
+            });
+        }
+    }
+
     private async registerRelayer(req: Request, res: Response) {
         try {
             const { publicKey, endpoint, signature } = req.body;
@@ -211,7 +239,7 @@ class SecureRelayerService {
         }
     }
 
-    private authenticate(req: Request, res: Response, next: NextFunction) {
+    private authenticate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         const { timestamp } = req.headers;
 
         if (!timestamp) {
@@ -269,25 +297,27 @@ class SecureRelayerService {
         next();
     }
 
-    private async relayTransaction(req: Request, res: Response) {
+    private async relayTransaction(req: AuthenticatedRequest, res: Response) {
         const startTime = Date.now();
         
         try {
             // Enforce request schema
             const enforcedRequest = enforce(RelayRequestSchema, req.body, {
                 origin: DataOrigin.API_PAYLOAD,
-                trust: DataTrust.Untrusted,
-                unit: Unit.Transaction,
+                trust: DataTrust.UNTRUSTED,
+                units: Unit.SOL,
+                createdAt: Date.now(),
+                owner: NODE_ID,
             });
 
             // Extract transaction data for replay protection
             const txData: TransactionData = {
                 publicKey: req.authenticatedPublicKey,
-                nonce: enforcedRequest.nonce || 0,
-                timestamp: enforcedRequest.timestamp || Date.now(),
-                txHash: enforcedRequest.transactionHash || '',
-                signature: enforcedRequest.signature || '',
-                instructions: enforcedRequest.instructions || []
+                nonce: req.body.nonce || 0,
+                timestamp: req.body.timestamp || Date.now(),
+                txHash: req.body.transactionHash || '',
+                signature: req.body.signature || '',
+                instructions: req.body.instructions || []
             };
 
             // Multi-layered replay protection
@@ -306,7 +336,7 @@ class SecureRelayerService {
             }
 
             // Deserialize and validate transaction
-            const transaction = VersionedTransaction.deserialize(Buffer.from(enforcedRequest.transaction, 'base64'));
+            const transaction = VersionedTransaction.deserialize(Buffer.from(req.body.transaction, 'base64'));
             
             // Get recent blockhash for transaction
             const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
@@ -339,10 +369,8 @@ class SecureRelayerService {
             // Return success response
             const response: RelayResponse = {
                 success: true,
-                signature,
                 hopCount: 1,
                 relayPath: [NODE_ID],
-                timestamp: Date.now(),
             };
 
             res.json(response);
@@ -441,7 +469,7 @@ class SecureRelayerService {
             const messageBuffer = Buffer.from(message, 'utf8');
             
             // Verify Ed25519 signature
-            return nacl.sign.detached.verify(messageBuffer, signatureBuffer, publicKeyBuffer);
+            return tweetnacl.sign.detached.verify(messageBuffer, signatureBuffer, publicKeyBuffer);
         } catch (error) {
             console.error('Signature verification failed:', error);
             return false;

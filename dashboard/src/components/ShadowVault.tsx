@@ -13,13 +13,16 @@ export interface Commitment {
     readonly status: 'pending' | 'confirmed' | 'withdrawn';
 }
 
+import { ProtocolStats } from '../../../sdk/integrity';
+
 interface ShadowVaultProps {
     readonly commitments: readonly Commitment[];
+    readonly stats: ProtocolStats | null;
     readonly onDeposit?: (amountSOL: number) => Promise<void>;
     readonly onWithdraw?: (id: string) => Promise<void>;
 }
 
-export const ShadowVault = ({ commitments, onDeposit, onWithdraw }: ShadowVaultProps) => {
+export const ShadowVault = ({ commitments, stats, onDeposit, onWithdraw }: ShadowVaultProps) => {
     const [mounted, setMounted] = useState<boolean>(false);
     const [isDepositing, setIsDepositing] = useState<boolean>(false);
     const [depositAmountSOL, setDepositAmountSOL] = useState<string>('');
@@ -108,11 +111,11 @@ export const ShadowVault = ({ commitments, onDeposit, onWithdraw }: ShadowVaultP
                         </div>
                         <div className="space-y-1">
                             <p className="text-[8px] text-white/20 uppercase font-mono">Mixing Time (Avg)</p>
-                            <p className="text-xs font-bold text-tactical-green">14.2m</p>
+                            <p className="text-xs font-bold text-tactical-green">{stats ? `${stats.mixingTimeAvgMinutes}m` : '--'}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[8px] text-white/20 uppercase font-mono">Anon Set</p>
-                            <p className="text-xs font-bold text-tactical-cyan">2,481</p>
+                            <p className="text-xs font-bold text-tactical-cyan">{stats ? stats.anonSetSize.toLocaleString() : '--'}</p>
                         </div>
                     </div>
                 </div>

@@ -101,7 +101,7 @@ export class ShadowRPC {
             return this.directBroadcast(tx);
         }
 
-        EventBus.info(`Relay chain established: ${relayChain.map(n => n.region).join(' → ')}`);
+        EventBus.info(`Relay chain established: ${relayChain.map(n => n.region).join('  ')}`);
 
         if (options.stealthMode) {
             const jitter = Math.floor(Math.random() * 200) + 50;

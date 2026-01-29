@@ -17,6 +17,17 @@ coverage/
 .env.local
 .env.*.local
 
+# Security files
+*.key
+*.pem
+*.p12
+*.pfx
+keypair.json
+private-key.json
+secret.json
+secrets/
+credentials/
+
 # Logs
 *.log
 npm-debug.log*
@@ -60,3 +71,4 @@ privacy_tool.zip
 .solvoid/cache/
 # Passport storage
 privacy-passport.json
+solana/

@@ -1,6 +1,21 @@
 // Export all public types
 export * from './types';
 
+// Export integrity module (server-side) - specific exports to avoid conflicts
+export { 
+  DataOrigin, 
+  DataTrust, 
+  Unit, 
+  RelayRequestSchema, 
+  RelayResponseSchema, 
+  OnionLayerSchema, 
+  enforce, 
+  DataMetadata, 
+  RelayResponse, 
+  RelayRequest, 
+  OnionLayer 
+} from './integrity';
+
 // Export privacy engine (core scanning & remediation detection)
 export { PrivacyEngine } from './privacy-engine';
 export { PrivacyPipeline } from './pipeline';

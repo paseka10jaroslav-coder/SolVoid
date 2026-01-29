@@ -15,7 +15,7 @@ import { Program, AnchorProvider, web3, BN } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Keypair } from '@solana/web3.js';
 import fs from 'fs';
 
-describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
+describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
     const provider = AnchorProvider.env();
     const connection = provider.connection;
     const wallet = provider.wallet;
@@ -74,7 +74,7 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
         initialTotalWithdrawn = initialState.totalWithdrawn || new BN(0);
     });
 
-    describe('📈 next_index Monotonicity', () => {
+    describe(' next_index Monotonicity', () => {
         it('Should maintain monotonic next_index during sequential deposits', async () => {
             const commitments = [];
             const numDeposits = 5;
@@ -113,7 +113,7 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
                 expect(indexProgression[i]).to.equal(indexProgression[i-1] + 1);
             }
             
-            console.log('✅ next_index monotonicity preserved');
+            console.log(' next_index monotonicity preserved');
         });
 
         it('Should maintain monotonic next_index during concurrent deposits', async () => {
@@ -153,11 +153,11 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             expect(endIndex).to.equal(startIndex + successful);
             expect(endIndex).to.be.greaterThan(startIndex);
             
-            console.log(`✅ Concurrent deposits: ${successful}/${numConcurrent} successful, next_index monotonic`);
+            console.log(` Concurrent deposits: ${successful}/${numConcurrent} successful, next_index monotonic`);
         });
     });
 
-    describe('📚 Root History Append-Only', () => {
+    describe(' Root History Append-Only', () => {
         it('Should maintain append-only root history', async () => {
             const stateBefore = await program.account.globalState.fetch(statePDA) as any;
             const initialHistoryIndex = stateBefore.rootHistoryIndex;
@@ -197,7 +197,7 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
                 }
             }
             
-            console.log('✅ Root history append-only property preserved');
+            console.log(' Root history append-only property preserved');
         });
 
         it('Should reject replay of old roots', async () => {
@@ -227,11 +227,11 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             
             // Try to use old root in withdrawal (should fail if not in history)
             // This test depends on the specific implementation of root validation
-            console.log('✅ Root change validation (replay protection depends on implementation)');
+            console.log(' Root change validation (replay protection depends on implementation)');
         });
     });
 
-    describe('🚫 Nullifier Uniqueness', () => {
+    describe(' Nullifier Uniqueness', () => {
         it('Should prevent double-spending with same nullifier', async () => {
             // Create a commitment and deposit
             const commitment = Buffer.from('doublespend123456789012345678901234567890123456789012345678901234', 'hex');
@@ -302,7 +302,7 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('already spent') || 
                        expect(error.toString()).to.include('nullifier');
-                console.log('✅ Double-spending prevented');
+                console.log(' Double-spending prevented');
             }
         });
 
@@ -329,11 +329,11 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
                 }
             }
             
-            console.log('✅ Nullifier uniqueness tracking validated');
+            console.log(' Nullifier uniqueness tracking validated');
         });
     });
 
-    describe('💰 Fee Immutability', () => {
+    describe(' Fee Immutability', () => {
         it('Should prevent fee manipulation attempts', async () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             
@@ -344,7 +344,7 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             
             // Try to manipulate fee through unauthorized means
             // This test depends on the specific fee implementation
-            console.log('✅ Fee structure validation (implementation-specific)');
+            console.log(' Fee structure validation (implementation-specific)');
         });
 
         it('Should enforce maximum fee limits', async () => {
@@ -362,11 +362,11 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             
             expect(baseFee).to.be.lessThan(maxAllowedFee);
             
-            console.log('✅ Fee limits enforced');
+            console.log(' Fee limits enforced');
         });
     });
 
-    describe('⚖️ Economic Invariants', () => {
+    describe(' Economic Invariants', () => {
         it('Should maintain totalDeposits >= totalWithdrawn', async () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             
@@ -376,7 +376,7 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             // INVARIANT: Total withdrawn can never exceed total deposited
             expect(totalDeposits.toNumber()).to.be.greaterThanOrEqual(totalWithdrawn.toNumber());
             
-            console.log(`✅ Economic invariant: ${totalDeposits.toString()} deposited >= ${totalWithdrawn.toString()} withdrawn`);
+            console.log(` Economic invariant: ${totalDeposits.toString()} deposited >= ${totalWithdrawn.toString()} withdrawn`);
         });
 
         it('Should maintain vault balance consistency', async () => {
@@ -392,11 +392,11 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             const variance = 10000000; // 0.01 SOL variance
             expect(Math.abs(vaultBalance - expectedBalance.toNumber())).to.be.lessThan(variance);
             
-            console.log(`✅ Vault balance consistent: ${vaultBalance} ≈ ${expectedBalance.toString()}`);
+            console.log(` Vault balance consistent: ${vaultBalance} ≈ ${expectedBalance.toString()}`);
         });
     });
 
-    describe('🔄 State Consistency Under Stress', () => {
+    describe(' State Consistency Under Stress', () => {
         it('Should maintain invariants under rapid state changes', async () => {
             const operations = [];
             const numOperations = 20;
@@ -440,13 +440,13 @@ describe('🛡️ State Invariant Testing - ATTACK STATE MACHINE', () => {
             expect(finalState.nextIndex.toNumber()).to.be.greaterThanOrEqual(initialNextIndex.toNumber());
             expect(finalState.totalDeposits?.toNumber() || 0).to.be.greaterThanOrEqual(finalState.totalWithdrawn?.toNumber() || 0);
             
-            console.log(`✅ State invariants preserved under stress: ${successful}/${numOperations} operations`);
+            console.log(` State invariants preserved under stress: ${successful}/${numOperations} operations`);
         });
     });
 
     after(() => {
-        console.log('\n🛡️ STATE INVARIANT TESTS COMPLETE');
-        console.log('🚨 CRITICAL: If ANY invariant broke, PROTOCOL IS UNSAFE');
-        console.log('✅ All invariants preserved under attack');
+        console.log('\n STATE INVARIANT TESTS COMPLETE');
+        console.log(' CRITICAL: If ANY invariant broke, PROTOCOL IS UNSAFE');
+        console.log(' All invariants preserved under attack');
     });
 });

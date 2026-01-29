@@ -18,7 +18,7 @@ import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 import * as crypto from 'crypto';
 
-describe('🔐 SolVoid Security Gates', () => {
+describe(' SolVoid Security Gates', () => {
     const provider = AnchorProvider.env();
     const connection = provider.connection;
     const wallet = provider.wallet;
@@ -54,14 +54,14 @@ describe('🔐 SolVoid Security Gates', () => {
         await setup();
     });
 
-    describe('🏗️ Circuit Security', () => {
+    describe(' Circuit Security', () => {
         it('Should validate withdraw circuit constraints', async () => {
             // Load circuit artifacts
             const wasmPath = './build/circuits/withdraw.wasm';
             const zkeyPath = './build/circuits/withdraw_final.zkey';
             
             if (!fs.existsSync(wasmPath) || !fs.existsSync(zkeyPath)) {
-                console.warn('⚠️ Circuit artifacts not found. Run build-circuits.sh first.');
+                console.warn(' Circuit artifacts not found. Run build-circuits.sh first.');
                 return;
             }
             
@@ -96,10 +96,10 @@ describe('🔐 SolVoid Security Gates', () => {
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
                 expect(isValid).to.be.true;
                 
-                console.log('✅ Circuit constraints validated');
+                console.log(' Circuit constraints validated');
                 
             } catch (error) {
-                console.error('❌ Circuit validation failed:', error);
+                console.error(' Circuit validation failed:', error);
                 throw error;
             }
         });
@@ -126,16 +126,16 @@ describe('🔐 SolVoid Security Gates', () => {
             const isValid = await snarkjs.groth16.verify(vKey, invalidSignals, fakeProof);
             expect(isValid).to.be.false;
             
-            console.log('✅ Invalid proof rejection validated');
+            console.log(' Invalid proof rejection validated');
         });
     });
 
-    describe('🔑 Verification Key Security', () => {
+    describe(' Verification Key Security', () => {
         it('Should have valid verification key format', () => {
             const vkPath = './build/circuits/withdraw_vk.json';
             
             if (!fs.existsSync(vkPath)) {
-                console.warn('⚠️ Verification key not found');
+                console.warn(' Verification key not found');
                 return;
             }
             
@@ -155,7 +155,7 @@ describe('🔐 SolVoid Security Gates', () => {
             expect(vk.vk_beta_2).to.have.length(3);
             expect(vk.IC).to.be.an('array');
             
-            console.log('✅ Verification key format validated');
+            console.log(' Verification key format validated');
         });
 
         it('Should match ceremony transcript', () => {
@@ -163,7 +163,7 @@ describe('🔐 SolVoid Security Gates', () => {
             const transcriptPath = './ceremony/output/ceremony_transcript.json';
             
             if (!fs.existsSync(vkPath) || !fs.existsSync(transcriptPath)) {
-                console.warn('⚠️ Ceremony artifacts not found');
+                console.warn(' Ceremony artifacts not found');
                 return;
             }
             
@@ -175,11 +175,11 @@ describe('🔐 SolVoid Security Gates', () => {
             expect(transcript.ceremony.transcript_hash).to.exist;
             expect(transcript.ceremony.contributions).to.be.greaterThan(0);
             
-            console.log('✅ Ceremony transcript integrity validated');
+            console.log(' Ceremony transcript integrity validated');
         });
     });
 
-    describe('🌳 Merkle Tree Security', () => {
+    describe(' Merkle Tree Security', () => {
         it('Should maintain atomicity during deposits', async () => {
             // Initialize the program
             const withdrawVk = fs.readFileSync('./build/circuits/withdraw_vk.json');
@@ -226,10 +226,10 @@ describe('🔐 SolVoid Security Gates', () => {
                 expect(finalState.commitments[initialIndex.toNumber()]).to.deep.equal(commitment);
                 expect(finalState.isInitialized).to.be.true;
                 
-                console.log('✅ Merkle tree atomicity validated');
+                console.log(' Merkle tree atomicity validated');
                 
             } catch (error) {
-                console.error('❌ Merkle tree atomicity test failed:', error);
+                console.error(' Merkle tree atomicity test failed:', error);
                 throw error;
             }
         });
@@ -242,11 +242,11 @@ describe('🔐 SolVoid Security Gates', () => {
             
             expect(state.nextIndex.toNumber()).to.be.lessThan(maxLeaves);
             
-            console.log('✅ Tree overflow protection validated');
+            console.log(' Tree overflow protection validated');
         });
     });
 
-    describe('💰 Economic Security', () => {
+    describe(' Economic Security', () => {
         it('Should enforce fee constraints', async () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             
@@ -268,7 +268,7 @@ describe('🔐 SolVoid Security Gates', () => {
             expect(state.economicState.totalFeesCollected).to.be.greaterThanOrEqual(0);
             expect(state.economicState.emergencyFeeMultiplier).to.be.greaterThanOrEqual(1);
             
-            console.log('✅ Economic constraints validated');
+            console.log(' Economic constraints validated');
         });
 
         it('Should prevent withdrawal without deposits', async () => {
@@ -283,11 +283,11 @@ describe('🔐 SolVoid Security Gates', () => {
                 expect(state.totalWithdrawn.toNumber()).to.be.lessThanOrEqual(state.totalDeposits.toNumber());
             }
             
-            console.log('✅ Economic invariants validated');
+            console.log(' Economic invariants validated');
         });
     });
 
-    describe('🛡️ Access Control', () => {
+    describe(' Access Control', () => {
         it('Should prevent unauthorized initialization', async () => {
             const withdrawVk = fs.readFileSync('./build/circuits/withdraw_vk.json');
             const depositVk = fs.readFileSync('./build/circuits/deposit_vk.json');
@@ -313,7 +313,7 @@ describe('🔐 SolVoid Security Gates', () => {
                 expect.fail('Should have failed with unauthorized admin');
             } catch (error: any) {
                 expect(error.toString()).to.include('AlreadyInitialized');
-                console.log('✅ Access control validated');
+                console.log(' Access control validated');
             }
         });
 
@@ -339,12 +339,12 @@ describe('🔐 SolVoid Security Gates', () => {
                 expect.fail('Should have failed with invalid verification keys');
             } catch (error: any) {
                 expect(error.toString()).to.include('AlreadyInitialized');
-                console.log('✅ Verification key validation enforced');
+                console.log(' Verification key validation enforced');
             }
         });
     });
 
-    describe('⚡ Performance & DoS Protection', () => {
+    describe(' Performance & DoS Protection', () => {
         it('Should handle concurrent deposits', async () => {
             const depositPromises = [];
             const numDeposits = 5;
@@ -370,10 +370,10 @@ describe('🔐 SolVoid Security Gates', () => {
                 const successful = results.filter(r => r.status === 'fulfilled').length;
                 
                 expect(successful).to.be.greaterThan(0);
-                console.log(`✅ Concurrent deposits: ${successful}/${numDeposits} successful`);
+                console.log(` Concurrent deposits: ${successful}/${numDeposits} successful`);
                 
             } catch (error: any) {
-                console.error('❌ Concurrent deposit test failed:', error);
+                console.error(' Concurrent deposit test failed:', error);
                 throw error;
             }
         });
@@ -386,11 +386,11 @@ describe('🔐 SolVoid Security Gates', () => {
             expect(state.pauseWithdrawals).to.be.a('boolean');
             expect(state.economicState.isFeeEmergency).to.be.a('boolean');
             
-            console.log('✅ Rate limiting capabilities validated');
+            console.log(' Rate limiting capabilities validated');
         });
     });
 
-    describe('🔍 Integration Security', () => {
+    describe(' Integration Security', () => {
         it('Should maintain end-to-end security', async () => {
             // Verify all components are properly integrated
             const state = await program.account.globalState.fetch(statePDA) as any;
@@ -410,13 +410,13 @@ describe('🔐 SolVoid Security Gates', () => {
             // Check security flags
             expect(state.pauseWithdrawals).to.be.a('boolean');
             
-            console.log('✅ End-to-end security integration validated');
+            console.log(' End-to-end security integration validated');
         });
     });
 
     afterEach(async () => {
         // Cleanup test state if needed
-        console.log('🧹 Security gates test completed');
+        console.log(' Security gates test completed');
     });
 });
 

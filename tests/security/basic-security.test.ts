@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 
-describe('🔬 Basic Security Framework Test', () => {
+describe(' Basic Security Framework Test', () => {
     describe('Circuit Artifacts Validation', () => {
         it('Should have required circuit files', () => {
             const requiredFiles = [
@@ -32,9 +32,9 @@ describe('🔬 Basic Security Framework Test', () => {
                 expect(vk).to.have.property('vk_beta_2');
                 expect(vk).to.have.property('IC');
                 
-                console.log('✅ Verification key format validated');
+                console.log(' Verification key format validated');
             } else {
-                console.log('⚠️ Verification key not found');
+                console.log(' Verification key not found');
             }
         });
     });
@@ -44,7 +44,7 @@ describe('🔬 Basic Security Framework Test', () => {
             const vkPath = 'verification_key.json';
             
             if (!fs.existsSync(vkPath)) {
-                console.log('⚠️ Skipping - verification key not found');
+                console.log(' Skipping - verification key not found');
                 return;
             }
             
@@ -64,9 +64,9 @@ describe('🔬 Basic Security Framework Test', () => {
             try {
                 const isValid = await snarkjs.groth16.verify(vKey, invalidSignals, invalidProof);
                 expect(isValid).to.be.false;
-                console.log('✅ Invalid proof correctly rejected');
+                console.log(' Invalid proof correctly rejected');
             } catch (error) {
-                console.log('✅ Invalid proof caused verification error (expected)');
+                console.log(' Invalid proof caused verification error (expected)');
             }
         });
     });
@@ -85,22 +85,22 @@ describe('🔬 Basic Security Framework Test', () => {
                 expect(fs.existsSync(test), `Missing security test: ${test}`).to.be.true;
             });
             
-            console.log('✅ All security test files present');
+            console.log(' All security test files present');
         });
 
         it('Should have security validation script', () => {
             expect(fs.existsSync('scripts/security-validation.sh')).to.be.true;
-            console.log('✅ Security validation script present');
+            console.log(' Security validation script present');
         });
 
         it('Should have trust assumptions document', () => {
             expect(fs.existsSync('TRUST_ASSUMPTIONS_FREEZE.md')).to.be.true;
-            console.log('✅ Trust assumptions document present');
+            console.log(' Trust assumptions document present');
         });
 
         it('Should have mainnet launch checklist', () => {
             expect(fs.existsSync('MAINNET_LAUNCH_CHECKLIST.md')).to.be.true;
-            console.log('✅ Mainnet launch checklist present');
+            console.log(' Mainnet launch checklist present');
         });
     });
 
@@ -116,7 +116,7 @@ describe('🔬 Basic Security Framework Test', () => {
                 expect(content.length).to.be.greaterThan(1000); // Substantial content
             });
             
-            console.log('✅ Security documentation is comprehensive');
+            console.log(' Security documentation is comprehensive');
         });
     });
 });

@@ -28,7 +28,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.7.0",
-    "solvoid": "file:..",
+    "solvoid": "^1.0.0",
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.0.0",

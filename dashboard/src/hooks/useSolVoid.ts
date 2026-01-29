@@ -10,7 +10,8 @@ import {
     enforce,
     DataOrigin,
     DataTrust,
-    PublicKeySchema
+    PublicKeySchema,
+    ProtocolStats
 } from '../../../sdk/integrity';
 import { formatError } from '../utils/formatError';
 import { useNetworkDetection, Network } from './useNetworkDetection';
@@ -25,11 +26,32 @@ export const useSolVoid = (overrideProgramId?: string) => {
 
     const [passport, setPassport] = useState<PrivacyPassport | null>(null);
     const [leaks, setLeaks] = useState<readonly ScanResult[]>([]);
+    const [stats, setStats] = useState<ProtocolStats | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [rpcError, setRpcError] = useState<boolean>(false);
 
     const programId = overrideProgramId || DEFAULT_PROGRAM_ID;
+
+    const fetchStats = useCallback(async () => {
+        try {
+            const response = await fetch('/api/solvoid', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'getStats',
+                    params: { network }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch protocol stats:', err);
+        }
+    }, [network]);
 
     const scanAddress = useCallback(async (targetAddress: string) => {
         if (!targetAddress) return;
@@ -59,10 +81,10 @@ export const useSolVoid = (overrideProgramId?: string) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'scan',
-                    params: { 
+                    params: {
                         publicKey: publicKey?.toBase58(),
                         targetAddress,
-                        network: network === 'mainnet' ? 'mainnet' : 'devnet'
+                        network
                     }
                 })
             });
@@ -77,14 +99,17 @@ export const useSolVoid = (overrideProgramId?: string) => {
 
             const scanData = await response.json();
             console.log("Scan data received:", scanData);
-            
+
             const { results, passport } = scanData;
             setLeaks(results);
-            
+
             if (passport) {
                 setPassport(passport);
             }
-            
+
+            // Refresh stats after scan
+            fetchStats();
+
         } catch (err: unknown) {
             console.error("Forensic scan failed:", err);
             const errorMsg = err instanceof Error ? err.message : 'Unknown forensic error';
@@ -98,23 +123,29 @@ export const useSolVoid = (overrideProgramId?: string) => {
         } finally {
             setLoading(false);
         }
-    }, [publicKey, network]);
+    }, [publicKey, network, fetchStats]);
 
-    const executeRescue = useCallback(async () => {
+    const executeRescue = useCallback(async (settings?: any) => {
         if (!publicKey) return;
         setLoading(true);
         setError(null);
-        
+
         try {
-            console.log("Executing rescue for:", publicKey.toBase58());
+            console.log("Executing rescue for:", publicKey.toBase58(), "with settings:", settings);
             const response = await fetch('/api/solvoid', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'rescue',
-                    params: { 
+                    params: {
                         targetAddress: publicKey.toBase58(),
-                        network: network === 'mainnet' ? 'mainnet' : 'devnet'
+                        network,
+                        settings: settings || {
+                            rentRecovery: true,
+                            sweepAll: true,
+                            emergencyMode: false,
+                            useCompression: true
+                        }
                     }
                 })
             });
@@ -126,13 +157,15 @@ export const useSolVoid = (overrideProgramId?: string) => {
 
             const rescueData = await response.json();
             console.log("Rescue data received:", rescueData);
-            
+
             // Refresh scan data after rescue to show updated state
             await scanAddress(publicKey.toBase58());
-            
+            return rescueData;
+
         } catch (err: unknown) {
             console.error("Rescue operation failed:", err);
             setError(err instanceof Error ? err.message : 'Rescue failed');
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -143,10 +176,10 @@ export const useSolVoid = (overrideProgramId?: string) => {
             setError("Invalid amount for shielding");
             return null;
         }
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
             console.log("Initiating shield for:", amountLamports, "lamports");
             const response = await fetch('/api/solvoid', {
@@ -154,9 +187,9 @@ export const useSolVoid = (overrideProgramId?: string) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'shield',
-                    params: { 
+                    params: {
                         amountLamports,
-                        network: network === 'mainnet' ? 'mainnet' : 'devnet'
+                        network
                     }
                 })
             });
@@ -168,9 +201,9 @@ export const useSolVoid = (overrideProgramId?: string) => {
 
             const shieldData = await response.json();
             console.log("Shield data received:", shieldData);
-            
+
             return shieldData;
-            
+
         } catch (err: unknown) {
             console.error("Shield operation failed:", err);
             setError(err instanceof Error ? err.message : 'Shield failed');
@@ -179,6 +212,56 @@ export const useSolVoid = (overrideProgramId?: string) => {
             setLoading(false);
         }
     }, [network]);
+
+    const withdraw = useCallback(async (secret: string, nullifier: string, amount: string, recipient: string) => {
+        if (!secret || !nullifier || !recipient) {
+            setError("Missing withdrawal parameters");
+            return null;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            console.log("Initiating withdrawal for recipient:", recipient);
+            const response = await fetch('/api/solvoid', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'withdraw',
+                    params: {
+                        secret,
+                        nullifier,
+                        amount,
+                        recipient,
+                        network
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Withdraw API Error: ${response.status} - ${errorText}`);
+            }
+
+            const withdrawData = await response.json();
+            console.log("Withdraw data received:", withdrawData);
+            return withdrawData;
+
+        } catch (err: unknown) {
+            console.error("Withdraw operation failed:", err);
+            setError(err instanceof Error ? err.message : 'Withdrawal failed');
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [network]);
+
+    useEffect(() => {
+        fetchStats();
+        const interval = setInterval(fetchStats, 60000); // Refresh stats every minute
+        return () => clearInterval(interval);
+    }, [fetchStats]);
 
     useEffect(() => {
         console.log("useSolVoid useEffect:", { connected, publicKey: publicKey?.toBase58() });
@@ -194,11 +277,13 @@ export const useSolVoid = (overrideProgramId?: string) => {
         address: publicKey?.toBase58() || null,
         passport,
         leaks,
+        stats,
         loading,
         error,
         rpcError,
         scanAddress,
         executeRescue,
-        shield
+        shield,
+        withdraw
     };
 };

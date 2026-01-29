@@ -57,6 +57,14 @@ export class OnChainIdlFetcher {
                         try {
                             const jsonString = buffer.toString('utf-8');
                             const idl = JSON.parse(jsonString) as Idl;
+
+                            // FIXED: IDL Shadowing Protection
+                            // Verify that the IDL address matches the program we are fetching for
+                            if (idl.metadata?.address && idl.metadata.address !== programIdString) {
+                                resolve(null);
+                                return;
+                            }
+
                             resolve(idl);
                         } catch {
                             resolve(null);

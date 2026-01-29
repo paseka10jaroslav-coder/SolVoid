@@ -119,7 +119,7 @@ describe('End-to-End Circuit Integration Test', () => {
         expect(stateAccount.depositAmount.toString()).to.equal(DEPOSIT_AMOUNT.toString());
         expect(stateAccount.nextIndex.toNumber()).to.equal(0);
         
-        console.log('✅ Setup phase completed successfully');
+        console.log(' Setup phase completed successfully');
     });
 
     it('Deposit Phase: Generate and submit commitment', async () => {
@@ -159,7 +159,7 @@ describe('End-to-End Circuit Integration Test', () => {
         const storedCommitment = stateAccount.commitments[0];
         expect(Buffer.from(storedCommitment)).to.deep.equal(commitment);
         
-        console.log('✅ Deposit phase completed successfully');
+        console.log(' Deposit phase completed successfully');
         console.log('Commitment stored at index 0');
     });
 
@@ -233,7 +233,7 @@ describe('End-to-End Circuit Integration Test', () => {
         );
         expect(nullifierFound).to.be.true;
         
-        console.log('✅ Withdrawal phase completed successfully');
+        console.log(' Withdrawal phase completed successfully');
         console.log('Funds transferred to recipient');
         console.log('Nullifier recorded in NullifierSet');
     });
@@ -267,7 +267,7 @@ describe('End-to-End Circuit Integration Test', () => {
         } catch (error) {
             // Verify second withdrawal rejected with NullifierAlreadyUsed
             expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
-            console.log('✅ Double withdrawal correctly rejected');
+            console.log(' Double withdrawal correctly rejected');
             console.log('Error:', (error as Error).toString());
         }
     });
@@ -288,7 +288,7 @@ describe('End-to-End Circuit Integration Test', () => {
         expect(stateAccount.totalWithdrawn.toNumber()).to.equal(1);
         expect(nullifierSetAccount.nullifiers.length).to.equal(1);
         
-        console.log('✅ Complete privacy lifecycle verified successfully');
+        console.log(' Complete privacy lifecycle verified successfully');
     });
 
     async function loadCircuitKeys(): Promise<void> {
@@ -297,7 +297,7 @@ describe('End-to-End Circuit Integration Test', () => {
             const vkBuffer = fs.readFileSync('./verification_key.json');
             const verificationKey = JSON.parse(vkBuffer.toString());
             
-            console.log('✅ Circuit keys loaded successfully');
+            console.log(' Circuit keys loaded successfully');
         } catch (error) {
             console.warn('Circuit keys not found, generating test keys...');
             await generateTestKeys();
@@ -321,7 +321,7 @@ describe('End-to-End Circuit Integration Test', () => {
             IC: [['1', '1'], ['1', '1'], ['1', '1']]
         };
         
-        console.log('✅ Test keys generated');
+        console.log(' Test keys generated');
     }
 
     async function generateMerkleProof(_leaf: Buffer, _leafIndex: number): Promise<Buffer[]> {

@@ -41,8 +41,10 @@ export class PrivacyPipeline {
         EventBus.scanStart(addressStr);
         EventBus.info('Fetching transaction history from Solana cluster...');
 
-        const signatures = await this.connection.getSignaturesForAddress(pubkey, { limit: 10 });
-        EventBus.info(`Found ${signatures.length} transactions. Analyzing latest 10...`);
+        // FIXED: Increase scan depth to prevent history smearing (Vulnerability: Semantic Evasion)
+        const scanLimit = 50;
+        const signatures = await this.connection.getSignaturesForAddress(pubkey, { limit: scanLimit });
+        EventBus.info(`Found ${signatures.length} transactions. Analyzing latest ${scanLimit}...`);
 
         const results: ScanResult[] = [];
         let totalLeaksCount = 0;
@@ -147,7 +149,8 @@ export class PrivacyPipeline {
         const criticalLeaks = leaks.filter(l => l.severity === 'CRITICAL' || l.severity === 'HIGH');
 
         if (criticalLeaks.length > 0) {
-            const commitmentData = this.shield.generateCommitment();
+            // FIXED: Await the async commitment generation (Vulnerability: Ghost Commitment)
+            const commitmentData = await this.shield.generateCommitment();
             EventBus.info('Critical leaks detected. Generating shielding recommendation...');
 
             return {

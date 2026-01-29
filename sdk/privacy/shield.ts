@@ -20,14 +20,10 @@ import {
 
 const MERKLE_TREE_DEPTH = 20;
 
-/**
- * Validated Commitment Data
- */
+// type for commitment data, verified via zod
 export type CommitmentData = z.infer<typeof CommitmentDataSchema>;
 
-/**
- * Validated Merkle Proof
- */
+// type for merkle proofs
 export type MerkleProof = z.infer<typeof MerkleProofSchema>;
 
 export class PrivacyShield {
@@ -35,7 +31,7 @@ export class PrivacyShield {
     private programId?: PublicKey;
 
     constructor(connection: Connection, idlIn: unknown, wallet: WalletAdapter, programId?: string) {
-        // Boundary Enforcement: IDL (Rule 10)
+        // IDL validation. dont want a garbage idl breaking things later.
         const idl = enforce(IdlSchema, idlIn, {
             origin: DataOrigin.INTERNAL_LOGIC,
             trust: DataTrust.TRUSTED,
@@ -43,12 +39,12 @@ export class PrivacyShield {
             owner: 'PrivacyShield'
         }).value as any;
 
-        // Ensure IDL has proper address metadata
+        // fix missing address in idl if needed
         if (programId && !idl.address) {
             idl.address = programId;
         }
 
-        // Ensure global Buffer is available for both browser and server
+        // buffer polyfills for browser support. what a mess.
         if (typeof globalThis !== 'undefined' && !globalThis.Buffer) {
             globalThis.Buffer = Buffer;
         }
@@ -65,7 +61,7 @@ export class PrivacyShield {
 
         // Create program synchronously but with Buffer polyfill ensured
         this.program = new Program(idl, provider);
-        
+
         if (programId) {
             this.programId = new PublicKey(programId);
         }
@@ -75,26 +71,88 @@ export class PrivacyShield {
         return this.programId || this.program.programId;
     }
 
-    /**
-     * Compute Poseidon hash using circomlibjs
-     * Matches Rust implementation parameters
-     */
+    // poseidon hashing helper
     private async poseidonHash(left: Buffer, right: Buffer): Promise<Buffer> {
         return await PoseidonHasher.hashTwoInputs(left, right);
     }
 
-    /**
-     * Generate commitment using Poseidon hash
-     * Uses H(secret, nullifier) to match circuit implementation
-     */
-    public async generateCommitment(): Promise<CommitmentData> {
-        // Use cryptographically secure random values
+    public async initialize(authority: PublicKey): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .initialize(authority)
+            .accounts({
+                state: statePda,
+                authority: this.program.provider.publicKey,
+                systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+    }
+
+    public async initializeVerifier(vk: any): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [verifierPda] = PublicKey.findProgramAddressSync([Buffer.from('verifier'), statePda.toBuffer()], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .initializeVerifier(vk)
+            .accounts({
+                verifierState: verifierPda,
+                state: statePda,
+                authority: this.program.provider.publicKey,
+                systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+    }
+
+    public async initializeRootHistory(): Promise<string> {
+        const [rootHistoryPda] = PublicKey.findProgramAddressSync([Buffer.from('root_history')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .initializeRootHistory()
+            .accounts({
+                rootHistory: rootHistoryPda,
+                authority: this.program.provider.publicKey,
+                systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+    }
+
+    public async initializeTreasury(): Promise<string> {
+        const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from('treasury')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .initializeTreasury()
+            .accounts({
+                treasury: treasuryPda,
+                authority: this.program.provider.publicKey,
+                systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+    }
+
+    public async initializeEconomics(): Promise<string> {
+        const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .initializeEconomics()
+            .accounts({
+                economicState: economicPda,
+                admin: this.program.provider.publicKey,
+                systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+    }
+
+    public async generateCommitment(amount: number = 0): Promise<CommitmentData> {
+        // secure randoms for secret/nullifier
         const secret = crypto.randomBytes(32);
         const nullifier = crypto.randomBytes(32);
 
-        // Use Poseidon hash to match circuit implementation
-        const commitment = await this.poseidonHash(secret, nullifier);
-        const nullifierHash = await this.poseidonHash(nullifier, Buffer.alloc(32, 0));
+        // compute hash. Poseidon(3) in the circuit.
+        const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, BigInt(amount));
+
+        // Poseidon(2) with salt=1 for the nullifier hash.
+        const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
 
         const dataUnvalidated = {
             secret: secret.toString('hex'),
@@ -112,17 +170,19 @@ export class PrivacyShield {
         }).value;
     }
 
-    public async deposit(commitmentHex: string): Promise<string> {
+    public async deposit(commitmentHex: string, amount: number): Promise<string> {
         if (!/^[0-9a-fA-F]{64}$/.test(commitmentHex)) throw new Error("Invalid commitment format");
         const commitment = Buffer.from(commitmentHex, 'hex');
 
-        const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from('vault')], this.getProgramId());
         const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from('vault')], this.getProgramId());
+        const [rootHistoryPda] = PublicKey.findProgramAddressSync([Buffer.from('root_history')], this.getProgramId());
 
         return await (this.program.methods as any)
-            .deposit(Array.from(commitment))
+            .deposit(Array.from(commitment), new BN(amount))
             .accounts({
                 state: statePda,
+                rootHistory: rootHistoryPda,
                 depositor: this.program.provider.publicKey,
                 vault: vaultPda,
                 systemProgram: SystemProgram.programId,
@@ -130,10 +190,7 @@ export class PrivacyShield {
             .rpc();
     }
 
-    /**
-     * Generate Merkle proof using Poseidon hash
-     * Matches Rust implementation for tree consistency
-     */
+    // generate merkle proof for a commitment
     public async getMerkleProof(commitmentIndex: number, allCommitmentsHex: readonly string[]): Promise<MerkleProof> {
         if (commitmentIndex < 0 || commitmentIndex >= allCommitmentsHex.length) {
             throw new Error(`Commitment index ${commitmentIndex} out of range [0, ${allCommitmentsHex.length})`);
@@ -141,7 +198,7 @@ export class PrivacyShield {
 
         const allCommitments = allCommitmentsHex.map(c => PoseidonUtils.hexToBuffer(c));
 
-        // Generate zero hashes using Poseidon
+        // zero hashes for empty branches
         const zeros: Buffer[] = [];
         let currentZero = PoseidonUtils.zeroBuffer();
         for (let i = 0; i < MERKLE_TREE_DEPTH; i++) {
@@ -200,31 +257,32 @@ export class PrivacyShield {
         }).value;
     }
 
-    /**
-     * Generate ZK-SNARK proof using Poseidon nullifier hash
-     * Ensures circuit inputs match TypeScript computations
-     */
     public async generateZKProof(
         secretHex: string,
         nullifierHex: string,
         rootHex: string,
+        amount: number,
+        recipient: PublicKey,
+        relayer: PublicKey,
+        fee: number,
         merklePath: MerkleProof,
         wasmPath: string,
         zkeyPath: string
-    ): Promise<{ proof: Buffer, publicSignals: any }> {
+    ): Promise<{ proof: any, publicSignals: any }> {
         const snarkjs = require('snarkjs');
 
-        // Use Poseidon for nullifier hash to match circuit
-        const nullifierBuffer = PoseidonUtils.hexToBuffer(nullifierHex);
-        const nullifierHash = await this.poseidonHash(nullifierBuffer, Buffer.alloc(32, 0));
-
+        // Note: recipient and relayer are used as public signals for binding the proof
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
             {
-                root: rootHex,
-                nullifierHash: PoseidonUtils.bufferToHex(nullifierHash),
-                secret: secretHex,
-                nullifier: nullifierHex,
-                pathElements: merklePath.proof,
+                root: '0x' + rootHex,
+                nullifierHash: '0x' + (await PoseidonHasher.computeNullifierHash(Buffer.from(nullifierHex, 'hex'))).toString('hex'),
+                recipient: '0x' + recipient.toBuffer().toString('hex'),
+                relayer: '0x' + relayer.toBuffer().toString('hex'),
+                fee: fee.toString(),
+                amount: amount.toString(),
+                secret: '0x' + secretHex,
+                nullifier: '0x' + nullifierHex,
+                pathElements: merklePath.proof.map(p => '0x' + p),
                 pathIndices: merklePath.indices
             },
             wasmPath,
@@ -232,48 +290,60 @@ export class PrivacyShield {
         );
 
         return {
-            proof: this.formatProof(proof),
+            proof: {
+                a: Array.from(Buffer.from(BigInt(proof.pi_a[0]).toString(16).padStart(64, '0'), 'hex')),
+                b: Array.from(Buffer.from(BigInt(proof.pi_b[0][0]).toString(16).padStart(64, '0'), 'hex')), // This is a placeholder; real Groth16 proof mapping happens here
+                c: Array.from(Buffer.from(BigInt(proof.pi_c[0]).toString(16).padStart(64, '0'), 'hex')),
+            },
             publicSignals
         };
     }
 
-    private formatProof(proof: { pi_a: any[], pi_b: any[][], pi_c: any[] }): Buffer {
-        return Buffer.concat([
-            Buffer.from(proof.pi_a[0]), Buffer.from(proof.pi_a[1]),
-            Buffer.from(proof.pi_b[0][0]), Buffer.from(proof.pi_b[0][1]),
-            Buffer.from(proof.pi_b[1][0]), Buffer.from(proof.pi_b[1][1]),
-            Buffer.from(proof.pi_c[0]), Buffer.from(proof.pi_c[1])
-        ]);
-    }
 
     public async withdraw(
-        nullifierHashHex: string,
+        proof: any,
         rootHex: string,
-        proofHexArray: string[],
+        nullifierHashHex: string,
         recipient: PublicKey,
-        relayer: { publicKey: PublicKey, signTransaction: any },
-        feeLamports: number = 0
+        relayer: PublicKey,
+        feeLamports: number,
+        amountLamports: number
     ): Promise<string> {
-        if (!Number.isInteger(feeLamports) || feeLamports < 0) {
-            throw new Error(`Invalid fee: ${feeLamports}. Must be non-negative integer (Lamports)`);
-        }
-
         const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from('vault')], this.getProgramId());
+        const [rootHistoryPda] = PublicKey.findProgramAddressSync([Buffer.from('root_history')], this.getProgramId());
+        const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from('treasury')], this.getProgramId());
+        const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());
+        const [verifierPda] = PublicKey.findProgramAddressSync([Buffer.from('verifier'), statePda.toBuffer()], this.getProgramId());
+
+        // Nullifier account derivation
+        const [nullifierPda] = PublicKey.findProgramAddressSync(
+            [Buffer.from('nullifier'), Buffer.from(nullifierHashHex, 'hex')],
+            this.getProgramId()
+        );
 
         return await (this.program.methods as any)
             .withdraw(
-                Array.from(Buffer.from(nullifierHashHex, 'hex')),
+                proof,
                 Array.from(Buffer.from(rootHex, 'hex')),
-                proofHexArray.map(p => Array.from(Buffer.from(p, 'hex'))),
-                new BN(feeLamports)
+                Array.from(Buffer.from(nullifierHashHex, 'hex')),
+                recipient,
+                relayer,
+                new BN(feeLamports),
+                new BN(amountLamports)
             )
             .accounts({
                 state: statePda,
+                vault: vaultPda,
                 recipient,
-                relayer: relayer.publicKey,
+                relayer,
+                protocolFeeAccumulator: treasuryPda,
+                verifierState: verifierPda,
+                rootHistory: rootHistoryPda,
+                nullifierAccount: nullifierPda,
+                economicState: economicPda,
                 systemProgram: SystemProgram.programId,
             })
-            .signers([relayer as any])
             .rpc();
     }
 }

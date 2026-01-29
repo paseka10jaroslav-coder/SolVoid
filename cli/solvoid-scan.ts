@@ -4,14 +4,7 @@
  * SolVoid CLI
  */
 
-import { PublicKey, Keypair } from '@solana/web3.js';
-import { SolVoidClient, WalletAdapter } from '../sdk/client';
-import {
-    enforce,
-    DataOrigin,
-    DataTrust,
-    PublicKeySchema
-} from '../sdk/integrity';
+import { PublicKey, Keypair, Connection } from '@solana/web3.js';
 import * as dotenv from 'dotenv';
 import fetch from 'cross-fetch';
 
@@ -37,8 +30,25 @@ Commands:
   rescue <address>     Atomic shielding of all leaked assets
   shield <amount>      Execute a private deposit (Surgical Shielding)
   withdraw <secret> <nullifier> <recipient>   Unlinkable ZK withdrawal
+  ghost <address>      Calculate Privacy Ghost Score
 `);
         process.exit(0);
+    }
+
+    if (command === 'ghost') {
+        const { Command } = await import('commander');
+        const program = new Command();
+        registerGhostCommand(program);
+        program.parse();
+        return;
+    }
+
+    if (command === 'rescue') {
+        const { Command } = await import('commander');
+        const program = new Command();
+        registerRescueCommand(program);
+        program.parse();
+        return;
     }
 
     const rpcUrl = args.includes('--rpc') ? args[args.indexOf('--rpc') + 1] : (process.env.RPC_URL || 'https://api.mainnet-beta.solana.com');
@@ -132,11 +142,15 @@ Commands:
                 const secret = args[1];
                 const nullifier = args[2];
                 const rawRecipient = args[3];
+                const amountRaw = args[4];
 
-                if (!secret || !nullifier || !rawRecipient) throw new Error("Missing withdrawal params");
+                if (!secret || !nullifier || !rawRecipient || !amountRaw) throw new Error("Missing withdrawal params");
 
                 const enforcedRecipient = enforce(PublicKeySchema, rawRecipient, CLI_METADATA);
-                const recipient = new PublicKey(enforcedRecipient.value);
+                const recipient = enforcedRecipient.value;
+                const amount = BigInt(Math.floor(parseFloat(amountRaw) * 1_000_000_000));
+
+                console.log(`Preparing withdrawal of ${amountRaw} SOL to ${recipient}...`);
 
                 console.log(`Fetching commitments from: ${relayerUrl}...`);
                 const response = await fetch(`${relayerUrl}/commitments`);
@@ -149,7 +163,8 @@ Commands:
                 const result = await client.prepareWithdrawal(
                     secret,
                     nullifier,
-                    recipient,
+                    amount,
+                    new PublicKey(recipient),
                     commitmentsHex,
                     './withdraw.wasm',
                     './withdraw.zkey'

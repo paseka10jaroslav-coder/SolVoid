@@ -20,8 +20,8 @@ import * as crypto from 'crypto';
 import { execSync } from 'child_process';
 
 const CEREMONY_DIR = path.join(__dirname, 'contributions');
-const CIRCUIT_DIR = path.join(__dirname, '..', 'program/circuits');
-const BUILD_DIR = path.join(__dirname, '..', 'build/circuits');
+const CIRCUIT_DIR = path.join(__dirname, '..', 'circuits');
+const BUILD_DIR = path.join(__dirname, '..', 'circuits', 'build');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 
 interface Contribution {
@@ -88,7 +88,7 @@ class RealCeremonyCoordinator {
      * Initialize a new MPC ceremony with security requirements
      */
     async initialize(config: CeremonyConfig) {
-        console.log('\n🔐 Initializing Real MPC Ceremony...\n');
+        console.log('\n Initializing Real MPC Ceremony...\n');
 
         if (this.state && this.state.status !== 'FINALIZED') {
             throw new Error('Active ceremony exists. Must finalize first.');
@@ -101,13 +101,13 @@ class RealCeremonyCoordinator {
         }
 
         // Verify PTAU file exists
-        const ptauFile = path.join(__dirname, '..', config.ptau_file);
+        const ptauFile = path.join(__dirname, config.ptau_file);
         if (!fs.existsSync(ptauFile)) {
             throw new Error(`PTAU file not found: ${ptauFile}`);
         }
 
         // Compile circuit to get R1CS
-        console.log('🔧 Compiling circuit...');
+        console.log(' Compiling circuit...');
         execSync(`circom ${circuitFile} --r1cs --output ${BUILD_DIR}`, { stdio: 'inherit' });
 
         // Calculate circuit hash
@@ -126,17 +126,17 @@ class RealCeremonyCoordinator {
         };
 
         // Generate initial zkey
-        console.log('🔑 Generating initial zkey...');
+        console.log(' Generating initial zkey...');
         const initialZkey = path.join(BUILD_DIR, this.state.current_zkey);
         execSync(`snarkjs groth16 setup ${r1csFile} ${ptauFile} ${initialZkey}`, { stdio: 'inherit' });
 
         this.state.status = 'ACCEPTING_CONTRIBUTIONS';
         this.saveState();
 
-        console.log('✅ Ceremony initialized successfully!');
-        console.log(`📋 Circuit: ${config.circuit_name}`);
-        console.log(`🔍 Circuit Hash: ${circuitHash.slice(0, 16)}...`);
-        console.log(`📊 Required Contributions: ${config.required_contributions}`);
+        console.log(' Ceremony initialized successfully!');
+        console.log(` Circuit: ${config.circuit_name}`);
+        console.log(` Circuit Hash: ${circuitHash.slice(0, 16)}...`);
+        console.log(` Required Contributions: ${config.required_contributions}`);
         console.log('');
     }
 
@@ -152,7 +152,7 @@ class RealCeremonyCoordinator {
             throw new Error('Required contributions already received');
         }
 
-        console.log(`\n🤝 Processing contribution from: ${contributor}\n`);
+        console.log(`\n Processing contribution from: ${contributor}\n`);
 
         const contributionId = this.state.contributions.length + 1;
         const inputZkey = path.join(BUILD_DIR, this.state.current_zkey);
@@ -165,7 +165,7 @@ class RealCeremonyCoordinator {
         // Calculate input zkey hash
         const inputZkeyHash = this.calculateFileHash(inputZkey);
 
-        console.log('🔐 Adding contribution...');
+        console.log(' Adding contribution...');
         console.log(`   Input: ${path.basename(inputZkey)}`);
         console.log(`   Output: ${path.basename(outputZkey)}`);
         console.log(`   Entropy Fingerprint: ${entropyFingerprint}`);
@@ -196,11 +196,11 @@ class RealCeremonyCoordinator {
         this.state.current_zkey = path.basename(outputZkey);
         this.saveState();
 
-        console.log('✅ Contribution recorded successfully!');
-        console.log(`📈 Total contributions: ${this.state.contributions.length}/${this.state.config.required_contributions}`);
+        console.log(' Contribution recorded successfully!');
+        console.log(` Total contributions: ${this.state.contributions.length}/${this.state.config.required_contributions}`);
 
         if (this.state.contributions.length >= this.state.config.required_contributions) {
-            console.log('\n🎉 All contributions received! Ready for verification.');
+            console.log('\n All contributions received! Ready for verification.');
             this.state.status = 'VERIFYING';
             this.saveState();
         }
@@ -216,7 +216,7 @@ class RealCeremonyCoordinator {
             throw new Error('Ceremony not in verification phase');
         }
 
-        console.log('\n🔍 Verifying all contributions...\n');
+        console.log('\n Verifying all contributions...\n');
 
         let allValid = true;
         let previousHash = 'GENESIS';
@@ -233,7 +233,7 @@ class RealCeremonyCoordinator {
             const outputZkeyPath = path.join(BUILD_DIR, `${this.state.config.circuit_name}_${String(contribution.id).padStart(4, '0')}.zkey`);
 
             if (!fs.existsSync(inputZkeyPath) || !fs.existsSync(outputZkeyPath)) {
-                console.log(`   ❌ Missing zkey files`);
+                console.log(`    Missing zkey files`);
                 contribution.verified = false;
                 allValid = false;
                 continue;
@@ -250,10 +250,10 @@ class RealCeremonyCoordinator {
             const isValid = contribution.hash === expectedHash;
             contribution.verified = isValid;
 
-            console.log(`   [${isValid ? '✅' : '❌'}] Hash verification`);
-            console.log(`   📋 Input: ${expectedInputZkey}`);
-            console.log(`   📋 Output: ${path.basename(outputZkeyPath)}`);
-            console.log(`   🔍 Hash: ${contribution.hash.slice(0, 24)}...`);
+            console.log(`   [${isValid ? '' : ''}] Hash verification`);
+            console.log(`    Input: ${expectedInputZkey}`);
+            console.log(`    Output: ${path.basename(outputZkeyPath)}`);
+            console.log(`    Hash: ${contribution.hash.slice(0, 24)}...`);
 
             if (!isValid) allValid = false;
             previousHash = contribution.hash;
@@ -262,11 +262,11 @@ class RealCeremonyCoordinator {
         this.saveState();
 
         if (allValid) {
-            console.log('\n✅ All contributions verified successfully!');
+            console.log('\n All contributions verified successfully!');
             this.state.transcript_hash = this.calculateTranscriptHash();
             this.saveState();
         } else {
-            console.log('\n❌ Some contributions failed verification!');
+            console.log('\n Some contributions failed verification!');
         }
 
         return allValid;
@@ -280,7 +280,7 @@ class RealCeremonyCoordinator {
             throw new Error('Ceremony not ready for finalization');
         }
 
-        console.log('\n🏁 Finalizing MPC Ceremony...\n');
+        console.log('\n Finalizing MPC Ceremony...\n');
 
         // Final verification
         const allValid = await this.verifyContributions();
@@ -332,14 +332,14 @@ class RealCeremonyCoordinator {
         this.state.end_time = new Date().toISOString();
         this.saveState();
 
-        console.log('✅ Ceremony finalized successfully!');
-        console.log('📦 Production assets:');
-        console.log(`   🔑 Final zkey: ${outputZkey}`);
-        console.log(`   📄 Verification key: ${vkPath}`);
-        console.log(`   📜 Transcript: ${transcriptPath}`);
-        console.log(`   🔍 Transcript hash: ${this.state.transcript_hash}`);
+        console.log(' Ceremony finalized successfully!');
+        console.log(' Production assets:');
+        console.log(`    Final zkey: ${outputZkey}`);
+        console.log(`    Verification key: ${vkPath}`);
+        console.log(`    Transcript: ${transcriptPath}`);
+        console.log(`    Transcript hash: ${this.state.transcript_hash}`);
         console.log('');
-        console.log('🚀 Ready for production deployment!');
+        console.log(' Ready for production deployment!');
     }
 
     /**
@@ -414,12 +414,12 @@ class RealCeremonyCoordinator {
      */
     status() {
         if (!this.state) {
-            console.log('\n📊 No ceremony in progress.\n');
+            console.log('\n No ceremony in progress.\n');
             return;
         }
 
-        console.log('\n📊 MPC Ceremony Status\n');
-        console.log('═'.repeat(60));
+        console.log('\n MPC Ceremony Status\n');
+        console.log(''.repeat(60));
         console.log(`Status: ${this.state.status}`);
         console.log(`Circuit: ${this.state.config.circuit_name}`);
         console.log(`Started: ${this.state.start_time}`);
@@ -428,12 +428,12 @@ class RealCeremonyCoordinator {
         if (this.state.transcript_hash) {
             console.log(`Transcript Hash: ${this.state.transcript_hash.slice(0, 24)}...`);
         }
-        console.log('═'.repeat(60));
+        console.log(''.repeat(60));
 
         if (this.state.contributions.length > 0) {
             console.log('\nContributions:');
             for (const c of this.state.contributions) {
-                console.log(`  [${c.id}] ${c.contributor} - ${c.hash.slice(0, 16)}... ${c.verified ? '✅' : '⏳'}`);
+                console.log(`  [${c.id}] ${c.contributor} - ${c.hash.slice(0, 16)}... ${c.verified ? '' : ''}`);
             }
         }
 
@@ -481,7 +481,7 @@ async function main() {
                 break;
         }
     } catch (error) {
-        console.error('❌ Error:', error instanceof Error ? error.message : String(error));
+        console.error(' Error:', error instanceof Error ? error.message : String(error));
         process.exit(1);
     }
 }

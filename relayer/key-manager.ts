@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
 import { Keypair } from '@solana/web3.js';
-import { nacl } from 'tweetnacl';
+import nacl from 'tweetnacl';
 
 export interface KeyPairData {
     publicKey: string;

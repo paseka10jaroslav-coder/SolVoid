@@ -76,7 +76,7 @@ export class RescueBuilder {
         for (const asset of leakedAssets) {
             EventBus.info(`Processing rescue for ${asset.isNative ? 'SOL' : asset.mint.slice(0, 8)}...`);
 
-            const commitmentData = this.shield.generateCommitment();
+            const commitmentData = await this.shield.generateCommitment(asset.amount);
             commitments.push({
                 mint: asset.mint,
                 commitment: commitmentData.commitmentHex

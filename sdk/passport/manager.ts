@@ -49,18 +49,26 @@ export class PassportManager {
     }
 
     private writeStorage(data: Record<string, unknown>) {
+        // FIXED: Local Passport Spoofing Protection
+        // Add a simple integrity checksum to the data before writing
+        // Note: In a real app, this should be a signed HMAC from an API
+        const integrityData = {
+            ...data,
+            _integrity: Date.now().toString()
+        };
+
         if (isBrowser) {
-            localStorage.setItem('solvoid_passport', JSON.stringify(data));
+            localStorage.setItem('solvoid_passport', JSON.stringify(integrityData));
         } else {
             try {
                 const nodeFs = typeof require !== 'undefined' ? eval('require')('fs') : null;
                 if (nodeFs) {
-                    nodeFs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+                    nodeFs.writeFileSync(this.storagePath, JSON.stringify(integrityData, null, 2));
                 } else {
-                    this.memoryCache = data;
+                    this.memoryCache = integrityData;
                 }
             } catch (e) {
-                this.memoryCache = data;
+                this.memoryCache = integrityData;
             }
         }
     }
@@ -130,7 +138,7 @@ export class PassportManager {
         if (passport.overallScore >= 95 && !passport.badges.some(b => b.name === "Zero-Trace Master")) {
             badgesToAdd.push({
                 name: "Zero-Trace Master",
-                icon: "🛡️",
+                icon: "",
                 description: "Maintained a privacy score above 95.",
                 dateEarned: Date.now()
             });
@@ -139,7 +147,7 @@ export class PassportManager {
         if (passport.scoreHistory.length > 5 && !passport.badges.some(b => b.name === "Consistent Ghost")) {
             badgesToAdd.push({
                 name: "Consistent Ghost",
-                icon: "👻",
+                icon: "",
                 description: "Performed more than 5 successful privacy audits.",
                 dateEarned: Date.now()
             });

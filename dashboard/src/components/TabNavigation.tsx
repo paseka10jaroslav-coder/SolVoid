@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, Globe, Shield, Settings, Zap } from 'lucide-react';
 
-export type TabValue = 'dashboard' | 'network' | 'shield' | 'settings';
+export type TabValue = 'dashboard' | 'network' | 'shield' | 'tactical' | 'settings';
 
 interface TabItem {
     value: TabValue;
@@ -12,10 +12,11 @@ interface TabItem {
     icon: React.ReactNode;
 }
 
-const tabs: TabItem[] = [
+export const TABS: TabItem[] = [
     { value: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { value: 'network', label: 'Network', icon: <Globe className="w-4 h-4" /> },
     { value: 'shield', label: 'Shield', icon: <Shield className="w-4 h-4" /> },
+    { value: 'tactical', label: 'Tactical', icon: <Zap className="w-4 h-4" /> },
     { value: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -27,13 +28,13 @@ interface TabNavigationProps {
 export const TabNavigation = ({ activeTab, onChange }: TabNavigationProps) => {
     return (
         <div className="flex items-center gap-1 p-1 bg-white/[0.02] rounded-xl border border-white/5">
-            {tabs.map((tab) => (
+            {TABS.map((tab) => (
                 <button
                     key={tab.value}
                     onClick={() => onChange(tab.value)}
                     className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${activeTab === tab.value
-                            ? 'text-tactical-cyan'
-                            : 'text-white/40 hover:text-white/60'
+                        ? 'text-tactical-cyan'
+                        : 'text-white/40 hover:text-white/60'
                         }`}
                 >
                     {activeTab === tab.value && (
@@ -57,13 +58,13 @@ export const MobileNavigation = ({ activeTab, onChange }: TabNavigationProps) =>
         <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
             <div className="bg-black/90 backdrop-blur-xl border-t border-white/5 safe-bottom">
                 <div className="flex items-center justify-around py-2">
-                    {tabs.map((tab) => (
+                    {TABS.map((tab) => (
                         <button
                             key={tab.value}
                             onClick={() => onChange(tab.value)}
                             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all ${activeTab === tab.value
-                                    ? 'text-tactical-cyan'
-                                    : 'text-white/30'
+                                ? 'text-tactical-cyan'
+                                : 'text-white/30'
                                 }`}
                         >
                             <span className={activeTab === tab.value ? 'scale-110' : ''}>

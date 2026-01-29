@@ -20,11 +20,11 @@ export class PoseidonHasher {
         try {
             // Build Poseidon instance with parameters matching Rust implementation
             this.poseidon = await buildPoseidon();
-            
+
             // Configure for BN254 field with width=3 (2 inputs + 1 output)
             // This matches the Rust Poseidon<Bn254, 3> setup
             await this.poseidon.ready();
-            
+
             this.initialized = true;
         } catch (error) {
             throw new Error(`Failed to initialize Poseidon: ${error}`);
@@ -42,86 +42,109 @@ export class PoseidonHasher {
 
     /**
      * Convert Buffer to BigInt for Poseidon input
-     * Handles little-endian conversion consistently with Rust
+     * FIXED: Handles little-endian conversion consistently with Rust ark-ff
      */
     private static bufferToBigInt(buffer: Buffer): bigint {
-        return BigInt('0x' + buffer.toString('hex'));
+        // Reverse buffer for little-endian conversion
+        const leBuffer = Buffer.from(buffer).reverse();
+        return BigInt('0x' + leBuffer.toString('hex'));
     }
 
     /**
      * Convert BigInt output to Buffer (32 bytes, little-endian)
-     * Ensures compatibility with Rust field element format
+     * FIXED: Ensures compatibility with Rust field element format (little-endian)
      */
     private static bigIntToBuffer(value: bigint): Buffer {
         // Convert to hex string and pad to 64 characters (32 bytes)
         const hex = value.toString(16).padStart(64, '0');
-        
-        // Convert hex to Buffer (little-endian to match Rust)
-        const buffer = Buffer.from(hex, 'hex');
-        
+
+        // Convert hex to Buffer and reverse for little-endian
+        const buffer = Buffer.from(hex, 'hex').reverse();
+
         // Ensure exactly 32 bytes
         if (buffer.length !== 32) {
             throw new Error(`Poseidon output must be 32 bytes, got ${buffer.length}`);
         }
-        
+
         return buffer;
     }
 
     /**
-     * Hash two 32-byte inputs using Poseidon
-     * @param left - First 32-byte input
-     * @param right - Second 32-byte input
-     * @returns 32-byte hash output
+     * Hash with salt for commitment derivation
+     * Matches Rust: hash_commitment_with_salt
+     */
+    static async hashWithSalt(left: Buffer, right: Buffer, saltValue: Buffer): Promise<Buffer> {
+        await this.ensureInitialized();
+
+        if (left.length !== 32 || right.length !== 32 || saltValue.length !== 32) {
+            throw new Error('All inputs must be exactly 32 bytes');
+        }
+
+        const l = this.bufferToBigInt(left);
+        const r = this.bufferToBigInt(right);
+        const s = this.bufferToBigInt(saltValue);
+
+        // Matches Rust: sponge.absorb(&l); sponge.absorb(&r); sponge.absorb(&s);
+        const resultBigInt = this.poseidon([l, r, s]);
+        return this.bigIntToBuffer(resultBigInt);
+    }
+
+    /**
+     * Hash two 32-byte inputs using Poseidon(2)
+     * MATCHES MerkleTreeChecker circuit: Poseidon(2)
      */
     static async hashTwoInputs(left: Buffer, right: Buffer): Promise<Buffer> {
         await this.ensureInitialized();
-
         if (left.length !== 32 || right.length !== 32) {
-            throw new Error('Both inputs must be exactly 32 bytes');
+            throw new Error('All inputs must be exactly 32 bytes');
         }
 
-        try {
-            // Convert Buffers to BigInt for Poseidon
-            const leftBigInt = this.bufferToBigInt(left);
-            const rightBigInt = this.bufferToBigInt(right);
+        const l = this.bufferToBigInt(left);
+        const r = this.bufferToBigInt(right);
 
-            // Compute Poseidon hash: H(left, right)
-            const resultBigInt = this.poseidon([leftBigInt, rightBigInt]);
-
-            // Convert result back to Buffer
-            return this.bigIntToBuffer(resultBigInt);
-        } catch (error) {
-            throw new Error(`Poseidon hash failed: ${error}`);
-        }
+        // Strict Poseidon(2) for Merkle Tree consistency
+        const resultBigInt = this.poseidon([l, r]);
+        return this.bigIntToBuffer(resultBigInt);
     }
 
     /**
-     * Hash single input with zero (for nullifier computation)
-     * @param input - 32-byte input
-     * @returns 32-byte hash output
+     * Hash single input with zero for nullifier hash
+     * MATCHES circuit: Poseidon(nullifier, 1)
      */
     static async hashWithZero(input: Buffer): Promise<Buffer> {
-        const zero = Buffer.alloc(32, 0);
-        return this.hashTwoInputs(input, zero);
+        await this.ensureInitialized();
+        const n = this.bufferToBigInt(input);
+        const resultBigInt = this.poseidon([n, BigInt(1)]);
+        return this.bigIntToBuffer(resultBigInt);
     }
 
     /**
-     * Compute commitment from secret and nullifier
-     * @param secret - 32-byte secret
-     * @param nullifier - 32-byte nullifier
-     * @returns 32-byte commitment
+     * Compute commitment from secret, nullifier, and amount
+     * FIXED: Includes amount to prevent value inflation
+     * Matches circuit: Poseidon(secret, nullifier, amount)
      */
-    static async computeCommitment(secret: Buffer, nullifier: Buffer): Promise<Buffer> {
-        return this.hashTwoInputs(secret, nullifier);
+    static async computeCommitment(secret: Buffer, nullifier: Buffer, amount: bigint): Promise<Buffer> {
+        await this.ensureInitialized();
+        const s = this.bufferToBigInt(secret);
+        const n = this.bufferToBigInt(nullifier);
+        const a = amount;
+
+        const resultBigInt = this.poseidon([s, n, a]);
+        return this.bigIntToBuffer(resultBigInt);
     }
 
     /**
      * Compute nullifier hash from nullifier
-     * @param nullifier - 32-byte nullifier
-     * @returns 32-byte nullifier hash
+     * FIXED: Uses constant domain salt matching the circuit
+     * Matches circuit: Poseidon(nullifier, 1)
      */
     static async computeNullifierHash(nullifier: Buffer): Promise<Buffer> {
-        return this.hashWithZero(nullifier);
+        await this.ensureInitialized();
+        const n = this.bufferToBigInt(nullifier);
+        const salt = BigInt(1);
+
+        const resultBigInt = this.poseidon([n, salt]);
+        return this.bigIntToBuffer(resultBigInt);
     }
 
     /**
@@ -168,10 +191,10 @@ export class PoseidonHasher {
         try {
             // Convert to BigInt and check it's within BN254 field
             const value = this.bufferToBigInt(hash);
-            
+
             // BN254 prime field modulus (p)
             const BN254_PRIME = BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617');
-            
+
             return value < BN254_PRIME;
         } catch {
             return false;
@@ -204,6 +227,52 @@ export type MerkleProof = {
     proof: Buffer[];
     indices: number[];
 };
+
+/**
+ * FIXED: Secure salt generation for cryptographic domain separation
+ * Matches Rust implementation in poseidon.rs
+ */
+export class SecureSalts {
+    static generateSecureSalts(transactionContext: Buffer): {
+        commitmentSalt: Buffer;
+        nullifierSalt: Buffer;
+        pathSalt: Buffer;
+    } {
+        const commitmentSalt = crypto.createHash('sha256')
+            .update(transactionContext)
+            .update(Buffer.from("commitment_domain"))
+            .digest();
+
+        const nullifierSalt = crypto.createHash('sha256')
+            .update(transactionContext)
+            .update(Buffer.from("nullifier_domain"))
+            .digest();
+
+        const pathSalt = crypto.createHash('sha256')
+            .update(transactionContext)
+            .update(Buffer.from("path_domain"))
+            .digest();
+
+        return {
+            commitmentSalt,
+            nullifierSalt,
+            pathSalt
+        };
+    }
+
+    static fromTransactionComponents(
+        root: Buffer,
+        nullifier: Buffer,
+        recipient: Buffer,
+        amount: bigint
+    ) {
+        const amountBuf = Buffer.alloc(8);
+        amountBuf.writeBigUInt64LE(amount);
+
+        const context = Buffer.concat([root, nullifier, recipient, amountBuf]);
+        return this.generateSecureSalts(context);
+    }
+}
 
 /**
  * Utility functions for working with Poseidon hashes
@@ -242,3 +311,5 @@ export class PoseidonUtils {
         return Buffer.alloc(32, 0);
     }
 }
+
+import * as crypto from 'crypto';

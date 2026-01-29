@@ -3,8 +3,8 @@
  * 
  * CRITICAL: Prove off-chain snarkjs verification = on-chain Solana verification
  * 
- * If Rust verifier accepts more than snarkjs → VERIFIER TRANSLATION BUG
- * If Rust verifier rejects what snarkjs accepts → VERIFIER TRANSLATION BUG
+ * If Rust verifier accepts more than snarkjs  VERIFIER TRANSLATION BUG
+ * If Rust verifier rejects what snarkjs accepts  VERIFIER TRANSLATION BUG
  */
 
 import { expect } from 'chai';
@@ -13,7 +13,7 @@ import { PublicKey, SystemProgram, Keypair } from '@solana/web3.js';
 import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 
-describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
+describe(' Verifier Consistency - Off-chain vs On-chain', () => {
     const provider = AnchorProvider.env();
     const connection = provider.connection;
     const wallet = provider.wallet;
@@ -54,12 +54,12 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
         vkPath = './verification_key.json';
         
         if (!fs.existsSync(wasmPath) || !fs.existsSync(zkeyPath) || !fs.existsSync(vkPath)) {
-            console.warn('⚠️ Circuit artifacts missing. Run build-circuits.sh first.');
+            console.warn(' Circuit artifacts missing. Run build-circuits.sh first.');
             this.skip();
         }
     });
 
-    describe('📋 Verification Key Consistency', () => {
+    describe(' Verification Key Consistency', () => {
         it('Should have matching verification keys off-chain and on-chain', async () => {
             // Load off-chain verification key
             const offchainVk = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
@@ -89,15 +89,15 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
                 // This depends on how the verification key is stored on-chain
                 expect(stateAccount.withdrawVerificationKey).to.exist;
                 
-                console.log('✅ Verification key consistency validated');
+                console.log(' Verification key consistency validated');
                 
             } catch (error) {
-                console.log('⚠️ Verification key test skipped (program initialization issue)');
+                console.log(' Verification key test skipped (program initialization issue)');
             }
         });
     });
 
-    describe('🔍 Valid Proof Verification', () => {
+    describe(' Valid Proof Verification', () => {
         let validProof: any;
         let validPublicSignals: string[];
         
@@ -125,13 +125,13 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
                 validProof = result.proof;
                 validPublicSignals = result.publicSignals;
             } catch (error) {
-                console.log('⚠️ Valid proof generation failed (expected with mock inputs)');
+                console.log(' Valid proof generation failed (expected with mock inputs)');
             }
         });
 
         it('Should verify valid proof off-chain', async () => {
             if (!validProof) {
-                console.log('⚠️ Skipping - no valid proof available');
+                console.log(' Skipping - no valid proof available');
                 return;
             }
             
@@ -139,12 +139,12 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
             const isValid = await snarkjs.groth16.verify(vKey, validPublicSignals, validProof);
             
             expect(isValid).to.be.true;
-            console.log('✅ Valid proof verified off-chain');
+            console.log(' Valid proof verified off-chain');
         });
 
         it('Should verify same valid proof on-chain', async () => {
             if (!validProof) {
-                console.log('⚠️ Skipping - no valid proof available');
+                console.log(' Skipping - no valid proof available');
                 return;
             }
             
@@ -178,16 +178,16 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
                     })
                     .rpc();
                 
-                console.log('✅ Valid proof verified on-chain:', tx);
+                console.log(' Valid proof verified on-chain:', tx);
                 
             } catch (error) {
                 // Expected to fail with mock proof, but should pass verification
-                console.log('⚠️ On-chain verification test inconclusive (mock proof)');
+                console.log(' On-chain verification test inconclusive (mock proof)');
             }
         });
     });
 
-    describe('🚫 Invalid Proof Rejection Consistency', () => {
+    describe(' Invalid Proof Rejection Consistency', () => {
         let invalidProof: any;
         let invalidPublicSignals: string[];
         
@@ -215,7 +215,7 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
             const isValid = await snarkjs.groth16.verify(vKey, invalidPublicSignals, invalidProof);
             
             expect(isValid).to.be.false;
-            console.log('✅ Invalid proof rejected off-chain');
+            console.log(' Invalid proof rejected off-chain');
         });
 
         it('Should reject same invalid proof on-chain', async () => {
@@ -254,12 +254,12 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
             } catch (error: any) {
                 // Should fail verification
                 expect(error.toString()).to.include('Invalid proof');
-                console.log('✅ Invalid proof rejected on-chain');
+                console.log(' Invalid proof rejected on-chain');
             }
         });
     });
 
-    describe('🔧 Proof Mutation Tests', () => {
+    describe(' Proof Mutation Tests', () => {
         it('Should reject proof with mutated bytes on-chain', async () => {
             // Create a valid proof structure
             const baseProof = {
@@ -314,7 +314,7 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
                 
             } catch (error: any) {
                 expect(error.toString()).to.include('Invalid proof');
-                console.log('✅ Mutated proof rejected on-chain');
+                console.log(' Mutated proof rejected on-chain');
             }
         });
 
@@ -368,12 +368,12 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
                 
             } catch (error: any) {
                 expect(error.toString()).to.include('Invalid proof');
-                console.log('✅ Wrong public signals rejected on-chain');
+                console.log(' Wrong public signals rejected on-chain');
             }
         });
     });
 
-    describe('📊 Verification Performance', () => {
+    describe(' Verification Performance', () => {
         it('Should handle verification within reasonable time', async () => {
             const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
             
@@ -403,13 +403,13 @@ describe('🔄 Verifier Consistency - Off-chain vs On-chain', () => {
             expect(isValid).to.be.false; // Should reject invalid proof
             expect(verificationTime).to.be.lessThan(5000); // Should verify within 5 seconds
             
-            console.log(`✅ Verification completed in ${verificationTime}ms`);
+            console.log(` Verification completed in ${verificationTime}ms`);
         });
     });
 
     after(() => {
-        console.log('\n🔄 VERIFIER CONSISTENCY TESTS COMPLETE');
-        console.log('🚨 CRITICAL: Off-chain and on-chain verification MUST match exactly');
-        console.log('✅ Consistency validated');
+        console.log('\n VERIFIER CONSISTENCY TESTS COMPLETE');
+        console.log(' CRITICAL: Off-chain and on-chain verification MUST match exactly');
+        console.log(' Consistency validated');
     });
 });

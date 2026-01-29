@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 
-describe('🔬 Circuit Soundness Test', () => {
+describe(' Circuit Soundness Test', () => {
     let vkPath: string;
     
     beforeEach(() => {
@@ -11,7 +11,7 @@ describe('🔬 Circuit Soundness Test', () => {
 
     it('Should reject invalid proof', async () => {
         if (!fs.existsSync(vkPath)) {
-            console.log('⚠️ Skipping - verification key not found');
+            console.log(' Skipping - verification key not found');
             return;
         }
         
@@ -28,9 +28,9 @@ describe('🔬 Circuit Soundness Test', () => {
         try {
             const isValid = await snarkjs.groth16.verify(vKey, invalidSignals, fakeProof);
             expect(isValid).to.be.false;
-            console.log('✅ Invalid proof rejected');
+            console.log(' Invalid proof rejected');
         } catch (error) {
-            console.log('✅ Invalid proof caused error (expected)');
+            console.log(' Invalid proof caused error (expected)');
         }
     });
 
@@ -41,6 +41,6 @@ describe('🔬 Circuit Soundness Test', () => {
         expect(vk).to.have.property('protocol');
         expect(vk).to.have.property('curve');
         expect(vk).to.have.property('vk_alpha_1');
-        console.log('✅ Verification key valid');
+        console.log(' Verification key valid');
     });
 });

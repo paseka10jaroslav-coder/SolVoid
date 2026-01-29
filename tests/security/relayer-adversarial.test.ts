@@ -16,7 +16,7 @@ import { Program, AnchorProvider, web3, BN } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Keypair, Transaction } from '@solana/web3.js';
 import fs from 'fs';
 
-describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
+describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
     const provider = AnchorProvider.env();
     const connection = provider.connection;
     const wallet = provider.wallet;
@@ -67,7 +67,7 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
         }
     });
 
-    describe('🔄 Replay Attack Prevention', () => {
+    describe(' Replay Attack Prevention', () => {
         it('Should prevent transaction replay', async () => {
             // Create a deposit transaction
             const commitment = Buffer.from('replay123456789012345678901234567890123456789012345678901234567890', 'hex');
@@ -98,7 +98,7 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('already processed') || 
                        expect(error.toString()).to.include('duplicate');
-                console.log('✅ Transaction replay prevented');
+                console.log(' Transaction replay prevented');
             }
         });
 
@@ -162,12 +162,12 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('already spent') ||
                        expect(error.toString()).to.include('nullifier');
-                console.log('✅ Withdrawal replay prevented');
+                console.log(' Withdrawal replay prevented');
             }
         });
     });
 
-    describe('💸 Fee Manipulation Attacks', () => {
+    describe(' Fee Manipulation Attacks', () => {
         it('Should prevent fee inflation', async () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             const baseFee = state.feeStructure?.baseFee || new BN(1000000);
@@ -206,7 +206,7 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('fee') ||
                        expect(error.toString()).to.include('excessive');
-                console.log('✅ Excessive fee prevented');
+                console.log(' Excessive fee prevented');
             }
         });
 
@@ -244,12 +244,12 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('fee') ||
                        expect(error.toString()).to.include('negative');
-                console.log('✅ Negative fee prevented');
+                console.log(' Negative fee prevented');
             }
         });
     });
 
-    describe('🔧 Calldata Manipulation Attacks', () => {
+    describe(' Calldata Manipulation Attacks', () => {
         it('Should prevent modified proof bytes', async () => {
             const nullifierHash = Buffer.from('calldata12345678901234567890123456789012345678901234567890', 'hex');
             const [nullifierPDA] = PublicKey.findProgramAddressSync(
@@ -289,7 +289,7 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('proof') ||
                        expect(error.toString()).to.include('invalid');
-                console.log('✅ Corrupted proof rejected');
+                console.log(' Corrupted proof rejected');
             }
         });
 
@@ -328,12 +328,12 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             } catch (error: any) {
                 expect(error.toString()).to.include('invalid') ||
                        expect(error.toString()).to.include('length');
-                console.log('✅ Malformed root rejected');
+                console.log(' Malformed root rejected');
             }
         });
     });
 
-    describe('🎯 Signature Forgery Attempts', () => {
+    describe(' Signature Forgery Attempts', () => {
         it('Should prevent unauthorized relayer operations', async () => {
             const unauthorizedRelayer = Keypair.generate();
             
@@ -366,10 +366,10 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                     .rpc();
                 
                 // This might succeed if relayer authorization is not enforced
-                console.log('⚠️ Relayer authorization may not be enforced');
+                console.log(' Relayer authorization may not be enforced');
             } catch (error: any) {
                 // Expected if relayer authorization is enforced
-                console.log('✅ Unauthorized relayer rejected');
+                console.log(' Unauthorized relayer rejected');
             }
         });
 
@@ -402,14 +402,14 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                 await connection.confirmTransaction(signature);
                 
                 // If this succeeds, it means the signature doesn't protect against tampering
-                console.log('⚠️ Transaction tampering protection needs verification');
+                console.log(' Transaction tampering protection needs verification');
             } catch (error: any) {
-                console.log('✅ Transaction tampering prevented');
+                console.log(' Transaction tampering prevented');
             }
         });
     });
 
-    describe('⚡ DoS and State Corruption Attacks', () => {
+    describe(' DoS and State Corruption Attacks', () => {
         it('Should handle rapid successive submissions', async () => {
             const numRapid = 20;
             const promises = [];
@@ -442,7 +442,7 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             const finalState = await program.account.globalState.fetch(statePDA) as any;
             expect(finalState.nextIndex.toNumber()).to.be.greaterThan(0);
             
-            console.log('✅ State consistency preserved under rapid submissions');
+            console.log(' State consistency preserved under rapid submissions');
         });
 
         it('Should prevent state corruption through partial failures', async () => {
@@ -476,11 +476,11 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             // Other state should remain consistent
             expect(stateAfter.isInitialized).to.equal(stateBefore.isInitialized);
             
-            console.log('✅ No state corruption from partial failures');
+            console.log(' No state corruption from partial failures');
         });
     });
 
-    describe('🔍 Relayer Privacy Protection', () => {
+    describe(' Relayer Privacy Protection', () => {
         it('Should not leak sensitive relayer information', async () => {
             // Test that relayer operations don't expose unnecessary information
             const state = await program.account.globalState.fetch(statePDA) as any;
@@ -489,13 +489,13 @@ describe('😈 Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             expect(state).to.not.have.property('relayerPrivateKey');
             expect(state).to.not.have.property('adminPrivateKey');
             
-            console.log('✅ Relayer privacy protected');
+            console.log(' Relayer privacy protected');
         });
     });
 
     after(() => {
-        console.log('\n😈 RELAYER ADVERSARIAL TESTS COMPLETE');
-        console.log('🚨 CRITICAL: Relayers must be INCAPABLE of stealing, even if malicious');
-        console.log('✅ All relayer attacks prevented');
+        console.log('\n RELAYER ADVERSARIAL TESTS COMPLETE');
+        console.log(' CRITICAL: Relayers must be INCAPABLE of stealing, even if malicious');
+        console.log(' All relayer attacks prevented');
     });
 });

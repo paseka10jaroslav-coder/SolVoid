@@ -1,755 +1,318 @@
 # SolVoid Architecture Documentation
 
-This document provides a comprehensive overview of the SolVoid privacy platform architecture, including system components, data flows, security models, and design patterns.
+## System Architecture Overview
 
-## Table of Contents
+SolVoid implements a multi-layered privacy architecture designed for enterprise-grade deployment on the Solana blockchain. The system integrates zero-knowledge cryptography, secure relayer infrastructure, and compliance mechanisms to provide comprehensive privacy solutions.
 
-- [System Overview](#system-overview)
-- [Architecture Diagrams](#architecture-diagrams)
-- [Core Components](#core-components)
-- [Data Flow](#data-flow)
-- [Security Architecture](#security-architecture)
-- [Performance Design](#performance-design)
-- [Scalability Considerations](#scalability-considerations)
-- [Integration Patterns](#integration-patterns)
-
-## System Overview
-
-SolVoid is a multi-layered privacy platform built on the Solana blockchain, providing zero-knowledge proof (ZKP) based confidential transactions and privacy lifecycle management.
-
-### High-Level Architecture
+## High-Level Architecture
 
 ```mermaid
 graph TB
-    subgraph "User Layer"
-        WebApp[Web Dashboard]
-        CLI[CLI Tool]
-        Mobile[Mobile App]
-        DApps[Third-party DApps]
+    subgraph "Client Layer"
+        A[Web Dashboard] --> B[Mobile Application]
+        B --> C[CLI Tools]
     end
     
-    subgraph "Client SDK Layer"
-        TS_SDK[TypeScript SDK]
-        React_Hooks[React Hooks]
-        Wallet_Adapters[Wallet Adapters]
-    end
-    
-    subgraph "Privacy Engine"
-        Shield[Privacy Shield]
-        Pipeline[Leak Detection]
-        Passport[Privacy Passport]
-        ZK_Prover[ZK Prover]
-    end
-    
-    subgraph "Cryptography Layer"
-        Poseidon[Poseidon Hash]
-        Merkle[Merkle Trees]
-        Groth16[Groth16 SNARKs]
-        Nullifiers[Nullifier System]
-    end
-    
-    subgraph "Blockchain Layer"
-        Solana_Program[Solana Program]
-        State_Accounts[State Accounts]
-        Event_Logs[Event Logs]
+    subgraph "SDK Layer"
+        D[TypeScript SDK] --> E[Privacy Engine]
+        E --> F[Crypto Primitives]
+        F --> G[ZK Circuit Interface]
     end
     
     subgraph "Infrastructure Layer"
-        Relayer[Shadow Relayer]
-        Indexer[Event Indexer]
-        API_Gateway[API Gateway]
-        Monitor[Monitoring]
+        H[Relayer Network] --> I[Key Management]
+        I --> J[Replay Protection]
+        J --> K[Gas Optimization]
     end
     
-    subgraph "External Services"
-        Solana_RPC[Solana RPC]
-        IPFS[IPFS Storage]
-        CDNs[CDN Network]
+    subgraph "Blockchain Layer"
+        L[Solana Programs] --> M[ZK Verifier]
+        M --> N[State Management]
+        N --> O[Compliance Engine]
     end
     
-    WebApp --> TS_SDK
-    CLI --> TS_SDK
-    Mobile --> TS_SDK
-    DApps --> TS_SDK
-    
-    TS_SDK --> Shield
-    TS_SDK --> Pipeline
-    TS_SDK --> Passport
-    
-    Shield --> ZK_Prover
-    Pipeline --> Merkle
-    Passport --> Poseidon
-    
-    ZK_Prover --> Groth16
-    Merkle --> Poseidon
-    Nullifiers --> Poseidon
-    
-    Solana_Program --> State_Accounts
-    Solana_Program --> Event_Logs
-    
-    Groth16 --> Solana_Program
-    Poseidon --> Solana_Program
-    Merkle --> Solana_Program
-    
-    Relayer --> Solana_RPC
-    Indexer --> Solana_RPC
-    API_Gateway --> Solana_RPC
-    
-    Indexer --> IPFS
-    Monitor --> CDNs
+    A --> D
+    B --> D
+    C --> D
+    D --> H
+    H --> L
 ```
 
-## Architecture Diagrams
+## Component Architecture
 
-### Privacy Transaction Flow
+### 1. Zero-Knowledge Circuit Layer
 
+#### Withdraw Circuit
+```
+Input Parameters:
+- secret: 32-byte random value
+- nullifier: 32-byte unique identifier
+- amount: 64-bit transaction value
+- merkle_path: 20-level authentication path
+- merkle_root: 32-byte tree root
+
+Processing:
+1. Poseidon-3 Hash(secret || nullifier || amount) → commitment
+2. Verify merkle_path against merkle_root
+3. Generate nullifier hash for double-spend protection
+4. Create Groth16 proof of knowledge
+
+Output:
+- zk_proof: Groth16 proof
+- public_inputs: [nullifier_hash, merkle_root, amount]
+```
+
+#### Merkle Tree Circuit
+```
+Tree Structure:
+- Depth: 20 levels (configurable)
+- Hash Function: Poseidon-2
+- Zero Hashes: Precomputed for efficiency
+- Leaf Format: Poseidon-3 commitment
+
+Operations:
+- Insert: O(log n) complexity
+- Verify: O(1) with path
+- Update: O(log n) with proof
+```
+
+### 2. Smart Contract Architecture
+
+#### Program Structure
+```rust
+pub struct SolVoidProgram {
+    // State management
+    merkle_roots: HashMap<u32, [u8; 32]>,
+    nullifiers: HashSet<[u8; 32]>,
+    
+    // Economic controls
+    circuit_breakers: HashMap<String, CircuitBreaker>,
+    volume_limits: HashMap<String, VolumeLimit>,
+    
+    // Compliance
+    privacy_scores: HashMap<[u8; 32], u8>,
+    risk_thresholds: RiskThresholds,
+}
+```
+
+#### Key Functions
+- `initialize()`: Program initialization with configuration
+- `shield()`: Deposit transaction with commitment
+- `unshield()`: Withdrawal with ZK proof verification
+- `rescue()`: Atomic wallet recovery protocol
+- `update_privacy_score()`: Compliance scoring mechanism
+
+### 3. Relayer Network Architecture
+
+#### Relayer Components
+```typescript
+class PrivacyRelayer {
+    // Core components
+    keyManager: KeyManager;
+    replayProtection: ReplayProtection;
+    gasOptimizer: GasOptimizer;
+    
+    // Security features
+    rateLimiter: RateLimiter;
+    circuitBreaker: CircuitBreaker;
+    auditLogger: AuditLogger;
+    
+    // Network interfaces
+    solanaConnection: Connection;
+    privateNetwork: PrivateNetwork;
+}
+```
+
+#### Security Architecture
+- **Multi-signature Authorization**: 3-of-5 threshold for critical operations
+- **Hardware Security Modules**: Key protection with HSM integration
+- **Network Isolation**: Private relayer network with VPN access
+- **Audit Trail**: Complete transaction logging with tamper resistance
+
+### 4. SDK Architecture
+
+#### Client SDK Structure
+```typescript
+export class SolVoidSDK {
+    // Core modules
+    privacyEngine: PrivacyEngine;
+    cryptoUtils: CryptoUtils;
+    networkClient: NetworkClient;
+    
+    // Configuration
+    config: SolVoidConfig;
+    logger: Logger;
+    
+    // Methods
+    async shield(amount: number, recipient: string): Promise<string>;
+    async unshield(proof: ZKProof): Promise<string>;
+    async scanTransactions(address: string): Promise<PrivacyReport>;
+    async rescueWallet(signatures: string[]): Promise<string>;
+}
+```
+
+## Data Flow Architecture
+
+### Shield Transaction Flow
 ```mermaid
 sequenceDiagram
-    participant User
+    participant Client
     participant SDK
-    participant ZK_Prover
+    participant ZK_Circuit
     participant Relayer
     participant Solana
-    participant Indexer
     
-    User->>SDK: Initiate Shielding
-    SDK->>SDK: Generate Commitment
-    SDK->>ZK_Prover: Create ZK Proof
-    ZK_Prover-->>SDK: Proof Generated
-    
-    SDK->>Relayer: Submit Transaction
-    Relayer->>Solana: Broadcast Anonymously
-    Solana-->>Relayer: Transaction Confirmed
-    Relayer-->>SDK: Confirmation
-    
-    Solana->>Indexer: Emit Events
-    Indexer-->>SDK: Real-time Updates
-    SDK-->>User: Shielding Complete
+    Client->>SDK: Initiate shield(amount)
+    SDK->>ZK_Circuit: Generate commitment
+    ZK_Circuit->>SDK: Return commitment
+    SDK->>Relayer: Submit shield transaction
+    Relayer->>Solana: Execute shield
+    Solana->>Relayer: Transaction confirmation
+    Relayer->>SDK: Return receipt
+    SDK->>Client: Shield complete
 ```
 
-### Leak Detection Pipeline
-
+### Unshield Transaction Flow
 ```mermaid
-flowchart TD
-    Start([Start Analysis]) --> Input[Input Address]
-    Input --> Fetch[Fetch Transaction History]
-    Fetch --> Analyze[Analyze Patterns]
+sequenceDiagram
+    participant Client
+    participant SDK
+    participant ZK_Circuit
+    participant Relayer
+    participant Solana
     
-    Analyze --> Detect_CEX{CEX Links?}
-    Analyze --> Detect_Timing{Timing Patterns?}
-    Analyze --> Detect_Amount{Amount Patterns?}
-    Analyze --> Detect_Cluster{Address Clustering?}
-    
-    Detect_CEX -->|Yes| Mark_CEX[Mark as HIGH Risk]
-    Detect_CEX -->|No| Continue1[Continue]
-    
-    Detect_Timing -->|Yes| Mark_Timing[Mark as MEDIUM Risk]
-    Detect_Timing -->|No| Continue2[Continue]
-    
-    Detect_Amount -->|Yes| Mark_Amount[Mark as MEDIUM Risk]
-    Detect_Amount -->|No| Continue3[Continue]
-    
-    Detect_Cluster -->|Yes| Mark_Cluster[Mark as LOW Risk]
-    Detect_Cluster -->|No| Continue4[Continue]
-    
-    Mark_CEX --> Score[Calculate Privacy Score]
-    Mark_Timing --> Score
-    Mark_Amount --> Score
-    Mark_Cluster --> Score
-    Continue1 --> Score
-    Continue2 --> Score
-    Continue3 --> Score
-    Continue4 --> Score
-    
-    Score --> Passport[Update Privacy Passport]
-    Passport --> End([Analysis Complete])
+    Client->>SDK: Initiate unshield(proof)
+    SDK->>ZK_Circuit: Verify ZK proof
+    ZK_Circuit->>SDK: Proof validation
+    SDK->>Relayer: Submit unshield transaction
+    Relayer->>Solana: Verify and execute
+    Solana->>Relayer: Transaction confirmation
+    Relayer->>SDK: Return receipt
+    SDK->>Client: Unshield complete
 ```
-
-### ZK Proof Generation Flow
-
-```mermaid
-graph LR
-    subgraph "Input Preparation"
-        Secret[Secret Random]
-        Nullifier[Nullifier Random]
-        Amount[Deposit Amount]
-    end
-    
-    subgraph "Cryptographic Operations"
-        Poseidon1[Poseidon Hash]
-        Commitment[Commitment = H(Secret, Nullifier)]
-        MerkleProof[Merkle Proof Generation]
-        Witness[Circuit Witness]
-    end
-    
-    subgraph "ZK Circuit"
-        Circom[Circom Circuit]
-        WASM[Compiled WASM]
-        ProvingKey[Proving Key .zkey]
-    end
-    
-    subgraph "Proof Generation"
-        Snarkjs[snarkjs Groth16]
-        Proof[ZK Proof]
-        PublicSignals[Public Signals]
-    end
-    
-    Secret --> Poseidon1
-    Nullifier --> Poseidon1
-    Poseidon1 --> Commitment
-    
-    Commitment --> MerkleProof
-    Amount --> Witness
-    MerkleProof --> Witness
-    
-    Witness --> Circom
-    Circom --> WASM
-    WASM --> Snarkjs
-    ProvingKey --> Snarkjs
-    
-    Snarkjs --> Proof
-    Snarkjs --> PublicSignals
-```
-
-### System Component Interaction
-
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        Dashboard[Dashboard UI]
-        CLI_Interface[CLI Interface]
-    end
-    
-    subgraph "Business Logic Layer"
-        Privacy_Engine[Privacy Engine]
-        Analytics[Analytics Engine]
-        Alerting[Alert System]
-    end
-    
-    subgraph "Data Layer"
-        State_DB[(State Database)]
-        Event_Store[(Event Store)]
-        Cache[(Redis Cache)]
-    end
-    
-    subgraph "External Integrations"
-        Solana_Network[Solana Network]
-        IPFS_Storage[IPFS Storage]
-        Monitoring_Service[Monitoring Service]
-    end
-    
-    Dashboard --> Privacy_Engine
-    CLI_Interface --> Privacy_Engine
-    
-    Privacy_Engine --> Analytics
-    Privacy_Engine --> Alerting
-    
-    Analytics --> State_DB
-    Privacy_Engine --> Event_Store
-    Alerting --> Cache
-    
-    Privacy_Engine --> Solana_Network
-    Analytics --> IPFS_Storage
-    Alerting --> Monitoring_Service
-```
-
-## Core Components
-
-### 1. Solana Program (On-Chain)
-
-The core smart contract managing privacy operations on Solana.
-
-**Key Features:**
-- Deposit and withdrawal instruction processing
-- Merkle tree state management
-- ZK proof verification
-- Nullifier tracking
-- Economic parameter management
-
-**Account Structure:**
-```rust
-pub struct GlobalState {
-    pub is_initialized: bool,
-    pub deposit_amount: u64,
-    pub next_index: u64,
-    pub root: [u8; 32],
-    pub filled_subtrees: [[u8; 32]; 20],
-    pub zeros: [[u8; 32]; 20],
-    pub total_deposits: u64,
-    pub total_withdrawn: u64,
-    pub pause_withdrawals: bool,
-    pub economic_state: EconomicState,
-}
-```
-
-### 2. Privacy Shield (Client-Side)
-
-Client-side component for ZK proof generation and commitment management.
-
-**Responsibilities:**
-- Generate cryptographic commitments
-- Create ZK-SNARK proofs
-- Manage wallet interactions
-- Handle transaction signing
-
-**Key Methods:**
-```typescript
-class PrivacyShield {
-  async generateCommitment(): Promise<CommitmentData>
-  async generateZKProof(params: ProofParams): Promise<ZKProof>
-  async getMerkleProof(index: number, commitments: string[]): Promise<MerkleProof>
-  async verifyProof(proof: ZKProof): Promise<boolean>
-}
-```
-
-### 3. Leak Detection Pipeline
-
-Automated system for detecting privacy vulnerabilities in transaction patterns.
-
-**Detection Modules:**
-- **CEX Link Detection**: Identifies transactions to/from centralized exchanges
-- **Temporal Analysis**: Detects regular timing patterns
-- **Amount Pattern Analysis**: Identifies predictable transaction amounts
-- **Address Clustering**: Links related addresses through heuristics
-
-**Pipeline Stages:**
-1. **Data Collection**: Fetch transaction history from Solana
-2. **Pattern Recognition**: Apply ML models for pattern detection
-3. **Risk Assessment**: Calculate privacy risk scores
-4. **Recommendation Generation**: Provide actionable privacy improvements
-
-### 4. Privacy Passport
-
-Reputation and scoring system for user privacy health.
-
-**Scoring Factors:**
-- Historical privacy behavior
-- Current anonymity set size
-- Transaction frequency patterns
-- Leak detection results
-
-**Badge System:**
-- **Privacy Guardian**: Maintained >90 privacy score for 30 days
-- **Shield Master**: Completed 10+ successful shield operations
-- **Anonymity Expert**: Maintained large anonymity set
-- **Privacy Pioneer**: Early adopter with consistent privacy practices
-
-### 5. Shadow Relayer Network
-
-Decentralized transaction relaying service for IP anonymity.
-
-**Features:**
-- IP address obfuscation
-- Transaction batching
-- Randomized timing delays
-- Geographic distribution
-
-**Architecture:**
-```mermaid
-graph LR
-    User[User] --> Entry[Entry Node]
-    Entry --> Mix1[Mix Node 1]
-    Mix1 --> Mix2[Mix Node 2]
-    Mix2 --> Mix3[Mix Node 3]
-    Mix3 --> Exit[Exit Node]
-    Exit --> Solana[Solana Network]
-```
-
-## Data Flow
-
-### Deposit Flow
-
-1. **Commitment Generation**
-   - User generates random secret and nullifier
-   - Poseidon hash creates commitment
-   - Client stores secret securely
-
-2. **Transaction Creation**
-   - Create deposit transaction with commitment
-   - Sign with user wallet
-   - Submit via shadow relayer
-
-3. **On-Chain Processing**
-   - Program validates commitment format
-   - Updates Merkle tree with new commitment
-   - Emits deposit event
-
-4. **State Updates**
-   - Indexer processes deposit event
-   - Updates global commitment list
-   - Notifies connected clients
-
-### Withdrawal Flow
-
-1. **Proof Preparation**
-   - User retrieves current commitment list
-   - Generates Merkle proof for their commitment
-   - Creates ZK-SNARK proof of knowledge
-
-2. **Transaction Submission**
-   - Create withdrawal transaction with proof
-   - Include nullifier hash to prevent double-spending
-   - Submit via relayer network
-
-3. **Verification**
-   - Program verifies ZK proof validity
-   - Checks nullifier hasn't been used
-   - Validates Merkle root
-
-4. **Execution**
-   - Transfer funds to recipient
-   - Update nullifier set
-   - Emit withdrawal event
-
-### Privacy Analysis Flow
-
-1. **Data Collection**
-   - Fetch complete transaction history
-   - Retrieve token transfers and SOL transfers
-   - Collect metadata and associated addresses
-
-2. **Pattern Analysis**
-   - Apply detection algorithms
-   - Calculate risk scores
-   - Identify privacy vulnerabilities
-
-3. **Scoring**
-   - Compute overall privacy score
-   - Generate recommendations
-   - Update privacy passport
-
-4. **Reporting**
-   - Return detailed analysis results
-   - Store historical data
-   - Trigger alerts for critical issues
 
 ## Security Architecture
 
-### Threat Model
+### Cryptographic Security
+- **Zero-Knowledge Proofs**: Groth16 with BN254 curve
+- **Hash Functions**: Poseidon for ZK-friendly operations
+- **Randomness**: Cryptographically secure RNG for secrets
+- **Key Management**: Hierarchical deterministic wallet structure
 
-```mermaid
-graph TB
-    subgraph "External Threats"
-        Network_Surveillance[Network Surveillance]
-        Transaction_Analysis[Transaction Analysis]
-        Timing_Attacks[Timing Attacks]
-        Quantum_Computing[Quantum Computing]
-    end
-    
-    subgraph "Internal Threats"
-        Key_Compromise[Key Compromise]
-        Insider_Threats[Insider Threats]
-        Software_Bugs[Software Bugs]
-        Configuration_Errors[Configuration Errors]
-    end
-    
-    subgraph "Mitigations"
-        ZK_Proofs[ZK Proofs]
-        Relayer_Network[Relayer Network]
-        Multi_Sig[Multi-sig Controls]
-        Audited_Code[Audited Code]
-        Rate_Limiting[Rate Limiting]
-    end
-    
-    Network_Surveillance --> ZK_Proofs
-    Transaction_Analysis --> ZK_Proofs
-    Timing_Attacks --> Relayer_Network
-    Quantum_Computing --> ZK_Proofs
-    
-    Key_Compromise --> Multi_Sig
-    Insider_Threats --> Multi_Sig
-    Software_Bugs --> Audited_Code
-    Configuration_Errors --> Rate_Limiting
-```
+### Network Security
+- **TLS Encryption**: All network communications encrypted
+- **Authentication**: Mutual TLS for relayer communications
+- **Rate Limiting**: DoS protection at multiple layers
+- **Circuit Breakers**: Automatic failure isolation
 
-### Privacy Guarantees
+### Application Security
+- **Input Validation**: Comprehensive parameter validation
+- **Access Control**: Role-based permissions
+- **Audit Logging**: Immutable transaction records
+- **Error Handling**: Secure error reporting without information leakage
 
-**Confidentiality:**
-- Transaction amounts hidden using ZK proofs
-- Recipient addresses concealed in anonymity sets
-- No link between deposits and withdrawals
-
-**Anonymity:**
-- Large anonymity sets (1M+ commitments)
-- Randomized withdrawal timing
-- IP obfuscation through relayer network
-
-**Unlinkability:**
-- ZK proofs prevent transaction linking
-- Nullifiers prevent double-spending without linkability
-- Separate commitments for each deposit
-
-**Plausible Deniability:**
-- Users cannot be proven to control specific commitments
-- Multiple users could plausibly own any commitment
-- No cryptographic proof of ownership required
-
-### Security Controls
-
-**Cryptographic Security:**
-- Poseidon hash function optimized for ZK circuits
-- Groth16 SNARKs for efficient proof generation
-- 256-bit security level throughout
-
-**Operational Security:**
-- Multi-signature controls for critical operations
-- Time-locked emergency procedures
-- Regular security audits and penetration testing
-
-**Network Security:**
-- Rate limiting to prevent DoS attacks
-- Input validation and sanitization
-- Secure communication channels (TLS 1.3)
-
-## Performance Design
-
-### Performance Targets
-
-| Metric | Target | Current |
-|--------|--------|---------|
-| ZK Proof Generation | <5 seconds | 2.3 seconds |
-| Deposit Confirmation | <30 seconds | 15 seconds |
-| Withdrawal Processing | <60 seconds | 35 seconds |
-| Privacy Scan | <10 seconds | 3.2 seconds |
-| API Response Time | <500ms | 150ms |
+## Performance Architecture
 
 ### Optimization Strategies
+- **Precomputed Values**: Zero hashes and common computations
+- **Batch Processing**: Multiple transactions in single proof
+- **Parallel Execution**: Concurrent circuit generation
+- **Caching**: Frequently accessed data in memory
 
-**ZK Proof Optimization:**
-- Pre-computed verification keys
-- Efficient circuit design
-- Parallel proof generation
-- WASM acceleration
+### Resource Management
+- **Memory Efficiency**: Optimized data structures
+- **Compute Budget**: Solana program optimization
+- **Network Bandwidth**: Minimal data transmission
+- **Storage Optimization**: Efficient state management
 
-**Database Optimization:**
-- Indexed Merkle tree storage
-- Cached commitment lists
-- Event streaming architecture
-- Connection pooling
+## Compliance Architecture
 
-**Network Optimization:**
-- CDN for static assets
-- Geographic relayer distribution
-- Connection multiplexing
-- Compression protocols
-
-### Caching Strategy
-
-```mermaid
-graph TB
-    subgraph "Cache Layers"
-        L1[Browser Cache]
-        L2[CDN Cache]
-        L3[Application Cache]
-        L4[Database Cache]
-    end
+### Privacy Scoring System
+```typescript
+interface PrivacyScore {
+    transactionPattern: number;    // 0-100
+    timingAnalysis: number;        // 0-100
+    amountDistribution: number;    // 0-100
+    networkBehavior: number;       // 0-100
     
-    subgraph "Cache Types"
-        Static[Static Assets]
-        API[API Responses]
-        State[State Data]
-        Events[Event Data]
-    end
+    overallScore: number;           // Weighted average
+    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+```
+
+### Regulatory Features
+- **Transaction Monitoring**: Real-time pattern analysis
+- **Risk Assessment**: Automated scoring algorithms
+- **Reporting**: Regulatory compliance reporting
+- **Audit Trails**: Complete transaction history
+
+## Deployment Architecture
+
+### Multi-Environment Support
+- **Development**: Local testing environment
+- **Staging**: Pre-production testing
+- **Production**: Mainnet deployment with full security
+
+### Infrastructure Components
+- **Load Balancers**: Traffic distribution
+- **Database Systems**: Persistent state storage
+- **Monitoring Systems**: Real-time health monitoring
+- **Backup Systems**: Disaster recovery capabilities
+
+## Integration Architecture
+
+### API Design
+```typescript
+// Core API endpoints
+interface SolVoidAPI {
+    // Privacy operations
+    shield(request: ShieldRequest): Promise<ShieldResponse>;
+    unshield(request: UnshieldRequest): Promise<UnshieldResponse>;
     
-    L1 --> Static
-    L2 --> Static
-    L3 --> API
-    L4 --> State
-    L4 --> Events
-```
-
-## Scalability Considerations
-
-### Horizontal Scaling
-
-**API Layer:**
-- Load balancer distribution
-- Auto-scaling based on demand
-- Geographic distribution
-- Health monitoring
-
-**Relayer Network:**
-- Decentralized node operation
-- Incentive mechanisms
-- Reputation system
-- Automatic failover
-
-**Indexing Layer:**
-- Sharded event processing
-- Parallel Merkle tree updates
-- Distributed state management
-- Real-time synchronization
-
-### Vertical Scaling
-
-**Compute Optimization:**
-- GPU acceleration for ZK proofs
-- Optimized circuit compilation
-- Memory-efficient algorithms
-- CPU affinity tuning
-
-**Storage Optimization:**
-- Compressed state storage
-- Efficient Merkle tree representation
-- Archival strategies
-- Data lifecycle management
-
-### Capacity Planning
-
-**Current Capacity:**
-- 1M+ commitments in anonymity set
-- 1000+ transactions per second
-- 10K+ concurrent users
-- 99.9% uptime SLA
-
-**Future Scaling:**
-- 10M+ commitments target
-- 10K+ transactions per second
-- 100K+ concurrent users
-- 99.99% uptime SLA
-
-## Integration Patterns
-
-### SDK Integration
-
-```typescript
-// Standard integration pattern
-import { SolVoidClient } from 'solvoid';
-
-const client = new SolVoidClient(config, wallet);
-
-// Event-driven integration
-client.on('depositComplete', (data) => {
-  // Handle deposit completion
-});
-
-client.on('privacyAlert', (alert) => {
-  // Handle privacy alerts
-});
-```
-
-### Webhook Integration
-
-```typescript
-// Webhook configuration
-const webhookConfig = {
-  url: 'https://your-app.com/webhooks/solvoid',
-  events: ['deposit', 'withdrawal', 'privacy_alert'],
-  secret: 'your-webhook-secret'
-};
-
-// Webhook payload format
-{
-  "event": "privacy_alert",
-  "data": {
-    "address": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
-    "severity": "HIGH",
-    "type": "cex_link_detected",
-    "timestamp": "2024-01-20T15:30:00Z"
-  },
-  "signature": "webhook-signature"
+    // Compliance operations
+    getPrivacyScore(address: string): Promise<PrivacyScore>;
+    scanTransactions(request: ScanRequest): Promise<ScanResponse>;
+    
+    // Rescue operations
+    initiateRescue(request: RescueRequest): Promise<RescueResponse>;
+    completeRescue(request: CompleteRequest): Promise<CompleteResponse>;
 }
 ```
 
-### REST API Integration
-
-```typescript
-// API client integration
-const apiClient = new SolVoidAPI({
-  baseURL: 'https://api.solvoid.io',
-  apiKey: 'your-api-key'
-});
-
-// Privacy analysis
-const analysis = await apiClient.analyzeAddress(address);
-
-// Transaction monitoring
-const monitor = apiClient.monitorTransactions({
-  address,
-  onTransaction: (tx) => console.log(tx),
-  onPrivacyAlert: (alert) => handleAlert(alert)
-});
-```
-
-### GraphQL Integration
-
-```graphql
-query PrivacyPassport($address: String!) {
-  passport(address: $address) {
-    overallScore
-    badges {
-      id
-      name
-      icon
-      earnedAt
-    }
-    metrics {
-      depositCount
-      withdrawalCount
-      totalShielded
-    }
-  }
-}
-
-subscription PrivacyEvents($address: String!) {
-  privacyEvents(address: $address) {
-    type
-    data
-    timestamp
-  }
-}
-```
+### Third-Party Integrations
+- **Wallet Providers**: MetaMask, Phantom, Solflare
+- **Exchanges**: Major cryptocurrency exchange APIs
+- **Analytics**: Chain analysis and compliance tools
+- **Oracles**: External data feeds for pricing
 
 ## Monitoring and Observability
 
 ### Metrics Collection
+- **Transaction Metrics**: Volume, success rates, timing
+- **Performance Metrics**: Latency, throughput, resource usage
+- **Security Metrics**: Attack attempts, anomaly detection
+- **Business Metrics**: User adoption, retention rates
 
-**System Metrics:**
-- Transaction throughput
-- Proof generation time
-- API response times
-- Error rates
+### Alerting System
+- **Real-time Alerts**: Critical system notifications
+- **Threshold Monitoring**: Performance and security thresholds
+- **Escalation Procedures**: Multi-level alert escalation
+- **Incident Response**: Automated and manual response procedures
 
-**Privacy Metrics:**
-- Anonymity set size
-- Privacy score distribution
-- Leak detection rates
-- User engagement
+## Future Architecture Considerations
 
-**Business Metrics:**
-- Active users
-- Total value shielded
-- Geographic distribution
-- Platform adoption
+### Scalability Enhancements
+- **Layer 2 Solutions**: Off-chain computation with on-chain verification
+- **Sharding**: Horizontal scaling for increased throughput
+- **Cross-Chain**: Multi-blockchain privacy solutions
+- **Quantum Resistance**: Post-quantum cryptographic upgrades
 
-### Alerting
-
-**Critical Alerts:**
-- System downtime
-- Security incidents
-- Proof generation failures
-- Relayer network issues
-
-**Warning Alerts:**
-- Performance degradation
-- High error rates
-- Unusual activity patterns
-- Resource utilization
-
-### Dashboards
-
-**Technical Dashboard:**
-- System health monitoring
-- Performance metrics
-- Error tracking
-- Resource utilization
-
-**Business Dashboard:**
-- User analytics
-- Privacy metrics
-- Financial metrics
-- Growth indicators
+### Feature Extensions
+- **Multi-Asset Support**: Additional token types and NFTs
+- **Advanced Privacy**: Recursive proofs and composability
+- **DeFi Integration**: Privacy-preserving decentralized finance
+- **Enterprise Features**: Advanced compliance and reporting tools
 
 ---
 
-This architecture documentation provides a comprehensive view of the SolVoid privacy platform's design and implementation. For specific technical details, please refer to the individual component documentation and API references.
+*Architecture Version: 1.1.0 | Last Updated: January 2026*

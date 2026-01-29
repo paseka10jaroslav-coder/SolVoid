@@ -3,7 +3,7 @@ import { useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey, Connection } from '@solana/web3.js';
 import { DEFAULT_RPC } from '../config/rpc';
 
-export type Network = 'mainnet' | 'devnet' | 'testnet' | 'unknown';
+export type Network = 'mainnet' | 'devnet' | 'testnet' | 'ephemeral' | 'unknown';
 
 export const useNetworkDetection = () => {
     const { connection } = useConnection();
@@ -13,13 +13,13 @@ export const useNetworkDetection = () => {
     useEffect(() => {
         const detectNetwork = async () => {
             if (!connection) return;
-            
+
             setIsDetecting(true);
-            
+
             try {
                 const rpcEndpoint = connection.rpcEndpoint;
                 console.log("Detecting network for RPC:", rpcEndpoint);
-                
+
                 // Method 1: Check RPC endpoint URL
                 let detectedNetwork: Network = 'unknown';
                 if (rpcEndpoint.includes('mainnet') || rpcEndpoint.includes('api.solana.com')) {
@@ -28,6 +28,8 @@ export const useNetworkDetection = () => {
                     detectedNetwork = 'devnet';
                 } else if (rpcEndpoint.includes('testnet') || rpcEndpoint.includes('testnet.solana.com')) {
                     detectedNetwork = 'testnet';
+                } else if (rpcEndpoint.includes('zk-edge') || rpcEndpoint.includes('surfnet.dev')) {
+                    detectedNetwork = 'ephemeral';
                 } else {
                     // Method 2: Test against known endpoints
                     if (rpcEndpoint === DEFAULT_RPC.MAINNET) {
@@ -36,9 +38,11 @@ export const useNetworkDetection = () => {
                         detectedNetwork = 'devnet';
                     } else if (rpcEndpoint === DEFAULT_RPC.TESTNET) {
                         detectedNetwork = 'testnet';
+                    } else if (rpcEndpoint === (DEFAULT_RPC as any).EPHEMERAL) {
+                        detectedNetwork = 'ephemeral';
                     }
                 }
-                
+
                 // Method 3: Verify by getting a recent blockhash (network-specific test)
                 try {
                     const testConnection = new Connection(rpcEndpoint, 'confirmed');
@@ -51,7 +55,7 @@ export const useNetworkDetection = () => {
                         detectedNetwork = 'mainnet';
                     }
                 }
-                
+
                 setNetwork(detectedNetwork);
             } catch (error) {
                 console.error('Network detection failed:', error);

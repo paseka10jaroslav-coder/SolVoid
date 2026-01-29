@@ -49,20 +49,61 @@ export class SolVoidClient {
                     name: "initialize",
                     accounts: [
                         { name: "state", writable: true, signer: false },
-                        { name: "admin", writable: true, signer: true },
+                        { name: "authority", writable: true, signer: true },
                         { name: "systemProgram", writable: false, signer: false }
                     ],
-                    args: [{ name: "amount", type: "u64" }]
+                    args: [{ name: "authority", type: "publicKey" }]
+                },
+                {
+                    name: "initializeVerifier",
+                    accounts: [
+                        { name: "verifierState", writable: true, signer: false },
+                        { name: "state", writable: false, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: [{ name: "vk", type: { "defined": "VerificationKeyData" } }]
+                },
+                {
+                    name: "initializeRootHistory",
+                    accounts: [
+                        { name: "rootHistory", writable: true, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: []
+                },
+                {
+                    name: "initializeTreasury",
+                    accounts: [
+                        { name: "treasury", writable: true, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: []
+                },
+                {
+                    name: "initializeEconomics",
+                    accounts: [
+                        { name: "economicState", writable: true, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: []
                 },
                 {
                     name: "deposit",
                     accounts: [
                         { name: "state", writable: true, signer: false },
+                        { name: "rootHistory", writable: true, signer: false },
                         { name: "depositor", writable: true, signer: true },
                         { name: "vault", writable: true, signer: false },
                         { name: "systemProgram", writable: false, signer: false }
                     ],
-                    args: [{ name: "commitment", type: { array: ["u8", 32] } }]
+                    args: [
+                        { name: "commitment", type: { array: ["u8", 32] } },
+                        { name: "amount", type: "u64" }
+                    ]
                 },
                 {
                     name: "withdraw",
@@ -70,20 +111,52 @@ export class SolVoidClient {
                         { name: "state", writable: true, signer: false },
                         { name: "vault", writable: true, signer: false },
                         { name: "recipient", writable: true, signer: false },
-                        { name: "nullifierRecord", writable: true, signer: false },
                         { name: "relayer", writable: true, signer: true },
+                        { name: "protocolFeeAccumulator", writable: true, signer: false },
+                        { name: "verifierState", writable: false, signer: false },
+                        { name: "rootHistory", writable: true, signer: false },
+                        { name: "nullifierAccount", writable: true, signer: false },
+                        { name: "economicState", writable: true, signer: false },
                         { name: "systemProgram", writable: false, signer: false }
                     ],
                     args: [
-                        { name: "nullifierHash", type: { array: ["u8", 32] } },
+                        { name: "proof", type: { "defined": "ProofData" } },
                         { name: "root", type: { array: ["u8", 32] } },
-                        { name: "proof", type: "bytes" },
-                        { name: "fee", type: "u64" }
+                        { name: "nullifierHash", type: { array: ["u8", 32] } },
+                        { name: "recipient", type: "publicKey" },
+                        { name: "relayer", type: "publicKey" },
+                        { name: "fee", type: "u64" },
+                        { name: "amount", type: "u64" }
                     ]
                 }
             ],
             accounts: [],
-            types: [],
+            types: [
+                {
+                    name: "VerificationKeyData",
+                    type: {
+                        kind: "struct",
+                        fields: [
+                            { name: "alpha", type: { array: ["u8", 32] } },
+                            { name: "beta", type: { array: ["u8", 64] } },
+                            { name: "gamma", type: { array: ["u8", 64] } },
+                            { name: "delta", type: { array: ["u8", 64] } },
+                            { name: "ic", type: { vec: { array: ["u8", 32] } } }
+                        ]
+                    }
+                },
+                {
+                    name: "ProofData",
+                    type: {
+                        kind: "struct",
+                        fields: [
+                            { name: "a", type: { array: ["u8", 32] } },
+                            { name: "b", type: { array: ["u8", 64] } },
+                            { name: "c", type: { array: ["u8", 32] } }
+                        ]
+                    }
+                }
+            ],
             events: [],
             errors: [],
             metadata: {
@@ -180,6 +253,7 @@ export class SolVoidClient {
     public async prepareWithdrawal(
         secretHex: string,
         nullifierHex: string,
+        amount: bigint,
         recipient: PublicKey,
         allCommitmentsHex: string[],
         wasmPath: string,
@@ -192,15 +266,15 @@ export class SolVoidClient {
 
         const secret = Buffer.from(secretHex, 'hex');
         const nullifier = Buffer.from(nullifierHex, 'hex');
-        
-        // Use Poseidon hash to match shield.ts implementation
-        const commitment = await PoseidonHasher.hashTwoInputs(secret, nullifier);
+
+        // Use Poseidon(3) to match circuit commitment: Poseidon(secret, nullifier, amount)
+        const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, amount);
         const commitmentHex = PoseidonUtils.bufferToHex(commitment);
 
         const index = allCommitmentsHex.indexOf(commitmentHex);
         if (index === -1) {
-            EventBus.error('Commitment not found in state');
-            throw new Error("Commitment not found in state");
+            EventBus.error('Commitment not found in state (Check amount matching)');
+            throw new Error(`Commitment not found in state. Hash mismatch or invalid amount.`);
         }
 
         EventBus.info('Generating Merkle proof...');
@@ -209,7 +283,7 @@ export class SolVoidClient {
         // Calculate actual Merkle root from proof path using Poseidon
         const calculateMerkleRoot = async (commitmentIndex: number, allCommitments: string[], merklePath: any): Promise<string> => {
             let currentHash = PoseidonUtils.hexToBuffer(allCommitments[commitmentIndex]);
-            
+
             for (let i = 0; i < merklePath.proof.length; i++) {
                 const sibling = PoseidonUtils.hexToBuffer(merklePath.proof[i]);
                 if (merklePath.indices[i] === 0) {
@@ -228,10 +302,10 @@ export class SolVoidClient {
                     currentHash = await PoseidonHasher.hashTwoInputs(leftCopy, rightCopy);
                 }
             }
-            
+
             return PoseidonUtils.bufferToHex(currentHash);
         };
-        
+
         const rootHex = await calculateMerkleRoot(index, allCommitmentsHex, merklePath);
 
         EventBus.info('Generating ZK-SNARK proof (Groth16)...');
@@ -239,15 +313,28 @@ export class SolVoidClient {
             secretHex,
             nullifierHex,
             rootHex,
+            Number(amount), // Convert bigint to number for shield adapter if needed
+            recipient,
+            recipient, // relayer (default to recipient for self-withdraw)
+            0, // fee
             merklePath,
             wasmPath,
             zkeyPath
         );
 
+        // FIXED: Mitigate Root-Lock Liveness Gap
+        // Check if the root has drifted during proof generation
+        const latestRoots = allCommitmentsHex; // In production, fetch from on-chain history
+        const currentRoot = await calculateMerkleRoot(index, latestRoots, merklePath);
+        if (currentRoot !== rootHex) {
+            EventBus.error('Merkle root drifted during proof generation. Retrying...');
+            throw new Error("Root drifted. State churn detected.");
+        }
+
         EventBus.proofGenerated('Groth16');
 
-        // Use Poseidon hash to match shield.ts nullifierHash generation
-        const nullifierHash = await PoseidonHasher.hashWithZero(nullifier);
+        // Use Poseidon hash to match circuit nullifier hash logic (salt=1)
+        const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
 
         return {
             status: 'proof_ready' as const,

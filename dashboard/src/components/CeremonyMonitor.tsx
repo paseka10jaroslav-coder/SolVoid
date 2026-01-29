@@ -32,7 +32,13 @@ interface CeremonyState {
     readonly userContributed: boolean;
 }
 
-export const CeremonyMonitor = () => {
+import { ProtocolStats } from '../../../sdk/integrity';
+
+interface CeremonyMonitorProps {
+    readonly stats: ProtocolStats | null;
+}
+
+export const CeremonyMonitor = ({ stats }: CeremonyMonitorProps) => {
     const [mounted, setMounted] = useState<boolean>(false);
     const [state, setState] = useState<CeremonyState>({
         status: 'WAITING',
@@ -184,7 +190,7 @@ export const CeremonyMonitor = () => {
                 <div className="p-4 border border-white/5 bg-white/[0.02] rounded-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-2 opacity-10"><Users size={32} /></div>
                     <span className="text-[9px] text-white/30 uppercase tracking-widest font-mono">Verified Entities</span>
-                    <div className="text-2xl font-bold text-white mt-1 tabular-nums">{state.totalContributions}</div>
+                    <div className="text-2xl font-bold text-white mt-1 tabular-nums">{stats?.anonSetSize || state.totalContributions}</div>
                     <div className="w-full h-1 bg-white/5 mt-3 rounded-full overflow-hidden">
                         <motion.div
                             className="h-full bg-tactical-cyan"
@@ -196,7 +202,7 @@ export const CeremonyMonitor = () => {
                 <div className="p-4 border border-white/5 bg-white/[0.02] rounded-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-2 opacity-10"><Binary size={32} /></div>
                     <span className="text-[9px] text-white/30 uppercase tracking-widest font-mono">Accumulated Entropy (Bits)</span>
-                    <div className="text-2xl font-bold text-tactical-purple mt-1 tabular-nums">{(state.totalContributions * 256)}</div>
+                    <div className="text-2xl font-bold text-tactical-purple mt-1 tabular-nums">{(stats?.anonSetSize || state.totalContributions) * 256}</div>
                     <div className="text-[8px] text-tactical-purple/50 font-mono mt-2">SHA-256 RECURSIVE FOLDING</div>
                 </div>
             </div>
@@ -319,7 +325,7 @@ export const CeremonyMonitor = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-1 h-1 rounded-full bg-tactical-cyan" />
-                        <span className="text-[8px] font-mono text-white uppercase">Peers_Local: 512</span>
+                        <span className="text-[8px] font-mono text-white uppercase">Peers_Local: {stats?.relayNodeCount || '---'}</span>
                     </div>
                 </div>
                 <span className="text-[8px] font-mono text-white uppercase tracking-widest">Protocol_V1.0</span>

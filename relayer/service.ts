@@ -20,7 +20,7 @@ import {
     RelayResponse,
     RelayRequest,
     OnionLayer
-} from '../sdk/integrity';
+} from '../sdk/index';
 import fetch from 'cross-fetch';
 
 // Configuration
@@ -333,7 +333,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`🛡️  SolVoid Relayer Ready on ${PORT}`);
+    console.log(`  SolVoid Relayer Ready on ${PORT}`);
 });
 
 export { app, peerRegistry, metrics };

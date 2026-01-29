@@ -170,7 +170,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Proof with wrong public inputs should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidProof');
-                console.log('✅ Proof with wrong public inputs correctly rejected');
+                console.log(' Proof with wrong public inputs correctly rejected');
             }
         });
 
@@ -229,7 +229,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Proof for different merkle root should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidMerkleRoot');
-                console.log('✅ Proof for different merkle root correctly rejected');
+                console.log(' Proof for different merkle root correctly rejected');
             }
         });
 
@@ -284,7 +284,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Replayed proof should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
-                console.log('✅ Replayed proof correctly rejected');
+                console.log(' Replayed proof correctly rejected');
             }
         });
 
@@ -319,7 +319,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Proof with corrupted signature should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidProof');
-                console.log('✅ Proof with corrupted signature correctly rejected');
+                console.log(' Proof with corrupted signature correctly rejected');
             }
         });
     });
@@ -413,7 +413,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Double-spend with same nullifier should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
-                console.log('✅ Double-spend with same nullifier correctly rejected');
+                console.log(' Double-spend with same nullifier correctly rejected');
             }
         });
 
@@ -472,7 +472,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Withdrawal with nullifier from different commitment should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidProof');
-                console.log('✅ Withdrawal with nullifier from different commitment correctly rejected');
+                console.log(' Withdrawal with nullifier from different commitment correctly rejected');
             }
         });
     });
@@ -511,7 +511,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Withdrawal exceeding vault balance should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InsufficientVaultBalance');
-                console.log('✅ Withdrawal exceeding vault balance correctly rejected');
+                console.log(' Withdrawal exceeding vault balance correctly rejected');
             }
         });
 
@@ -540,7 +540,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Excessive emergency multiplier should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidEmergencyMultiplier');
-                console.log('✅ Excessive emergency multiplier correctly rejected');
+                console.log(' Excessive emergency multiplier correctly rejected');
             }
             
             // Try to withdraw with manipulated fees
@@ -568,7 +568,7 @@ describe('Security Test Suite', () => {
                     .rpc();
                     
                 // This should succeed but with emergency fees applied
-                console.log('✅ Emergency mode withdrawal processed with correct fees');
+                console.log(' Emergency mode withdrawal processed with correct fees');
             } catch (error) {
                 console.log('Emergency withdrawal failed:', error);
             }
@@ -602,7 +602,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Zero amount withdrawal should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidAmount');
-                console.log('✅ Zero amount withdrawal correctly rejected');
+                console.log(' Zero amount withdrawal correctly rejected');
             }
             
             // Try negative amount withdrawal (using large number that would underflow)
@@ -632,7 +632,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Negative amount withdrawal should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidAmount');
-                console.log('✅ Negative amount withdrawal correctly rejected');
+                console.log(' Negative amount withdrawal correctly rejected');
             }
         });
     });
@@ -667,7 +667,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Relay request without proper signature should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidRelayer');
-                console.log('✅ Relay request without proper signature correctly rejected');
+                console.log(' Relay request without proper signature correctly rejected');
             }
         });
 
@@ -687,7 +687,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Relay request with signature from wrong key should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidAuthority');
-                console.log('✅ Relay request with signature from wrong key correctly rejected');
+                console.log(' Relay request with signature from wrong key correctly rejected');
             }
         });
 
@@ -708,7 +708,7 @@ describe('Security Test Suite', () => {
                 const transactionAge = currentTime - oldTimestamp;
                 
                 expect(transactionAge).to.be.greaterThan(600); // 10 minutes
-                console.log('✅ Expired transaction would be rejected');
+                console.log(' Expired transaction would be rejected');
             } catch (error) {
                 console.log('Expired transaction test failed:', error);
             }
@@ -765,7 +765,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Replay of old transaction should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
-                console.log('✅ Replay of old transaction correctly rejected');
+                console.log(' Replay of old transaction correctly rejected');
             }
         });
     });
@@ -801,7 +801,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Overflow attack should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('ArithmeticError');
-                console.log('✅ Overflow attack correctly rejected');
+                console.log(' Overflow attack correctly rejected');
             }
         });
 
@@ -831,7 +831,7 @@ describe('Security Test Suite', () => {
                     .rpc();
                     
                 // This should work fine
-                console.log('✅ Small amount withdrawal processed correctly');
+                console.log(' Small amount withdrawal processed correctly');
             } catch (error) {
                 console.log('Small amount withdrawal failed:', error);
             }
@@ -867,7 +867,7 @@ describe('Security Test Suite', () => {
                 expect.fail('Malformed input attack should have failed');
             } catch (error) {
                 expect((error as Error).toString()).to.include('InvalidInput');
-                console.log('✅ Malformed input attack correctly rejected');
+                console.log(' Malformed input attack correctly rejected');
             }
         });
     });

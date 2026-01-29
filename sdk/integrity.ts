@@ -7,7 +7,7 @@ if (typeof window !== 'undefined') {
     if (!(window as any).Buffer) {
         (window as any).Buffer = Buffer;
     }
-    
+
     // Enhanced isBuffer with strict type checking
     const originalIsBuffer = (window as any).Buffer?.isBuffer;
     (window as any).Buffer.isBuffer = (obj: any): boolean => {
@@ -15,10 +15,10 @@ if (typeof window !== 'undefined') {
         if (originalIsBuffer && typeof originalIsBuffer === 'function') {
             return originalIsBuffer(obj);
         }
-        
+
         // Strict type checking - no type confusion
-        return obj instanceof Buffer || 
-               (obj && obj.constructor && obj.constructor.name === 'Buffer');
+        return obj instanceof Buffer ||
+            (obj && obj.constructor && obj.constructor.name === 'Buffer');
     };
 }
 
@@ -268,6 +268,16 @@ export const RescueAnalysisSchema = z.object({
     estimatedFee: z.number().nonnegative(),
 }).strict();
 
+export const ProtocolStatsSchema = z.object({
+    solPriceUSD: z.number().nonnegative(),
+    relayNodeCount: z.number().int().nonnegative(),
+    mixingTimeAvgMinutes: z.number().nonnegative(),
+    anonSetSize: z.number().int().nonnegative(),
+    totalShieldedValueSOL: z.number().nonnegative(),
+    systemStatus: z.enum(["OPERATIONAL", "DEGRADED", "MAINTENANCE"]),
+    lastUpdated: z.number().int().nonnegative(),
+}).strict();
+
 // 3. Types
 export type LeakType = z.infer<typeof LeakTypeSchema>;
 export type VisibilityScope = z.infer<typeof VisibilityScopeSchema>;
@@ -294,6 +304,7 @@ export type RelayResponse = z.infer<typeof RelayResponseSchema>;
 export type OnionLayer = z.infer<typeof OnionLayerSchema>;
 export type LeakedAsset = z.infer<typeof LeakedAssetSchema>;
 export type RescueAnalysis = z.infer<typeof RescueAnalysisSchema>;
+export type ProtocolStats = z.infer<typeof ProtocolStatsSchema>;
 
 /**
  * Utility for boundary enforcement

@@ -1,52 +1,31 @@
 #!/bin/bash
 set -e
 
-# PrivacyZero ZK-Ceremony & Compilation Script
-# This script automates the creation of the zero-knowledge artifacts.
+# Real ZK Build System for PrivacyZero
+# This script replaces the mock system with real Circom compilation and SNARKJS ceremony.
 
-echo "--------------------------------------------------"
-echo "PrivacyZero ZK Build System"
-echo "--------------------------------------------------"
+CIRCUIT_NAME="withdraw"
+PTAU_FILE="pot14_final.ptau"
+BUILD_DIR="./build-zk"
 
-# 1. Compile Circuit
-echo "[1/4] Compiling withdraw.circom..."
-if ! command -v circom &> /dev/null
-then
-    echo "Error: 'circom' binary not found. Please install it from https://docs.circom.io/"
-    exit 1
+mkdir -p $BUILD_DIR
+
+echo "--- Phase 1: Circom Compilation ---"
+circom -l node_modules circuits/$CIRCUIT_NAME.circom --r1cs --wasm --sym --output $BUILD_DIR
+
+echo "--- Phase 2: Powers of Tau ---"
+if [ ! -f "$PTAU_FILE" ]; then
+    echo "Generating new Powers of Tau (pot14)..."
+    npx snarkjs powersoftau new bn128 14 $BUILD_DIR/pot14_0000.ptau -v
+    npx snarkjs powersoftau contribute $BUILD_DIR/pot14_0000.ptau $BUILD_DIR/pot14_0001.ptau --name="First contribution" -v -e="some random text"
+    npx snarkjs powersoftau prepare phase2 $BUILD_DIR/pot14_0001.ptau $PTAU_FILE -v
 fi
 
-mkdir -p ./build
+echo "--- Phase 3: Groth16 Setup ---"
+npx snarkjs groth16 setup $BUILD_DIR/$CIRCUIT_NAME.r1cs $PTAU_FILE $BUILD_DIR/${CIRCUIT_NAME}_0000.zkey
+npx snarkjs zkey contribute $BUILD_DIR/${CIRCUIT_NAME}_0000.zkey $BUILD_DIR/${CIRCUIT_NAME}_final.zkey --name="Second contribution" -v -e="more randomness"
 
-circom program/circuits/withdraw.circom --wasm --r1cs -o ./build -l node_modules -l program/circuits
+echo "--- Phase 4: Verification Key Export ---"
+npx snarkjs zkey export verificationkey $BUILD_DIR/${CIRCUIT_NAME}_final.zkey $BUILD_DIR/verification_key.json
 
-# 2. Trusted Setup (Phase 1 - Powers of Tau)
-# We use a 2^14 tau file which is sufficient for this circuit depth.
-echo "[2/4] Downloading Powers of Tau..."
-if [ ! -f "pot14_final.ptau" ]; then
-    curl -L https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_14.ptau -o pot14_final.ptau
-fi
-
-# 3. Phase 2 Setup (Circuit Specific)
-echo "[3/4] Generating ZKey..."
-if [ ! -f "withdraw_0000.zkey" ]; then
-    npx snarkjs groth16 setup ./build/withdraw.r1cs pot14_final.ptau withdraw_0000.zkey
-fi
-echo "Contribution..." | npx snarkjs zkey contribute withdraw_0000.zkey withdraw_final.zkey --name="PrivacyZero Contribution" -v
-
-# 4. Export Verification Key
-echo "[4/4] Exporting Verification Key..."
-npx snarkjs zkey export verificationkey withdraw_final.zkey verification_key.json
-
-# Copy artifacts for SDK/CLI
-cp ./build/withdraw_js/withdraw.wasm ./withdraw.wasm
-cp withdraw_final.zkey ./withdraw.zkey
-
-echo "--------------------------------------------------"
-echo "Build Complete!"
-echo "Artifacts generated:"
-echo " - ./withdraw.wasm"
-echo " - ./withdraw.zkey"
-echo " - ./verification_key.json"
-echo "--------------------------------------------------"
-echo "Action required: Copy the bytes from verification_key.json into program/src/lib.rs"
+echo "ZK Build Complete. Artifacts in $BUILD_DIR"

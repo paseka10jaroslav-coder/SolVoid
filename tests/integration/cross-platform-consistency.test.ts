@@ -261,16 +261,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         rustResults: RustTestResults,
         tsResults: { hash_results: string[]; merkle_root: string }
     ): void {
-        console.log('🔍 Comparing Rust and TypeScript results...\n');
+        console.log(' Comparing Rust and TypeScript results...\n');
 
         // Compare individual hash results
-        console.log('📊 Individual Hash Results:');
+        console.log(' Individual Hash Results:');
         for (let i = 0; i < rustResults.hash_results.length; i++) {
             const rustHash = rustResults.hash_results[i];
             const tsHash = tsResults.hash_results[i];
             const matches = rustHash === tsHash;
             
-            console.log(`  Test ${i + 1}: ${matches ? '✅' : '❌'}`);
+            console.log(`  Test ${i + 1}: ${matches ? '' : ''}`);
             if (!matches) {
                 console.log(`    Rust:    ${rustHash}`);
                 console.log(`    TS:      ${tsHash}`);
@@ -279,9 +279,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         // Compare Merkle root
-        console.log('\n🌳 Merkle Tree Root:');
+        console.log('\n Merkle Tree Root:');
         const rootMatches = rustResults.merkle_root === tsResults.merkle_root;
-        console.log(`  Root: ${rootMatches ? '✅' : '❌'}`);
+        console.log(`  Root: ${rootMatches ? '' : ''}`);
         
         if (!rootMatches) {
             console.log(`    Rust:    ${rustResults.merkle_root}`);
@@ -289,32 +289,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             throw new Error('Merkle root mismatch');
         }
 
-        console.log('\n🎉 All hash computations match between Rust and TypeScript!');
+        console.log('\n All hash computations match between Rust and TypeScript!');
     }
 
     /**
      * Main test execution
      */
     static async run(): Promise<void> {
-        console.log('🚀 Starting Cross-Platform Poseidon Consistency Test\n');
+        console.log(' Starting Cross-Platform Poseidon Consistency Test\n');
 
         try {
             // 1. Generate test data
-            console.log('📝 Generating test data...');
+            console.log(' Generating test data...');
             const testData = this.generateTestData();
             writeFileSync(this.TEST_DATA_FILE, JSON.stringify(testData, null, 2));
-            console.log('✅ Test data generated\n');
+            console.log(' Test data generated\n');
 
             // 2. Create and run Rust test
-            console.log('🦀 Running Rust Poseidon computations...');
+            console.log(' Running Rust Poseidon computations...');
             this.createRustTestProgram();
             const rustResults = await this.runRustTest();
-            console.log('✅ Rust computations completed\n');
+            console.log(' Rust computations completed\n');
 
             // 3. Run TypeScript computations
-            console.log('📘 Running TypeScript Poseidon computations...');
+            console.log(' Running TypeScript Poseidon computations...');
             const tsResults = await this.computeTypeScriptHashes(testData);
-            console.log('✅ TypeScript computations completed\n');
+            console.log(' TypeScript computations completed\n');
 
             // 4. Compare results
             this.compareResults(rustResults, tsResults);
@@ -328,11 +328,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Ignore cleanup errors
             }
 
-            console.log('\n🧹 Cleanup completed');
-            console.log('🏆 Cross-platform consistency test PASSED!');
+            console.log('\n Cleanup completed');
+            console.log(' Cross-platform consistency test PASSED!');
 
         } catch (error) {
-            console.error('\n❌ Cross-platform consistency test FAILED:', error);
+            console.error('\n Cross-platform consistency test FAILED:', error);
             throw error;
         }
     }

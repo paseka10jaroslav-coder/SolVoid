@@ -10,10 +10,11 @@ interface HeaderProps {
     score?: number;
     loading: boolean;
     rpcError?: boolean;
+    network?: string;
     onMenuClick?: () => void;
 }
 
-export const Header = ({ score, loading, rpcError, onMenuClick }: HeaderProps) => {
+export const Header = ({ score, loading, rpcError, network, onMenuClick }: HeaderProps) => {
     const [mounted, setMounted] = React.useState(false);
 
     React.useEffect(() => {
@@ -63,7 +64,9 @@ export const Header = ({ score, loading, rpcError, onMenuClick }: HeaderProps) =
                 <div className="flex items-center gap-2">
                     <Globe className="w-3.5 h-3.5 text-tactical-cyan opacity-70" />
                     <span className="text-xs text-white/50">Network:</span>
-                    <span className="text-xs text-tactical-cyan font-medium">Secure</span>
+                    <span className={`text-xs font-medium ${network === 'ephemeral' ? 'text-tactical-cyan animate-pulse' : 'text-tactical-cyan'}`}>
+                        {network === 'ephemeral' ? 'Privacy Hack' : network === 'mainnet' ? 'Mainnet' : network === 'devnet' ? 'Devnet' : 'Secure'}
+                    </span>
                 </div>
                 <div className="flex items-center gap-2">
                     <Cpu className="w-3.5 h-3.5 text-tactical-purple opacity-70" />
@@ -93,6 +96,6 @@ export const Header = ({ score, loading, rpcError, onMenuClick }: HeaderProps) =
                     <WalletMultiButton />
                 </div>
             </div>
-        </motion.header>
+        </motion.header >
     );
 };

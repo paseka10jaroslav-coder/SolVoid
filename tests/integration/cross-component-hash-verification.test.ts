@@ -71,7 +71,7 @@ describe('Cross-Component Hash Verification', () => {
                 expect(resultHex).to.equal(vector.expected);
             }
             
-            console.log('✅ All official test vectors validated');
+            console.log(' All official test vectors validated');
         });
 
         it('should validate merkle tree test vectors', async () => {
@@ -94,7 +94,7 @@ describe('Cross-Component Hash Verification', () => {
                 expect(rootHex).to.equal(vector.expectedRoot);
             }
             
-            console.log('✅ All merkle tree test vectors validated');
+            console.log(' All merkle tree test vectors validated');
         });
     });
 
@@ -189,7 +189,7 @@ describe('Cross-Component Hash Verification', () => {
                 }
             }
             
-            console.log('\n✅ All cross-platform hashes match exactly');
+            console.log('\n All cross-platform hashes match exactly');
         });
 
         it('should compute identical merkle roots across platforms', async () => {
@@ -240,7 +240,7 @@ describe('Cross-Component Hash Verification', () => {
                 }
             }
             
-            console.log('\n✅ All merkle root computations match');
+            console.log('\n All merkle root computations match');
         });
     });
 
@@ -273,7 +273,7 @@ describe('Cross-Component Hash Verification', () => {
                 expect(resultHex).to.equal(resultHex2);
             }
             
-            console.log('✅ Critical hash verification passed - build can proceed');
+            console.log(' Critical hash verification passed - build can proceed');
         });
 
         it('should validate no floating point or rounding differences', () => {
@@ -300,7 +300,7 @@ describe('Cross-Component Hash Verification', () => {
                 expect(resultHex).to.equal(resultHex2);
             }
             
-            console.log('✅ No floating point or rounding differences detected');
+            console.log(' No floating point or rounding differences detected');
         });
     });
 
@@ -335,7 +335,7 @@ describe('Cross-Component Hash Verification', () => {
                 expect(resultHex).to.equal(resultHex2);
             }
             
-            console.log('✅ Regression tests passed - no cryptographic drift detected');
+            console.log(' Regression tests passed - no cryptographic drift detected');
         });
     });
 });
