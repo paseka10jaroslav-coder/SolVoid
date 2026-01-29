@@ -44,6 +44,81 @@ graph TB
 
 ### Command Line Interface (CLI)
 
+#### 🌍 Multi-RPC System with IP Rotation
+
+SolVoid CLI features an advanced **40+ RPC endpoint rotation system** with intelligent failover and IP rotation capabilities for maximum resilience and anonymity.
+
+**Features:**
+- 🌍 **40+ Global RPC Endpoints** across US, Europe, and Asia
+- 🔄 **Intelligent Failover** with success rate tracking
+- 🌐 **IP Rotation** for enhanced anonymity
+- 📊 **Performance Monitoring** and statistics
+- 🎯 **Regional Optimization** for low latency
+- ⚡ **Exponential Backoff** with jitter
+
+**RPC Categories:**
+- 🏢 **Official**: Solana Labs endpoints
+- 🚀 **Providers**: Triton, QuickNode, Helius, Blockdaemon
+- 🌍 **Regional**: US, Europe, Asia optimized
+- 🔄 **Backup**: Community and fallback endpoints
+- 📈 **Performance**: High-speed endpoints
+- 🛠️ **Development**: Devnet and testnet
+
+#### Usage Examples
+
+```bash
+# Ultimate privacy scan with 40+ RPC endpoints
+solvoid scan <ADDRESS> --ultimate
+
+# Enhanced scan with IP rotation
+solvoid scan <ADDRESS> --enhanced
+
+# Show RPC performance statistics
+solvoid scan <ADDRESS> --stats
+
+# Regional optimization
+solvoid scan <ADDRESS> --region us-east
+```
+
+#### IP Rotation Technology
+
+The scanner implements sophisticated IP rotation through:
+
+1. **Random IP Generation**: Each request uses a randomly generated IP address
+2. **Header Manipulation**: `X-Client-IP` and `X-Forwarded-For` headers
+3. **User-Agent Rotation**: Multiple user-agent strings
+4. **Request Timing**: Random delays to avoid pattern detection
+
+```typescript
+// IP Rotation Implementation
+const randomIP = generateRandomIP();
+const headers = {
+  'User-Agent': 'SolVoid-Ultimate-Scanner/1.0.0',
+  'X-Client-IP': randomIP,
+  'X-Forwarded-For': randomIP
+};
+```
+
+#### RPC Performance Monitoring
+
+Track endpoint performance with real-time statistics:
+
+```bash
+📊 RPC Performance Statistics:
+================================
+✅ Solana Mainnet Official: 15 success, 2 failures (88.2%)
+✅ Triton RPC: 12 success, 1 failures (92.3%)
+✅ QuickNode Mainnet: 8 success, 0 failures (100.0%)
+✅ Helius RPC: 6 success, 3 failures (66.7%)
+
+🌍 Available by Region:
+   us-east: 8/8 endpoints
+   us-west: 7/8 endpoints
+   europe: 6/8 endpoints
+   asia: 5/8 endpoints
+   global: 4/4 endpoints
+```
+
 ### Installation and Setup
 ```bash
 # Install SolVoid CLI globally

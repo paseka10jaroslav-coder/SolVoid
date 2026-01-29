@@ -45,7 +45,7 @@ pub fn verify_withdraw_proof(
 
     // hash all signals to bind them to the proof. 
     // Poseidon(recipient, relayer, fee, root, amount, nullifier)
-    let statement_hash = crate::poseidon::PoseidonHasherWrapper::hash_multiple_bytes(&[
+    let _statement_hash = crate::poseidon::PoseidonHasherWrapper::hash_multiple_bytes(&[
         recipient_low,
         recipient_high,
         relayer_low,
