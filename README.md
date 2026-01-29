@@ -17,7 +17,6 @@ SolVoid is an open-source privacy protocol that enables confidential transaction
 ### Developer Tools
 - **CLI Tools**: Command-line interface for privacy operations
 - **SDK**: TypeScript/JavaScript SDK for integration
-- **Mobile Apps**: Android and iOS applications
 - **API**: RESTful API for privacy services
 
 ### Smart Contracts
@@ -61,10 +60,8 @@ npm run dev
 
 ## 📚 Documentation
 
-- **[System Architecture](./docs/ARCHITECTURE.md)**: Complete system architecture
 - **[API Documentation](./docs/API.md)**: API reference and examples
 - **[Security Guide](./docs/SECURITY.md)**: Security best practices
-- **[Developer Guide](./docs/DEVELOPER.md)**: Development setup and guidelines
 
 ## 🔧 Development
 
@@ -76,7 +73,6 @@ npm run build
 # Build specific component
 npm run build:sdk
 npm run build:cli
-npm run build:mobile
 
 # Run tests
 npm test
@@ -104,7 +100,6 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 ### Support
 - **Issues**: [GitHub Issues](https://github.com/privacy-zero/solvoid/issues)
 - **Discord**: Community discussions
-- **Documentation**: [Documentation Issues](https://github.com/privacy-zero/solvoid/docs/issues)
 
 ## 📄 License
 
@@ -121,7 +116,6 @@ solvoid/
 ├── cli/                 # Command-line tools
 ├── sdk/                 # TypeScript SDK
 ├── dashboard/           # Web dashboard
-├── mobile/              # Mobile applications
 ├── programs/           # Solana smart contracts
 ├── circuits/           # ZK circuits
 ├── docs/               # Documentation
