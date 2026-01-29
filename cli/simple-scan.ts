@@ -242,8 +242,8 @@ Examples:
         : 'devnet';
 
     try {
-        console.log(`🔍 Analyzing privacy for address: ${address}`);
-        console.log(`🌐 Using network: ${network}`);
+        console.log(` Analyzing privacy for address: ${address}`);
+        console.log(` Using network: ${network}`);
         console.log('');
 
         const scanner = new SimplePrivacyScanner(
@@ -254,22 +254,22 @@ Examples:
 
         const result = await scanner.analyzeAddress(address);
 
-        console.log(`📊 Privacy Score: ${result.score}/100`);
-        console.log(`⚠️  Risk Level: ${result.riskLevel}`);
+        console.log(` Privacy Score: ${result.score}/100`);
+        console.log(`  Risk Level: ${result.riskLevel}`);
         console.log('');
-        console.log('📈 Score Breakdown:');
+        console.log(' Score Breakdown:');
         console.log(`  Transaction Pattern: ${result.breakdown.transactionPattern}%`);
         console.log(`  Timing Analysis: ${result.breakdown.timingAnalysis}%`);
         console.log(`  Amount Distribution: ${result.breakdown.amountDistribution}%`);
         console.log(`  Network Behavior: ${result.breakdown.networkBehavior}%`);
         console.log('');
-        console.log('💡 Recommendations:');
+        console.log(' Recommendations:');
         result.recommendations.forEach(rec => {
             console.log(`  • ${rec}`);
         });
 
     } catch (error) {
-        console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
+        console.error(' Error:', error instanceof Error ? error.message : 'Unknown error');
         process.exit(1);
     }
 }

@@ -171,7 +171,7 @@ async function main() {
     
     if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
         console.log(`
-🔍 SolVoid Privacy Scanner - Demo Version
+ SolVoid Privacy Scanner - Demo Version
 
 Usage:
   node demo-scan.js <address> [options]
@@ -195,34 +195,34 @@ Examples:
     const address = args[0];
 
     try {
-        console.log(`🔍 Analyzing privacy for address: ${address}`);
-        console.log(`🌐 Using demo data (mock analysis)`);
+        console.log(` Analyzing privacy for address: ${address}`);
+        console.log(` Using demo data (mock analysis)`);
         console.log('');
 
         const scanner = new DemoPrivacyScanner();
         const result = await scanner.analyzeAddress(address);
 
-        console.log(`📊 Privacy Score: ${result.score}/100`);
-        console.log(`⚠️  Risk Level: ${result.riskLevel}`);
+        console.log(` Privacy Score: ${result.score}/100`);
+        console.log(`  Risk Level: ${result.riskLevel}`);
         console.log('');
-        console.log('📈 Score Breakdown:');
+        console.log(' Score Breakdown:');
         console.log(`  Transaction Pattern: ${result.breakdown.transactionPattern}%`);
         console.log(`  Timing Analysis: ${result.breakdown.timingAnalysis}%`);
         console.log(`  Amount Distribution: ${result.breakdown.amountDistribution}%`);
         console.log(`  Network Behavior: ${result.breakdown.networkBehavior}%`);
         console.log('');
-        console.log('📊 Transaction Statistics:');
+        console.log(' Transaction Statistics:');
         console.log(`  Total Transactions: ${result.totalTransactions.toLocaleString()}`);
         console.log(`  Unique Recipients: ${result.uniqueRecipients}`);
         console.log(`  Average Amount: ${(result.averageAmount / 1000000).toFixed(2)} SOL`);
         console.log('');
-        console.log('💡 Recommendations:');
+        console.log(' Recommendations:');
         result.recommendations.forEach(rec => {
             console.log(`  • ${rec}`);
         });
 
     } catch (error) {
-        console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
+        console.error(' Error:', error instanceof Error ? error.message : 'Unknown error');
         process.exit(1);
     }
 }
@@ -235,14 +235,14 @@ async function runDemo() {
         'So11111111111111111111111111111111111111112'
     ];
 
-    console.log('🎭 SolVoid Privacy Scanner - Demo Mode');
+    console.log(' SolVoid Privacy Scanner - Demo Mode');
     console.log('=====================================');
     console.log('');
 
     for (const address of addresses) {
-        console.log(`🔍 Analyzing: ${address.slice(0, 8)}...${address.slice(-8)}`);
+        console.log(` Analyzing: ${address.slice(0, 8)}...${address.slice(-8)}`);
         
-        const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        const spinner = ['', '', '', '', '', '', '', '', '', ''];
         let i = 0;
         
         const interval = setInterval(() => {
@@ -253,24 +253,24 @@ async function runDemo() {
         const result = await scanner.analyzeAddress(address);
         clearInterval(interval);
 
-        console.log(`\r✅ Analysis complete!`);
-        console.log(`📊 Privacy Score: ${result.score}/100 (${result.riskLevel})`);
-        console.log(`📈 ${result.totalTransactions.toLocaleString()} transactions analyzed`);
+        console.log(`\r Analysis complete!`);
+        console.log(` Privacy Score: ${result.score}/100 (${result.riskLevel})`);
+        console.log(` ${result.totalTransactions.toLocaleString()} transactions analyzed`);
         console.log('');
         
         await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     console.log('');
-    console.log('🎯 Demo Complete!');
+    console.log(' Demo Complete!');
     console.log('');
-    console.log('💡 Key Features Demonstrated:');
+    console.log(' Key Features Demonstrated:');
     console.log('  • Privacy scoring algorithm');
     console.log('  • Transaction pattern analysis');
     console.log('  • Risk assessment');
     console.log('  • Personalized recommendations');
     console.log('');
-    console.log('🚀 Try it yourself:');
+    console.log(' Try it yourself:');
     console.log('  node demo-scan.js <your-address>');
 }
 

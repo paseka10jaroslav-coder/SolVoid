@@ -6,23 +6,23 @@
 
 set -e
 
-echo "🚀 Starting SolVoid Dashboard Server..."
+echo " Starting SolVoid Dashboard Server..."
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js not found. Please install Node.js first."
+    echo " Node.js not found. Please install Node.js first."
     exit 1
 fi
 
 # Check if we're in the right directory
 if [ ! -f "package.json" ]; then
-    echo "❌ package.json not found. Please run from project root."
+    echo " package.json not found. Please run from project root."
     exit 1
 fi
 
 # Install dependencies if needed
 if [ ! -d "node_modules" ]; then
-    echo "📦 Installing dependencies..."
+    echo " Installing dependencies..."
     npm install
 fi
 
@@ -34,9 +34,9 @@ export NODE_ENV=${NODE_ENV:-production}
 mkdir -p logs
 
 echo ""
-echo "🌐 Starting dashboard server..."
-echo "📍 Dashboard: http://localhost:$PORT"
-echo "🔌 WebSocket: ws://localhost:$((PORT + 1))"
+echo " Starting dashboard server..."
+echo " Dashboard: http://localhost:$PORT"
+echo " WebSocket: ws://localhost:$((PORT + 1))"
 echo ""
 
 # Start the server

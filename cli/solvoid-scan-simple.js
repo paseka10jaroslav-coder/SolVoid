@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Simple CLI entry point that doesn't depend on problematic modules
-console.log('🔍 SolVoid Privacy Scanner');
+console.log(' SolVoid Privacy Scanner');
 console.log('');
 console.log('Usage:');
 console.log('  solvoid-scan <command> [options]');

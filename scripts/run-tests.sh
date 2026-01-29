@@ -7,7 +7,7 @@
 
 set -e
 
-echo "🧪 Running SolVoid Atomic Rescue Engine Test Suite..."
+echo " Running SolVoid Atomic Rescue Engine Test Suite..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -47,9 +47,9 @@ run_test_suite() {
     local exit_code=$?
     
     if [ $exit_code -eq 0 ]; then
-        echo "${GREEN}✅ $description passed${NC}"
+        echo "${GREEN} $description passed${NC}"
     else
-        echo "${RED}❌ $description failed${NC}"
+        echo "${RED} $description failed${NC}"
         return $exit_code
     fi
     
@@ -67,7 +67,7 @@ fi
 # Check if test files exist
 echo "${BLUE}Checking test files...${NC}"
 if [ ! -d "tests" ]; then
-    echo "${RED}❌ Tests directory not found${NC}"
+    echo "${RED} Tests directory not found${NC}"
     exit 1
 fi
 
@@ -80,7 +80,7 @@ if [ -n "$SOLANA_PRIVATE_KEY" ] || [ -n "$USE_DEVNET" ]; then
     run_test_suite "integration" "tests/integration" "Integration Tests"
     integration_exit_code=$?
 else
-    echo "${YELLOW}⚠️  Skipping integration tests (set SOLANA_PRIVATE_KEY or USE_DEVNET to enable)${NC}"
+    echo "${YELLOW}  Skipping integration tests (set SOLANA_PRIVATE_KEY or USE_DEVNET to enable)${NC}"
     integration_exit_code=0
 fi
 
@@ -99,9 +99,9 @@ Generated on: $(date)
 
 | Test Suite | Status | Exit Code |
 |-------------|--------|----------|
-| Unit Tests | $([ $unit_exit_code -eq 0 ] && echo "✅ Passed" || echo "❌ Failed") | $unit_exit_code |
-| Integration Tests | $([ $integration_exit_code -eq 0 ] && echo "✅ Passed" || echo "❌ Failed") | $integration_exit_code |
-| Performance Tests | $([ $performance_exit_code -eq 0 ] && echo "✅ Passed" || echo "❌ Failed") | $performance_exit_code |
+| Unit Tests | $([ $unit_exit_code -eq 0 ] && echo " Passed" || echo " Failed") | $unit_exit_code |
+| Integration Tests | $([ $integration_exit_code -eq 0 ] && echo " Passed" || echo " Failed") | $integration_exit_code |
+| Performance Tests | $([ $performance_exit_code -eq 0 ] && echo " Passed" || echo " Failed") | $performance_exit_code |
 
 ## Coverage Report
 
@@ -121,25 +121,25 @@ Coverage reports are available in \`coverage/lcov-report/index.html\`.
 
 EOF
 
-echo "📄 Test report generated: test-report.md"
+echo " Test report generated: test-report.md"
 
 # Check overall results
 overall_exit_code=$((unit_exit_code + integration_exit_code + performance_exit_code))
 
 if [ $overall_exit_code -eq 0 ]; then
     echo ""
-    echo "${GREEN}🎉 All test suites passed!${NC}"
-    echo "${GREEN}✅ SolVoid Atomic Rescue Engine is ready for production${NC}"
+    echo "${GREEN} All test suites passed!${NC}"
+    echo "${GREEN} SolVoid Atomic Rescue Engine is ready for production${NC}"
 else
     echo ""
-    echo "${RED}❌ Some test suites failed${NC}"
+    echo "${RED} Some test suites failed${NC}"
     echo "${RED}Please review the test output above${NC}"
 fi
 
 # Open coverage report if available
 if [ -f "coverage/lcov-report/index.html" ]; then
     echo ""
-    echo "${BLUE}📊 Coverage report available at: coverage/lcov-report/index.html${NC}"
+    echo "${BLUE} Coverage report available at: coverage/lcov-report/index.html${NC}"
 fi
 
 exit $overall_exit_code

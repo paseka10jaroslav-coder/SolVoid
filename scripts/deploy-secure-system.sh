@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🚀 SolVoid Secure System Deployment"
+echo " SolVoid Secure System Deployment"
 echo "=================================="
 
 # Configuration
@@ -51,7 +51,7 @@ if [ ! -f "build/circuits/withdraw_final.zkey" ] || [ ! -f "build/circuits/withd
     error "Circuit build failed - missing artifacts"
 fi
 
-log "✅ Phase 1 Complete: ZK Circuits built"
+log " Phase 1 Complete: ZK Circuits built"
 
 # Phase 2: MPC Ceremony
 log "Phase 2: Running MPC Ceremony"
@@ -67,7 +67,7 @@ if [ ! -f "ceremony/output/withdraw_final.zkey" ] || [ ! -f "ceremony/output/cer
     error "MPC ceremony failed - missing artifacts"
 fi
 
-log "✅ Phase 2 Complete: MPC Ceremony completed"
+log " Phase 2 Complete: MPC Ceremony completed"
 
 # Phase 3: Build Solana Program
 log "Phase 3: Building Solana Program"
@@ -86,7 +86,7 @@ if [ ! -f "target/deploy/solvoid.so" ]; then
     error "Program build failed"
 fi
 
-log "✅ Phase 3 Complete: Solana Program built"
+log " Phase 3 Complete: Solana Program built"
 
 # Phase 4: Security Testing
 log "Phase 4: Running Security Tests"
@@ -104,7 +104,7 @@ else
     warn "npm not found - skipping security tests"
 fi
 
-log "✅ Phase 4 Complete: Security testing completed"
+log " Phase 4 Complete: Security testing completed"
 
 # Phase 5: Deploy to Network
 log "Phase 5: Deploying to $NETWORK"
@@ -151,7 +151,7 @@ DEPOSIT_VK=$(cat ceremony/output/deposit_vk.json | base64 -w 0)
 info "Initializing program with verification keys..."
 anchor run initialize --amount $DEPOSIT_AMOUNT --withdraw_vk "$WITHDRAW_VK" --deposit_vk "$DEPOSIT_VK"
 
-log "✅ Phase 6 Complete: Program initialized"
+log " Phase 6 Complete: Program initialized"
 
 # Phase 7: Verify Deployment
 log "Phase 7: Verifying Deployment"
@@ -159,7 +159,7 @@ log "Phase 7: Verifying Deployment"
 # Check program state
 PROGRAM_STATE=$(solana account $DEPLOYED_PROGRAM_ID --output json)
 if [ $? -eq 0 ]; then
-    log "✅ Program account verified"
+    log " Program account verified"
 else
     error "Program account verification failed"
 fi
@@ -168,12 +168,12 @@ fi
 VAULT_PDA=$(solana address -k target/deploy/solvoid-keypair.json --seed "vault")
 VAULT_STATE=$(solana account $VAULT_PDA --output json 2>/dev/null || echo "null")
 if [ "$VAULT_STATE" != "null" ]; then
-    log "✅ Vault account verified"
+    log " Vault account verified"
 else
     warn "Vault account not found - may need initialization"
 fi
 
-log "✅ Phase 7 Complete: Deployment verified"
+log " Phase 7 Complete: Deployment verified"
 
 # Phase 8: Start Relayer Service
 log "Phase 8: Starting Secure Relayer Service"
@@ -195,7 +195,7 @@ sleep 5
 
 # Check if relayer is running
 if kill -0 $RELAYER_PID 2>/dev/null; then
-    log "✅ Phase 8 Complete: Relayer service started (PID: $RELAYER_PID)"
+    log " Phase 8 Complete: Relayer service started (PID: $RELAYER_PID)"
 else
     error "Relayer service failed to start"
 fi
@@ -206,7 +206,7 @@ log "Phase 9: Final Health Check"
 # Test relayer health
 RELAYER_HEALTH=$(curl -s http://localhost:8080/health 2>/dev/null || echo '{"status":"error"}')
 if echo "$RELAYER_HEALTH" | grep -q '"status":"healthy"'; then
-    log "✅ Relayer health check passed"
+    log " Relayer health check passed"
 else
     warn "Relayer health check failed"
 fi
@@ -214,43 +214,43 @@ fi
 # Test program health
 PROGRAM_HEALTH=$(anchor run health 2>/dev/null || echo "error")
 if [ "$PROGRAM_HEALTH" != "error" ]; then
-    log "✅ Program health check passed"
+    log " Program health check passed"
 else
     warn "Program health check failed"
 fi
 
-log "✅ Phase 9 Complete: Health checks finished"
+log " Phase 9 Complete: Health checks finished"
 
 # Deployment Summary
 echo ""
-echo "🎉 DEPLOYMENT SUMMARY"
+echo " DEPLOYMENT SUMMARY"
 echo "====================="
 echo "Network: $NETWORK"
 echo "Program ID: $DEPLOYED_PROGRAM_ID"
 echo "Relayer PID: $RELAYER_PID"
 echo "Relayer URL: http://localhost:8080"
 echo ""
-echo "📋 Important Files:"
+echo " Important Files:"
 echo "  - Program: target/deploy/solvoid.so"
 echo "  - Program Key: target/deploy/solvoid-keypair.json"
 echo "  - Verification Keys: ceremony/output/"
 echo "  - Ceremony Transcript: ceremony/output/ceremony_transcript.json"
 echo ""
-echo "🔐 Security Verification:"
-echo "  ✅ ZK Circuits built and verified"
-echo "  ✅ MPC Ceremony completed"
-echo "  ✅ Program deployed and initialized"
-echo "  ✅ Security tests passed"
-echo "  ✅ Relayer service running"
+echo " Security Verification:"
+echo "   ZK Circuits built and verified"
+echo "   MPC Ceremony completed"
+echo "   Program deployed and initialized"
+echo "   Security tests passed"
+echo "   Relayer service running"
 echo ""
-echo "⚠️  NEXT STEPS:"
+echo "  NEXT STEPS:"
 echo "  1. Monitor relayer logs: tail -f relayer/logs/relayer.log"
 echo "  2. Test deposits and withdrawals"
 echo "  3. Monitor program state: solana account $DEPLOYED_PROGRAM_ID"
 echo "  4. Set up monitoring and alerts"
 echo "  5. Schedule regular security audits"
 echo ""
-echo "🚀 SolVoid is now ready for $NETWORK!"
+echo " SolVoid is now ready for $NETWORK!"
 
 # Save deployment info
 DEPLOYMENT_INFO="{
@@ -267,5 +267,5 @@ echo "$DEPLOYMENT_INFO" > deployment-info.json
 log "Deployment info saved to deployment-info.json"
 
 echo ""
-log "🔒 SECURE DEPLOYMENT COMPLETED SUCCESSFULLY!"
+log " SECURE DEPLOYMENT COMPLETED SUCCESSFULLY!"
 warn "Keep all verification keys and ceremony transcripts secure and offline."

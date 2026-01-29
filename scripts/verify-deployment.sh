@@ -14,27 +14,27 @@ NC='\033[0m' # No Color
 
 # Function to log success
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 # Function to log error
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 # Function to log warning
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}  $1${NC}"
 }
 
 # Function to log info
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}ℹ  $1${NC}"
 }
 
 # Function to log section header
 log_section() {
-    echo -e "\n${BLUE}📋 $1${NC}"
+    echo -e "\n${BLUE} $1${NC}"
     echo "=================================="
 }
 
@@ -47,7 +47,7 @@ run_check() {
     local command="$2"
     local critical="${3:-true}"
     
-    echo -e "\n🔍 Checking: $description"
+    echo -e "\n Checking: $description"
     
     if eval "$command"; then
         log_success "$description - PASSED"
@@ -63,7 +63,7 @@ run_check() {
 
 # Main verification function
 main() {
-    echo "🚀 SolVoid Pre-Deployment Verification"
+    echo " SolVoid Pre-Deployment Verification"
     echo "======================================"
     echo "Starting comprehensive verification checks..."
     echo "Date: $(date)"
@@ -97,28 +97,28 @@ main() {
         "! grep -r 'unchecked_add\\|unchecked_sub\\|unchecked_mul' program/src/ > /dev/null"
     
     run_check "Arithmetic safety tests" \
-        "./scripts/arithmetic-safety-test.sh | grep -q '🎉 Arithmetic safety validation completed!'"
+        "./scripts/arithmetic-safety-test.sh | grep -q ' Arithmetic safety validation completed!'"
     
     run_check "Nullifier double-spend prevention" \
-        "./scripts/nullifier-validation-test.sh | grep -q '🎉 Nullifier double-spend prevention validation completed!'"
+        "./scripts/nullifier-validation-test.sh | grep -q ' Nullifier double-spend prevention validation completed!'"
     
     run_check "Vault balance protection" \
-        "./scripts/vault-balance-protection-test.sh | grep -q '🎉 Vault balance protection validation completed!'"
+        "./scripts/vault-balance-protection-test.sh | grep -q ' Vault balance protection validation completed!'"
     
     run_check "Fee manipulation protection" \
-        "./scripts/fee-manipulation-protection-test.sh | grep -q '🎉 Fee manipulation protection validation completed!'"
+        "./scripts/fee-manipulation-protection-test.sh | grep -q ' Fee manipulation protection validation completed!'"
     
     # 3. Integration Testing
     log_section "Section 3: Integration Testing"
     
     run_check "End-to-end privacy lifecycle" \
-        "./scripts/end-to-end-lifecycle-test.sh | grep -q '🎉 End-to-end privacy lifecycle validation completed!'"
+        "./scripts/end-to-end-lifecycle-test.sh | grep -q ' End-to-end privacy lifecycle validation completed!'"
     
     run_check "Security test suite" \
-        "./scripts/security-test-suite.sh | grep -q '🎉 Security test suite validation completed!'"
+        "./scripts/security-test-suite.sh | grep -q ' Security test suite validation completed!'"
     
     run_check "Cross-platform hash verification" \
-        "./scripts/cross-platform-hash-verification.sh | grep -q '🎉 Cross-platform hash verification validation completed!'"
+        "./scripts/cross-platform-hash-verification.sh | grep -q ' Cross-platform hash verification validation completed!'"
     
     # 4. Infrastructure
     log_section "Section 4: Infrastructure"
@@ -151,7 +151,7 @@ main() {
         "npm run lint 2>/dev/null; [ \$? -eq 0 ]"
     
     run_check "Rust clippy" \
-        "./scripts/rust-clippy-test.sh | grep -q '🎉 Rust clippy validation completed!'"
+        "./scripts/rust-clippy-test.sh | grep -q ' Rust clippy validation completed!'"
     
     run_check "No TODO comments in production code" \
         "! grep -r 'TODO\\|FIXME\\|XXX' src/ program/src/ relayer/ > /dev/null"
@@ -163,7 +163,7 @@ main() {
         "npm audit --audit-level=high 2>/dev/null; [ \$? -eq 0 ]"
     
     run_check "Rust dependency audit" \
-        "./scripts/rust-dependency-audit.sh | grep -q '🎉 Rust dependency audit validation completed!'"
+        "./scripts/rust-dependency-audit.sh | grep -q ' Rust dependency audit validation completed!'"
     
     # 8. Documentation
     log_section "Section 8: Documentation"
@@ -181,8 +181,8 @@ main() {
     log_section "Verification Results"
     
     if [ "$OVERALL_SUCCESS" = true ]; then
-        log_success "🎉 ALL VERIFICATION CHECKS PASSED!"
-        echo -e "\n${GREEN}✅ System is ready for deployment${NC}"
+        log_success " ALL VERIFICATION CHECKS PASSED!"
+        echo -e "\n${GREEN} System is ready for deployment${NC}"
         echo -e "\nNext steps:"
         echo "1. Review the detailed test results above"
         echo "2. Obtain all required sign-offs"
@@ -190,8 +190,8 @@ main() {
         echo "4. Monitor post-deployment metrics"
         exit 0
     else
-        log_error "❌ VERIFICATION FAILED!"
-        echo -e "\n${RED}🚫 DO NOT DEPLOY - Critical issues must be resolved${NC}"
+        log_error " VERIFICATION FAILED!"
+        echo -e "\n${RED} DO NOT DEPLOY - Critical issues must be resolved${NC}"
         echo -e "\nRequired actions:"
         echo "1. Fix all failed verification checks"
         echo "2. Re-run this verification script"

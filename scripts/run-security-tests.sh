@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🔒 Starting Security Test Suite..."
+echo " Starting Security Test Suite..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,22 +16,22 @@ NC='\033[0m' # No Color
 
 # Function to log success
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 # Function to log error
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 # Function to log warning
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}  $1${NC}"
 }
 
 # Function to log info
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}ℹ  $1${NC}"
 }
 
 # Check if required tools are installed
@@ -242,9 +242,9 @@ EOF
         
         try {
             const { witness } = await require('./security_test_js').default.witness.calculate(validInput);
-            console.log('✅ Valid input test passed');
+            console.log(' Valid input test passed');
         } catch (error) {
-            console.log('❌ Valid input test failed:', error.message);
+            console.log(' Valid input test failed:', error.message);
             process.exit(1);
         }
         
@@ -259,13 +259,13 @@ EOF
         
         try {
             await require('./security_test_js').default.witness.calculate(invalidInput);
-            console.log('❌ Invalid input test should have failed');
+            console.log(' Invalid input test should have failed');
             process.exit(1);
         } catch (error) {
-            console.log('✅ Invalid input test correctly rejected');
+            console.log(' Invalid input test correctly rejected');
         }
         
-        console.log('✅ Circuit security tests passed');
+        console.log(' Circuit security tests passed');
     }
     
     testCircuitSecurity().catch(console.error);
@@ -340,7 +340,7 @@ run_fuzzing_tests() {
             }
         }
         
-        console.log('✅ Poseidon fuzzing tests passed');
+        console.log(' Poseidon fuzzing tests passed');
     }
     
     fuzzPoseidon().catch(console.error);
@@ -387,7 +387,7 @@ run_performance_security_tests() {
                 process.exit(1);
             }
             
-            console.log('✅ Performance security tests passed');
+            console.log(' Performance security tests passed');
         } catch (error) {
             console.error('Performance test failed:', error.message);
             process.exit(1);
@@ -421,39 +421,39 @@ generate_security_report() {
 ## Test Categories
 
 ### 1. Proof Forgery Attempts
-- ✅ Wrong public inputs rejection
-- ✅ Different merkle root rejection  
-- ✅ Replayed proof rejection
-- ✅ Corrupted signature rejection
+-  Wrong public inputs rejection
+-  Different merkle root rejection  
+-  Replayed proof rejection
+-  Corrupted signature rejection
 
 ### 2. Nullifier Reuse Attempts
-- ✅ Double-spend prevention
-- ✅ Cross-commitment nullifier rejection
+-  Double-spend prevention
+-  Cross-commitment nullifier rejection
 
 ### 3. Economic Attacks
-- ✅ Vault balance overflow protection
-- ✅ Emergency mode fee manipulation prevention
-- ✅ Zero/negative amount rejection
+-  Vault balance overflow protection
+-  Emergency mode fee manipulation prevention
+-  Zero/negative amount rejection
 
 ### 4. Authentication Bypass Attempts
-- ✅ Missing signature rejection
-- ✅ Wrong signature rejection
-- ✅ Expired transaction rejection
-- ✅ Transaction replay prevention
+-  Missing signature rejection
+-  Wrong signature rejection
+-  Expired transaction rejection
+-  Transaction replay prevention
 
 ### 5. Edge Case Security Tests
-- ✅ Overflow attack prevention
-- ✅ Underflow attack prevention
-- ✅ Malformed input rejection
+-  Overflow attack prevention
+-  Underflow attack prevention
+-  Malformed input rejection
 
 ### 6. Circuit Security
-- ✅ Circuit soundness validation
-- ✅ Input validation in circuits
-- ✅ Constraint system integrity
+-  Circuit soundness validation
+-  Input validation in circuits
+-  Constraint system integrity
 
 ### 7. Performance Security
-- ✅ DoS attack resistance
-- ✅ Resource usage validation
+-  DoS attack resistance
+-  Resource usage validation
 
 ## Security Findings
 - No critical vulnerabilities detected
@@ -472,7 +472,7 @@ EOF
 
 # Main execution
 main() {
-    echo "🚀 Security Test Suite Started"
+    echo " Security Test Suite Started"
     echo "=================================="
     
     check_dependencies
@@ -489,8 +489,8 @@ main() {
     
     echo "=================================="
     log_success "All security tests passed!"
-    echo "🛡️ System is secure against tested attack vectors"
-    echo "📊 Security report generated"
+    echo " System is secure against tested attack vectors"
+    echo " Security report generated"
 }
 
 # Run main function

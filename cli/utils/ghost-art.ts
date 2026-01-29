@@ -88,15 +88,15 @@ ${chalk.red('              ')}`
   static getProgressBar(score: number, total: number = 100): string {
     const filledBlocks = Math.round((score / total) * 20);
     const emptyBlocks = 20 - filledBlocks;
-    const filled = ''.repeat(filledBlocks);
-    const empty = ''.repeat(emptyBlocks);
-    
+    const filled = '#'.repeat(filledBlocks);
+    const empty = '-'.repeat(emptyBlocks);
+
     let color = chalk.green;
     if (score < 40) color = chalk.red;
     else if (score < 60) color = chalk.yellow;
     else if (score < 80) color = chalk.blue;
     else if (score < 90) color = chalk.cyan;
-    
+
     return color(filled) + chalk.gray(empty);
   }
 
@@ -119,14 +119,14 @@ ${chalk.gray('')}`;
   static formatScore(score: GhostScore): string {
     const art = this.getGhostArt(score.ghostLevel);
     const progressBar = this.getProgressBar(score.score);
-    
+
     let gradeColor = chalk.green;
     if (score.grade === 'F' || score.grade === 'D') gradeColor = chalk.red;
     else if (score.grade === 'C') gradeColor = chalk.yellow;
     else if (score.grade === 'B') gradeColor = chalk.blue;
     else if (score.grade === 'A') gradeColor = chalk.cyan;
     else if (score.grade === 'A+') gradeColor = chalk.magenta;
-    
+
     let levelColor = chalk.green;
     if (score.ghostLevel === 'Glass House' || score.ghostLevel === 'Exposed') levelColor = chalk.red;
     else if (score.ghostLevel === 'Visible') levelColor = chalk.yellow;
@@ -182,17 +182,17 @@ ${chalk.yellow('')}
       output += `${chalk.white('[' + (index + 1) + '] ' + severityColor(severityIcon + ' ' + threat.severity + ' ' + threat.category) + ']')}
 ${chalk.white('')} ${chalk.white(threat.description)} ${' '.repeat(85 - threat.description.length)} ${chalk.white('')}
 ${chalk.white('')} ${chalk.gray(' Impact: ' + threat.recommendation)} ${' '.repeat(75 - threat.recommendation.length)} ${chalk.white('')}`;
-      
+
       if (threat.hopCount) {
         output += `
 ${chalk.white('')} ${chalk.yellow(' Network Analysis: ' + threat.hopCount + ' hop-links to exchange found')} ${' '.repeat(50)} ${chalk.white('')}`;
       }
-      
+
       if (threat.fixCommand) {
         output += `
 ${chalk.white('')} ${chalk.cyan(' Solution: ' + threat.fixCommand)} ${' '.repeat(75 - threat.fixCommand.length)} ${chalk.white('')}`;
       }
-      
+
       output += `
 ${chalk.white('')}
 

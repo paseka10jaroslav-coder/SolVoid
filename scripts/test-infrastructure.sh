@@ -13,19 +13,19 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}ℹ  $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}  $1${NC}"
 }
 
 # Test relayer service
@@ -492,7 +492,7 @@ test_logging_configuration() {
 
 # Main test execution
 main() {
-    echo "🏗️ Testing Infrastructure"
+    echo " Testing Infrastructure"
     echo "======================="
     
     test_relayer_service
@@ -507,18 +507,18 @@ main() {
     test_logging_configuration
     
     echo ""
-    echo "🎉 Infrastructure testing completed!"
+    echo " Infrastructure testing completed!"
     echo ""
-    echo "📋 Infrastructure Summary:"
-    echo "✅ Relayer service configuration verified"
-    echo "✅ Key persistence mechanisms tested"
-    echo "✅ Rate limiting functionality verified"
-    echo "✅ Monitoring and alerting configured"
-    echo "✅ Database connectivity tested"
-    echo "✅ Load balancing verified"
-    echo "✅ Health checks implemented"
-    echo "✅ Security configuration validated"
-    echo "✅ Logging system functional"
+    echo " Infrastructure Summary:"
+    echo " Relayer service configuration verified"
+    echo " Key persistence mechanisms tested"
+    echo " Rate limiting functionality verified"
+    echo " Monitoring and alerting configured"
+    echo " Database connectivity tested"
+    echo " Load balancing verified"
+    echo " Health checks implemented"
+    echo " Security configuration validated"
+    echo " Logging system functional"
 }
 
 # Run main function

@@ -1,178 +1,60 @@
-# Contributing to SolVoid
+#  Contributing to SolVoid
 
-We welcome contributions to SolVoid! This guide will help you get started.
+First off, thank you for considering contributing to SolVoid! It's people like you that make the open-source community such an amazing place to learn, inspire, and create.
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Git
-- Basic knowledge of Solana and blockchain concepts
-
-### Development Setup
-
-1. Fork the repository
-2. Create a feature branch
-3. Set up your development environment
-4. Make your changes
-5. Test your changes
-6. Submit a pull request
-
-## 📋 Areas of Contribution
-
-### Documentation
-- Improve existing documentation
-- Add new examples
-- Fix typos and errors
-
-### Examples and Demos
-- Create new integration examples
-- Improve existing demos
-- Add new use cases
-
-### Scripts and Tools
-- Improve build scripts
-- Add new CLI commands
-- Enhance automation tools
-
-### Testing
-- Write unit tests
-- Add integration tests
-- Improve test coverage
-
-## 🤝 Development Workflow
-
-1. **Fork & Clone**
-   ```bash
-   git clone https://github.com/your-username/solvoid.git
-   cd solvoid
-   ```
-
-2. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Make Changes**
-   - Write your code
-   - Add tests
-   - Update documentation
-
-4. **Test Your Changes**
-   ```bash
-   npm test
-   npm run lint
-   npm run type-check
-   ```
-
-5. **Submit Pull Request**
-   ```bash
-   git add .
-   git commit -m "feat: add your feature"
-   git push origin feature/your-feature-name
-   ```
-
-## 📝 Code Style
-
-### General Guidelines
-- Use TypeScript for all new code
-- Follow existing code patterns
-- Write clear, descriptive comments
-- Keep functions small and focused
-
-### Formatting
-```bash
-npm run format
-```
-
-### Linting
-```bash
-npm run lint
-```
-
-## 🧪 Testing
-
-### Running Tests
-```bash
-# Run all tests
-npm test
-
-# Run specific test suites
-npm run test:unit
-npm run test:integration
-npm run test:e2e
-```
-
-### Writing Tests
-- Write tests for new features
-- Aim for good coverage
-- Use descriptive test names
-- Test edge cases
-
-## 📚 Documentation
-
-### Documentation Types
-- **README**: Main project documentation
-- **API docs**: API reference
-- **Guides**: How-to guides
-- **Examples**: Code examples
-
-### Writing Documentation
-- Use clear, simple language
-- Include code examples
-- Keep documentation up to date
-
-## 🔐 Security
-
-### Reporting Security Issues
-- Do not report security issues publicly
-- Email: security@solvoid.dev
-- Follow our security policy
-
-### Security Best Practices
-- Review code for security issues
-- Use secure coding practices
-- Follow dependency best practices
-
-## 📝 Pull Request Process
-
-### Before Submitting
-- [ ] Tests pass
-- [ ] Code is properly formatted
-- [ ] Documentation is updated
-- [ ] No breaking changes
-
-### Submitting PR
-1. Create a descriptive title
-2. Describe your changes
-3. Link related issues
-4. Request reviews
-
-### After Submitting
-- Respond to review feedback
-- Make requested changes
-- Keep PR up to date
-
-## 🎉 Recognition
-
-Contributors are recognized in our:
-- README contributors section
-- Release notes
-- Community announcements
-
-## 📞 Getting Help
-
-### Resources
-- [Documentation](./docs/)
-- [Issues](https://github.com/privacy-zero/solvoid/issues)
-- [Discord](https://discord.gg/solvoid)
-- [Email](mailto:team@solvoid.dev)
-
-### Questions?
-- Check existing documentation
-- Search existing issues
-- Join our Discord community
+##  Our Code of Conduct
+By participating in this project, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ---
 
-**Thank you for contributing to SolVoid!** 🚀
+##  How Can I Contribute?
+
+### Reporting Bugs
+- **Check for existing issues:** Before opening a new one, see if someone else has already reported it.
+- **Provide detail:** Include your OS, browser version, Solana CLI version, and clear steps to reproduce the bug.
+- **Attach logs:** If the issue is with the SDK or CLI, provide the terminal output.
+
+### Suggesting Enhancements
+We love new ideas! Please open an issue with the "feature request" tag and explain:
+- **What** is the feature?
+- **Why** is it needed?
+- **How** should it work?
+
+### Pull Requests
+1. **Fork the repo** and create your branch from `main`.
+2. **Setup your environment:** (See [GETTING_STARTED.md](./GETTING_STARTED.md)).
+3. **Write tests:** Ensure your changes are covered by unit or integration tests.
+4. **Follow the style guide:** We use Prettier for TS and `cargo fmt` for Rust.
+5. **Update documentation:** If you change an API or add a feature, update the relevant `.md` files.
+
+---
+
+##  Development Setup
+
+```bash
+# Install everything
+npm install
+
+# Run tests
+anchor test
+
+# Build circuits (if needed)
+./scripts/build-zk.sh
+```
+
+---
+
+##  Commit Message Conventions
+We follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification:
+- `feat:` for new features.
+- `fix:` for bug fixes.
+- `docs:` for documentation updates.
+- `refactor:` for code changes that neither fix a bug nor add a feature.
+
+---
+
+##  Recognition
+All contributors will be featured in our README and are eligible for future token distributions or community rewards if the project transitions to a DAO model.
+
+---
+*Questions? Reach out to us on [Twitter/X](https://x.com/solvoid).*

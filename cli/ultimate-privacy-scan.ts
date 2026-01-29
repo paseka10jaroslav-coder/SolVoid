@@ -39,7 +39,7 @@ class UltimatePrivacyScanner {
     private region: string = 'global';
 
     constructor() {
-        console.log(`🚀 Ultimate Scanner initialized with ${this.workingRPCs.length} RPC endpoints`);
+        console.log(` Ultimate Scanner initialized with ${this.workingRPCs.length} RPC endpoints`);
         this.initializeRPCStats();
     }
 
@@ -127,7 +127,7 @@ class UltimatePrivacyScanner {
             const rpc = this.workingRPCs[index];
             if (await this.testRPCConnection(rpc.url, index)) {
                 this.currentRPCIndex = index;
-                console.log(`📡 Using RPC: ${rpc.name} (${rpc.region}, ${rpc.type})`);
+                console.log(` Using RPC: ${rpc.name} (${rpc.region}, ${rpc.type})`);
                 return new Connection(rpc.url, {
                     commitment: 'confirmed',
                     httpHeaders: { 
@@ -146,7 +146,7 @@ class UltimatePrivacyScanner {
             const rpc = this.workingRPCs[i];
             if (await this.testRPCConnection(rpc.url, i)) {
                 this.currentRPCIndex = i;
-                console.log(`🔄 Switched to RPC: ${rpc.name} (${rpc.region}, ${rpc.type})`);
+                console.log(` Switched to RPC: ${rpc.name} (${rpc.region}, ${rpc.type})`);
                 return new Connection(rpc.url, {
                     commitment: 'confirmed',
                     httpHeaders: { 
@@ -158,7 +158,7 @@ class UltimatePrivacyScanner {
         }
 
         // Fallback to devnet
-        console.log('⚠️ All mainnet RPCs failed, using devnet');
+        console.log(' All mainnet RPCs failed, using devnet');
         return new Connection(clusterApiUrl('devnet'), {
             commitment: 'confirmed'
         });
@@ -178,8 +178,8 @@ class UltimatePrivacyScanner {
     }
 
     async analyzeAddress(address: string): Promise<PrivacyScore> {
-        console.log(`🔍 Analyzing address: ${address}`);
-        console.log(`🌍 Available RPCs: ${this.workingRPCs.length} endpoints`);
+        console.log(` Analyzing address: ${address}`);
+        console.log(` Available RPCs: ${this.workingRPCs.length} endpoints`);
         
         let accountBalance = 0;
         let usedEndpoints: string[] = [];
@@ -197,9 +197,9 @@ class UltimatePrivacyScanner {
             usedEndpoints.push(currentRPC.name);
             region = currentRPC.region;
             
-            console.log(`💰 REAL Account Balance: ${accountBalance.toFixed(4)} SOL`);
+            console.log(` REAL Account Balance: ${accountBalance.toFixed(4)} SOL`);
         } catch (error) {
-            console.log('⚠️ Balance fetch failed, using realistic demo data');
+            console.log(' Balance fetch failed, using realistic demo data');
             accountBalance = this.getRealisticBalance(address);
             dataSource = 'Demo Data with Ultimate RPC Infrastructure';
         }
@@ -212,7 +212,7 @@ class UltimatePrivacyScanner {
         while (attempts < maxAttempts && !transactionData) {
             attempts++;
             try {
-                console.log(`📊 Attempt ${attempts}: Fetching transaction data...`);
+                console.log(` Attempt ${attempts}: Fetching transaction data...`);
                 const connection = await this.getWorkingConnection();
                 transactionData = await this.fetchTransactionData(address, connection);
                 
@@ -221,23 +221,23 @@ class UltimatePrivacyScanner {
                     usedEndpoints.push(currentRPC.name);
                 }
                 
-                console.log('✅ Transaction data fetched successfully');
+                console.log(' Transaction data fetched successfully');
                 break;
             } catch (error) {
-                console.log(`❌ Attempt ${attempts} failed: ${error.message}`);
+                console.log(` Attempt ${attempts} failed: ${error.message}`);
                 this.markRPCFailed(this.currentRPCIndex);
                 
                 if (attempts < maxAttempts) {
                     // Exponential backoff with jitter
                     const delay = Math.min(1000 * Math.pow(2, attempts - 1), 8000) + Math.random() * 1000;
-                    console.log(`⏳ Waiting ${Math.round(delay)}ms before retry...`);
+                    console.log(` Waiting ${Math.round(delay)}ms before retry...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
         }
 
         if (!transactionData) {
-            console.log('⚠️ All RPC attempts failed, using realistic demo data');
+            console.log(' All RPC attempts failed, using realistic demo data');
             transactionData = this.generateRealisticDemoData(address);
             dataSource = 'Realistic Demo Data';
         }
@@ -254,7 +254,7 @@ class UltimatePrivacyScanner {
             { limit: 15 }
         );
         
-        console.log(`📋 Found ${signatures.length} recent transactions`);
+        console.log(` Found ${signatures.length} recent transactions`);
 
         // Get detailed transactions (only first 5 to be safe)
         const transactions = [];
@@ -501,7 +501,7 @@ class UltimatePrivacyScanner {
     }
 
     public getRPCStats(): void {
-        console.log('\n📊 RPC Performance Statistics:');
+        console.log('\n RPC Performance Statistics:');
         console.log('================================');
         
         const workingRPCs = Array.from(this.rpcStats.entries())
@@ -512,10 +512,10 @@ class UltimatePrivacyScanner {
         workingRPCs.forEach(([index, stats]) => {
             const rpc = this.workingRPCs[index];
             const successRate = stats.success / Math.max(1, stats.success + stats.failure) * 100;
-            console.log(`✅ ${rpc.name}: ${stats.success} success, ${stats.failure} failures (${successRate.toFixed(1)}%)`);
+            console.log(` ${rpc.name}: ${stats.success} success, ${stats.failure} failures (${successRate.toFixed(1)}%)`);
         });
 
-        console.log(`\n🌍 Available by Region:`);
+        console.log(`\n Available by Region:`);
         Object.entries(RPC_REGIONS).forEach(([region, endpoints]) => {
             const available = endpoints.filter(name => 
                 this.workingRPCs.find(rpc => rpc.name === name && !this.failedRPCs.has(this.workingRPCs.indexOf(rpc)))
@@ -533,26 +533,26 @@ async function main() {
 
     if (!address) {
         console.log(`
-🚀 SolVoid Ultimate Privacy Scanner - 40+ RPC Endpoints
+ SolVoid Ultimate Privacy Scanner - 40+ RPC Endpoints
 
 Usage: node ultimate-privacy-scan.js <SOLANA_ADDRESS> [--stats]
 
 Features:
-  🌍 40+ verified RPC endpoints globally
-  🔄 Intelligent failover with success rate tracking
-  🌐 Regional optimization (US, Europe, Asia)
-  🎯 IP rotation for enhanced anonymity
-  📊 Performance statistics and monitoring
-  💡 Privacy recommendations
-  ⚡ Exponential backoff with jitter
+   40+ verified RPC endpoints globally
+   Intelligent failover with success rate tracking
+   Regional optimization (US, Europe, Asia)
+   IP rotation for enhanced anonymity
+   Performance statistics and monitoring
+   Privacy recommendations
+   Exponential backoff with jitter
 
 RPC Categories:
-  🏢 Official: Solana Labs endpoints
-  🚀 Providers: Triton, QuickNode, Helius, Blockdaemon
-  🌍 Regional: US, Europe, Asia optimized
-  🔄 Backup: Community and fallback endpoints
-  📈 Performance: High-speed endpoints
-  🛠️ Development: Devnet and testnet
+   Official: Solana Labs endpoints
+   Providers: Triton, QuickNode, Helius, Blockdaemon
+   Regional: US, Europe, Asia optimized
+   Backup: Community and fallback endpoints
+   Performance: High-speed endpoints
+   Development: Devnet and testnet
 
 REAL Test Addresses:
   🟢 So11111111111111111111111111111111111111112 (Wrapped SOL)
@@ -561,9 +561,9 @@ REAL Test Addresses:
         process.exit(1);
     }
 
-    console.log('🚀 SolVoid Ultimate Privacy Scanner');
+    console.log(' SolVoid Ultimate Privacy Scanner');
     console.log('====================================');
-    console.log('🌍 40+ RPC Endpoints with IP Rotation');
+    console.log(' 40+ RPC Endpoints with IP Rotation');
 
     const scanner = new UltimatePrivacyScanner();
     
@@ -577,59 +577,59 @@ REAL Test Addresses:
         const result = await scanner.analyzeAddress(address);
         const endTime = Date.now();
         
-        console.log(`\n⏱️  Analysis completed in ${endTime - startTime}ms`);
+        console.log(`\n  Analysis completed in ${endTime - startTime}ms`);
         
-        console.log('\n📊 PRIVACY ANALYSIS RESULTS');
+        console.log('\n PRIVACY ANALYSIS RESULTS');
         console.log('==========================');
-        console.log(`🎯 Overall Privacy Score: ${result.score}/100`);
-        console.log(`⚠️  Risk Level: ${result.riskLevel}`);
-        console.log(`📡 Data Source: ${result.realData.dataSource}`);
-        console.log(`🌍 Region: ${result.realData.region}`);
-        console.log(`🔄 RPC Endpoints Used: ${result.realData.rpcEndpoints.join(' → ')}`);
+        console.log(` Overall Privacy Score: ${result.score}/100`);
+        console.log(`  Risk Level: ${result.riskLevel}`);
+        console.log(` Data Source: ${result.realData.dataSource}`);
+        console.log(` Region: ${result.realData.region}`);
+        console.log(` RPC Endpoints Used: ${result.realData.rpcEndpoints.join(' → ')}`);
         
-        console.log('\n📈 Detailed Breakdown:');
-        console.log(`   🔹 Transaction Pattern: ${result.breakdown.transactionPattern}/100`);
-        console.log(`   🔹 Timing Analysis: ${result.breakdown.timingAnalysis}/100`);
-        console.log(`   🔹 Amount Distribution: ${result.breakdown.amountDistribution}/100`);
-        console.log(`   🔹 Network Behavior: ${result.breakdown.networkBehavior}/100`);
+        console.log('\n Detailed Breakdown:');
+        console.log(`    Transaction Pattern: ${result.breakdown.transactionPattern}/100`);
+        console.log(`    Timing Analysis: ${result.breakdown.timingAnalysis}/100`);
+        console.log(`    Amount Distribution: ${result.breakdown.amountDistribution}/100`);
+        console.log(`    Network Behavior: ${result.breakdown.networkBehavior}/100`);
         
-        console.log('\n💰 Blockchain Data:');
-        console.log(`   💳 Account Balance: ${result.realData.accountBalance.toFixed(4)} SOL`);
-        console.log(`   📊 Total Transactions: ${result.realData.totalTransactions}`);
-        console.log(`   💸 Total SOL Volume: ${result.realData.totalSol.toFixed(4)} SOL`);
-        console.log(`   👥 Unique Counterparties: ${result.realData.uniqueCounterparties}`);
-        console.log(`   📏 Average Transaction: ${result.realData.avgTransactionAmount.toFixed(4)} SOL`);
-        console.log(`   🕒 Last Activity: ${result.realData.lastActivity}`);
+        console.log('\n Blockchain Data:');
+        console.log(`    Account Balance: ${result.realData.accountBalance.toFixed(4)} SOL`);
+        console.log(`    Total Transactions: ${result.realData.totalTransactions}`);
+        console.log(`    Total SOL Volume: ${result.realData.totalSol.toFixed(4)} SOL`);
+        console.log(`    Unique Counterparties: ${result.realData.uniqueCounterparties}`);
+        console.log(`    Average Transaction: ${result.realData.avgTransactionAmount.toFixed(4)} SOL`);
+        console.log(`    Last Activity: ${result.realData.lastActivity}`);
         
-        console.log('\n💡 Privacy Recommendations:');
+        console.log('\n Privacy Recommendations:');
         result.recommendations.forEach((rec, index) => {
             console.log(`   ${index + 1}. ${rec}`);
         });
         
-        console.log('\n🔒 Privacy Status:');
+        console.log('\n Privacy Status:');
         if (result.score >= 80) {
-            console.log('   ✅ EXCELLENT - Strong privacy practices');
+            console.log('    EXCELLENT - Strong privacy practices');
         } else if (result.score >= 60) {
-            console.log('   ⚠️  MODERATE - Room for improvement');
+            console.log('     MODERATE - Room for improvement');
         } else {
-            console.log('   ❌ NEEDS ATTENTION - Privacy at risk');
+            console.log('    NEEDS ATTENTION - Privacy at risk');
         }
         
-        console.log('\n🛡️  SolVoid Enterprise Features:');
-        console.log('   🌍 40+ RPC endpoints globally');
-        console.log('   🔄 Intelligent failover system');
-        console.log('   🌐 IP rotation for anonymity');
-        console.log('   📊 Performance monitoring');
-        console.log('   🚀 Shield transactions');
-        console.log('   🔐 Zero-knowledge proofs');
-        console.log('   🌉 Gasless relayer network');
-        console.log('   📊 Real-time monitoring');
+        console.log('\n  SolVoid Enterprise Features:');
+        console.log('    40+ RPC endpoints globally');
+        console.log('    Intelligent failover system');
+        console.log('    IP rotation for anonymity');
+        console.log('    Performance monitoring');
+        console.log('    Shield transactions');
+        console.log('    Zero-knowledge proofs');
+        console.log('    Gasless relayer network');
+        console.log('    Real-time monitoring');
         
         // Show stats at the end
         scanner.getRPCStats();
         
     } catch (error) {
-        console.error('❌ Analysis failed:', error.message);
+        console.error(' Analysis failed:', error.message);
         process.exit(1);
     }
 }

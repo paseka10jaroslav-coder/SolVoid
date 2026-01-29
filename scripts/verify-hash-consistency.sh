@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🔍 Starting Cross-Component Hash Verification..."
+echo " Starting Cross-Component Hash Verification..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -15,22 +15,22 @@ NC='\033[0m' # No Color
 
 # Function to log success
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 # Function to log error
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 # Function to log warning
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}  $1${NC}"
 }
 
 # Function to log info
 log_info() {
-    echo -e "ℹ️  $1"
+    echo -e "ℹ  $1"
 }
 
 # Check if required tools are installed
@@ -160,7 +160,7 @@ EOF
             process.exit(1);
         }
         
-        console.log('✅ Circom hash test passed');
+        console.log(' Circom hash test passed');
     }
     
     test().catch(console.error);
@@ -232,7 +232,7 @@ compare_hash_results() {
             }
         }
         
-        console.log('✅ TypeScript hash comparison passed');
+        console.log(' TypeScript hash comparison passed');
     }
     
     test().catch(console.error);
@@ -287,7 +287,7 @@ check_cryptographic_drift() {
             }
         }
         
-        console.log('✅ No cryptographic drift detected');
+        console.log(' No cryptographic drift detected');
     }
     
     checkDrift().catch(console.error);
@@ -303,7 +303,7 @@ check_cryptographic_drift() {
 
 # Main execution
 main() {
-    echo "🚀 Cross-Component Hash Verification Started"
+    echo " Cross-Component Hash Verification Started"
     echo "=========================================="
     
     check_dependencies
@@ -315,7 +315,7 @@ main() {
     
     echo "=========================================="
     log_success "All cross-component hash verification tests passed!"
-    echo "🎉 Build can proceed safely"
+    echo " Build can proceed safely"
 }
 
 # Run main function

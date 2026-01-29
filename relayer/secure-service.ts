@@ -225,7 +225,7 @@ class SecureRelayerService {
 
             this.registeredRelayers.set(publicKey, relayer);
 
-            console.log(`✅ Registered relayer: ${publicKey.slice(0, 8)}...`);
+            console.log(` Registered relayer: ${publicKey.slice(0, 8)}...`);
 
             res.json({
                 success: true,
@@ -579,7 +579,7 @@ class SecureRelayerService {
         relayer.reputation = Math.max(0, relayer.reputation - amount);
         relayer.slashedAmount += amount;
 
-        console.log(`⚠️ Slashed relayer ${publicKey.slice(0, 8)}...: ${amount} - ${reason}`);
+        console.log(` Slashed relayer ${publicKey.slice(0, 8)}...: ${amount} - ${reason}`);
 
         res.json({
             success: true,
@@ -626,10 +626,10 @@ class SecureRelayerService {
 
     public start() {
         this.app.listen(PORT, () => {
-            console.log(`🛡️  SolVoid Secure Relayer Ready on ${PORT}`);
-            console.log(`🔑 Node ID: ${NODE_ID}`);
-            console.log(`💰 Bounty Rate: ${BOUNTY_RATE_SOL} SOL per relay`);
-            console.log(`📊 Rate Limit: ${RATE_LIMIT_MAX} requests per minute`);
+            console.log(`  SolVoid Secure Relayer Ready on ${PORT}`);
+            console.log(` Node ID: ${NODE_ID}`);
+            console.log(` Bounty Rate: ${BOUNTY_RATE_SOL} SOL per relay`);
+            console.log(` Rate Limit: ${RATE_LIMIT_MAX} requests per minute`);
         });
     }
 }

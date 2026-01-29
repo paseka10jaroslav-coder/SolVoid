@@ -6,17 +6,17 @@
 
 set -e
 
-echo "🌐 Building SolVoid Dashboard..."
+echo " Building SolVoid Dashboard..."
 
 # Check if we're in the right directory
 if [ ! -f "package.json" ]; then
-    echo "❌ package.json not found. Please run from dashboard directory."
+    echo " package.json not found. Please run from dashboard directory."
     exit 1
 fi
 
 # Install dependencies if needed
 if [ ! -d "node_modules" ]; then
-    echo "📦 Installing dependencies..."
+    echo " Installing dependencies..."
     npm install
 fi
 
@@ -24,21 +24,21 @@ fi
 mkdir -p dist
 
 # Copy static files
-echo "📄 Copying static files..."
+echo " Copying static files..."
 cp -r src/* dist/
 cp -r public/* dist/ 2>/dev/null || true
 
 # Copy to root for easy access
-echo "📋 Copying to project root..."
+echo " Copying to project root..."
 cp -r dist/* ../dashboard/dist/ 2>/dev/null || mkdir -p ../dashboard/dist && cp -r dist/* ../dashboard/dist/
 
 echo ""
-echo "✅ Dashboard build complete!"
+echo " Dashboard build complete!"
 echo ""
-echo "🚀 To start the dashboard server:"
+echo " To start the dashboard server:"
 echo "   npm run dev"
 echo ""
-echo "🌐 Or serve directly:"
+echo " Or serve directly:"
 echo "   npx http-server dist -p 3000 -c-1 --cors"
 echo ""
-echo "📊 Dashboard will be available at: http://localhost:3000"
+echo " Dashboard will be available at: http://localhost:3000"

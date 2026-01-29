@@ -13,15 +13,15 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}ℹ  $1${NC}"
 }
 
 # Test emergency mode controls
@@ -364,7 +364,7 @@ test_admin_permissions() {
 
 # Main test execution
 main() {
-    echo "🔧 Testing Admin Controls"
+    echo " Testing Admin Controls"
     echo "======================="
     
     test_emergency_mode
@@ -374,7 +374,7 @@ main() {
     test_admin_permissions
     
     echo ""
-    echo "🎉 Admin controls testing completed!"
+    echo " Admin controls testing completed!"
 }
 
 # Run main function

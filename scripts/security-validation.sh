@@ -7,7 +7,7 @@
 
 set -e
 
-echo "🔬 SolVoid Security Validation Suite"
+echo " SolVoid Security Validation Suite"
 echo "===================================="
 echo "Phase: Validation & Hardening"
 echo ""
@@ -31,7 +31,7 @@ run_test_suite() {
     local description=$3
     
     echo ""
-    echo "${BLUE}🧪 Running: $test_name${NC}"
+    echo "${BLUE} Running: $test_name${NC}"
     echo "$description"
     echo "----------------------------------------"
     
@@ -39,12 +39,12 @@ run_test_suite() {
     
     if npm test -- --testPathPattern="$test_file" --verbose; then
         echo ""
-        echo "${GREEN}✅ PASSED: $test_name${NC}"
+        echo "${GREEN} PASSED: $test_name${NC}"
         PASSED=$((PASSED + 1))
         return 0
     else
         echo ""
-        echo "${RED}❌ FAILED: $test_name${NC}"
+        echo "${RED} FAILED: $test_name${NC}"
         FAILED=$((FAILED + 1))
         return 1
     fi
@@ -53,7 +53,7 @@ run_test_suite() {
 # Function to check circuit artifacts
 check_circuit_artifacts() {
     echo ""
-    echo "${BLUE}🔍 Checking Circuit Artifacts${NC}"
+    echo "${BLUE} Checking Circuit Artifacts${NC}"
     echo "----------------------------------------"
     
     local artifacts=(
@@ -70,18 +70,18 @@ check_circuit_artifacts() {
         local desc="${artifact##*:}"
         
         if [ -f "$file" ]; then
-            echo "${GREEN}✅ Found: $desc ($file)${NC}"
+            echo "${GREEN} Found: $desc ($file)${NC}"
         else
-            echo "${RED}❌ Missing: $desc ($file)${NC}"
+            echo "${RED} Missing: $desc ($file)${NC}"
             all_exist=false
         fi
     done
     
     if [ "$all_exist" = true ]; then
-        echo "${GREEN}✅ All circuit artifacts present${NC}"
+        echo "${GREEN} All circuit artifacts present${NC}"
         return 0
     else
-        echo "${RED}❌ Missing circuit artifacts - run build-circuits.sh${NC}"
+        echo "${RED} Missing circuit artifacts - run build-circuits.sh${NC}"
         return 1
     fi
 }
@@ -89,7 +89,7 @@ check_circuit_artifacts() {
 # Function to verify ceremony artifacts
 check_ceremony_artifacts() {
     echo ""
-    echo "${BLUE}🔍 Checking Ceremony Artifacts${NC}"
+    echo "${BLUE} Checking Ceremony Artifacts${NC}"
     echo "----------------------------------------"
     
     local ceremony_files=(
@@ -105,13 +105,13 @@ check_ceremony_artifacts() {
         local desc="${file##*:}"
         
         if [ -f "$path" ]; then
-            echo "${GREEN}✅ Found: $desc${NC}"
+            echo "${GREEN} Found: $desc${NC}"
         else
-            echo "${YELLOW}⚠️ Optional: $desc${NC}"
+            echo "${YELLOW} Optional: $desc${NC}"
         fi
     done
     
-    echo "${GREEN}✅ Ceremony artifacts checked${NC}"
+    echo "${GREEN} Ceremony artifacts checked${NC}"
     return 0
 }
 
@@ -120,7 +120,7 @@ generate_security_report() {
     local report_file="SECURITY_VALIDATION_REPORT.md"
     
     echo ""
-    echo "${BLUE}📋 Generating Security Report${NC}"
+    echo "${BLUE} Generating Security Report${NC}"
     echo "----------------------------------------"
     
     cat > "$report_file" << EOF
@@ -128,7 +128,7 @@ generate_security_report() {
 
 **Generated:** $(date)
 **Phase:** Validation & Hardening
-**Status:** $([ $FAILED -eq 0 ] && echo "✅ PASSED" || echo "❌ FAILED")
+**Status:** $([ $FAILED -eq 0 ] && echo " PASSED" || echo " FAILED")
 
 ## Executive Summary
 
@@ -137,12 +137,12 @@ generate_security_report() {
 - **Failed:** $FAILED
 - **Success Rate:** $(( PASSED * 100 / TOTAL ))%
 
-$([ $FAILED -eq 0 ] && echo "🎉 ALL SECURITY TESTS PASSED - Protocol ready for next phase" || echo "🚨 SECURITY TESTS FAILED - DO NOT PROCEED TO MAINNET")
+$([ $FAILED -eq 0 ] && echo " ALL SECURITY TESTS PASSED - Protocol ready for next phase" || echo " SECURITY TESTS FAILED - DO NOT PROCEED TO MAINNET")
 
 ## Test Results
 
 ### Phase 9: Circuit Soundness Tests
-$([ -f "tests/security/circuit-soundness.test.ts" ] && echo "✅ Circuit soundness tests implemented" || echo "❌ Circuit soundness tests missing")
+$([ -f "tests/security/circuit-soundness.test.ts" ] && echo " Circuit soundness tests implemented" || echo " Circuit soundness tests missing")
 
 **Critical Validations:**
 - Invalid witness rejection
@@ -152,7 +152,7 @@ $([ -f "tests/security/circuit-soundness.test.ts" ] && echo "✅ Circuit soundne
 - snarkjs verification consistency
 
 ### Phase 9.2: Verifier Consistency Tests
-$([ -f "tests/security/verifier-consistency.test.ts" ] && echo "✅ Verifier consistency tests implemented" || echo "❌ Verifier consistency tests missing")
+$([ -f "tests/security/verifier-consistency.test.ts" ] && echo " Verifier consistency tests implemented" || echo " Verifier consistency tests missing")
 
 **Critical Validations:**
 - Off-chain vs on-chain verification match
@@ -160,7 +160,7 @@ $([ -f "tests/security/verifier-consistency.test.ts" ] && echo "✅ Verifier con
 - Public signal validation
 
 ### Phase 10: State Invariant Tests
-$([ -f "tests/security/state-invariants.test.ts" ] && echo "✅ State invariant tests implemented" || echo "❌ State invariant tests missing")
+$([ -f "tests/security/state-invariants.test.ts" ] && echo " State invariant tests implemented" || echo " State invariant tests missing")
 
 **Critical Invariants:**
 - next_index monotonicity
@@ -170,7 +170,7 @@ $([ -f "tests/security/state-invariants.test.ts" ] && echo "✅ State invariant 
 - Economic consistency
 
 ### Phase 11: Relayer Adversarial Tests
-$([ -f "tests/security/relayer-adversarial.test.ts" ] && echo "✅ Relayer adversarial tests implemented" || echo "❌ Relayer adversarial tests missing")
+$([ -f "tests/security/relayer-adversarial.test.ts" ] && echo " Relayer adversarial tests implemented" || echo " Relayer adversarial tests missing")
 
 **Attack Simulations:**
 - Replay attack prevention
@@ -235,7 +235,7 @@ RECOMMENDATIONS_FAILED
 
 ## Risk Assessment
 
-$([ $FAILED -eq 0 ] && echo "🟢 **LOW RISK** - All security validations passed" || echo "🔴 **HIGH RISK** - Security validations failed")
+$([ $FAILED -eq 0 ] && echo "🟢 **LOW RISK** - All security validations passed" || echo " **HIGH RISK** - Security validations failed")
 
 ## Compliance Status
 
@@ -253,7 +253,7 @@ $([ $FAILED -eq 0 ] && echo "🟢 **LOW RISK** - All security validations passed
 **This report is automatically generated. Manual review recommended.**
 EOF
 
-    echo "${GREEN}✅ Security report generated: $report_file${NC}"
+    echo "${GREEN} Security report generated: $report_file${NC}"
 }
 
 # Main execution
@@ -262,13 +262,13 @@ main() {
     echo ""
     
     # Check prerequisites
-    echo "${YELLOW}🔍 Checking prerequisites...${NC}"
+    echo "${YELLOW} Checking prerequisites...${NC}"
     check_circuit_artifacts || exit 1
     check_ceremony_artifacts
     
     # Run security test suites
     echo ""
-    echo "${YELLOW}🧪 Running Security Test Suites${NC}"
+    echo "${YELLOW} Running Security Test Suites${NC}"
     echo "===================================="
     
     # Phase 9: Circuit Soundness
@@ -289,7 +289,7 @@ main() {
     # Final summary
     echo ""
     echo "===================================="
-    echo "🏁 SECURITY VALIDATION COMPLETE"
+    echo " SECURITY VALIDATION COMPLETE"
     echo "===================================="
     echo ""
     echo "Test Suites: $TOTAL"
@@ -298,19 +298,19 @@ main() {
     echo ""
     
     if [ $FAILED -eq 0 ]; then
-        echo "${GREEN}🎉 ALL SECURITY TESTS PASSED${NC}"
+        echo "${GREEN} ALL SECURITY TESTS PASSED${NC}"
         echo ""
-        echo "✅ Protocol passed Phase 9-11 security validation"
-        echo "✅ Ready for Phase 12: Trust Assumption Freeze"
-        echo "✅ See SECURITY_VALIDATION_REPORT.md for details"
+        echo " Protocol passed Phase 9-11 security validation"
+        echo " Ready for Phase 12: Trust Assumption Freeze"
+        echo " See SECURITY_VALIDATION_REPORT.md for details"
         echo ""
         exit 0
     else
-        echo "${RED}🚨 SECURITY TESTS FAILED${NC}"
+        echo "${RED} SECURITY TESTS FAILED${NC}"
         echo ""
-        echo "❌ DO NOT PROCEED TO MAINNET"
-        echo "❌ Fix all failing tests before continuing"
-        echo "❌ See SECURITY_VALIDATION_REPORT.md for details"
+        echo " DO NOT PROCEED TO MAINNET"
+        echo " Fix all failing tests before continuing"
+        echo " See SECURITY_VALIDATION_REPORT.md for details"
         echo ""
         exit 1
     fi
@@ -318,7 +318,7 @@ main() {
 
 # Check if running in correct directory
 if [ ! -f "package.json" ]; then
-    echo "${RED}❌ Error: Must run from project root directory${NC}"
+    echo "${RED} Error: Must run from project root directory${NC}"
     exit 1
 fi
 

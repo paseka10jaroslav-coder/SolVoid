@@ -13,19 +13,19 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}ℹ  $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}  $1${NC}"
 }
 
 # Test circuit breaker functionality
@@ -459,7 +459,7 @@ test_emergency_communication() {
 
 # Main test execution
 main() {
-    echo "🚨 Testing Emergency Procedures"
+    echo " Testing Emergency Procedures"
     echo "==============================="
     
     test_circuit_breaker
@@ -471,15 +471,15 @@ main() {
     test_emergency_communication
     
     echo ""
-    echo "🎉 Emergency procedures testing completed!"
+    echo " Emergency procedures testing completed!"
     echo ""
-    echo "📋 Emergency Procedures Summary:"
-    echo "✅ Circuit breaker functionality verified"
-    echo "✅ Emergency mode controls tested"
-    echo "✅ Pause/resume operations verified"
-    echo "✅ Emergency event emission confirmed"
-    echo "✅ Rollback procedures documented"
-    echo "✅ Communication procedures in place"
+    echo " Emergency Procedures Summary:"
+    echo " Circuit breaker functionality verified"
+    echo " Emergency mode controls tested"
+    echo " Pause/resume operations verified"
+    echo " Emergency event emission confirmed"
+    echo " Rollback procedures documented"
+    echo " Communication procedures in place"
 }
 
 # Run main function
