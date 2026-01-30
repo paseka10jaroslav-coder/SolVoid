@@ -67,10 +67,16 @@ Checks the current status of the SolVoid vault, total deposits, and Merkle root.
 solvoid status
 ```
 
-### `solvoid rescue <address>`
-Scans the provided wallet for privacy leaks (e.g., assets linked to a known identity).
+### `solvoid protect <address>`
+Deep-scans for privacy leaks using the **Institutional Grade Scanner**. Rotates through 40+ RPC endpoints with automatic failover to ensure maximum data resilience.
 ```bash
-solvoid rescue <MY_WALLET_PUBKEY>
+solvoid protect <WALLET_PUBKEY> --ultimate --stats
+```
+
+### `solvoid rescue <address>`
+Atomic "Nuclear Option" for compromised wallets. Groups all leaked assets into a single Jito-bundle for high-speed, MEV-protected migration to a private vault.
+```bash
+solvoid rescue <MY_WALLET_PUBKEY> --emergency
 ```
 
 ### `solvoid ghost <address>`

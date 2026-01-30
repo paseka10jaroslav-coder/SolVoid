@@ -16,7 +16,7 @@
   <p>
     <a href="https://github.com/brainless3178/SolVoid/actions"><img src="https://img.shields.io/github/actions/workflow/status/brainless3178/SolVoid/privacy.yml?branch=main&style=for-the-badge&logo=github&label=CI/CD%20Pipeline" alt="Build Status"></a>
     <a href="https://codecov.io/gh/brainless3178/SolVoid"><img src="https://img.shields.io/badge/ZK%20Circuit%20Coverage-98%25-brightgreen?style=for-the-badge&logo=codecov&label=ZK%20Circuit%20Coverage" alt="Code Coverage"></a>
-    <a href="https://github.com/brainless3178/SolVoid/releases"><img src="https://img.shields.io/badge/Production-v1.1.0-blue?style=for-the-badge&logo=github" alt="Version"></a>
+    <a href="https://github.com/brainless3178/SolVoid/releases"><img src="https://img.shields.io/badge/Production-v1.1.3-blue?style=for-the-badge&logo=github" alt="Version"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=github" alt="License"></a>
   </p>
   <p>
