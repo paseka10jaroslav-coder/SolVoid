@@ -119,6 +119,86 @@ export class SolVoidClient {
                         { name: "fee", type: "u64" },
                         { name: "amount", type: "u64" }
                     ]
+                },
+                {
+                    name: "triggerEmergencyMode",
+                    accounts: [
+                        { name: "state", writable: true, signer: false },
+                        { name: "economicState", writable: true, signer: false },
+                        { name: "authority", writable: false, signer: true }
+                    ],
+                    args: [
+                        { name: "multiplier", type: "u64" },
+                        { name: "reason", type: "string" }
+                    ]
+                },
+                {
+                    name: "disableEmergencyMode",
+                    accounts: [
+                        { name: "state", writable: true, signer: false },
+                        { name: "economicState", writable: true, signer: false },
+                        { name: "authority", writable: false, signer: true }
+                    ],
+                    args: []
+                },
+                {
+                    name: "triggerCircuitBreaker",
+                    accounts: [
+                        { name: "state", writable: true, signer: false },
+                        { name: "economicState", writable: true, signer: false },
+                        { name: "authority", writable: false, signer: true }
+                    ],
+                    args: []
+                },
+                {
+                    name: "resetCircuitBreaker",
+                    accounts: [
+                        { name: "state", writable: true, signer: false },
+                        { name: "economicState", writable: true, signer: false },
+                        { name: "authority", writable: false, signer: true }
+                    ],
+                    args: []
+                },
+                {
+                    name: "initialize",
+                    accounts: [
+                        { name: "state", writable: true, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: [
+                        { name: "authority", type: "publicKey" }
+                    ]
+                },
+                {
+                    name: "initializeVerifier",
+                    accounts: [
+                        { name: "verifierState", writable: true, signer: false },
+                        { name: "state", writable: false, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: [
+                        { name: "vk", type: { "defined": "VerificationKeyData" } }
+                    ]
+                },
+                {
+                    name: "initializeRootHistory",
+                    accounts: [
+                        { name: "rootHistory", writable: true, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: []
+                },
+                {
+                    name: "initializeEconomics",
+                    accounts: [
+                        { name: "economicState", writable: true, signer: false },
+                        { name: "authority", writable: true, signer: true },
+                        { name: "systemProgram", writable: false, signer: false }
+                    ],
+                    args: []
                 }
             ],
             accounts: [],

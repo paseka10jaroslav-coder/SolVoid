@@ -9,6 +9,9 @@ import * as dotenv from 'dotenv';
 import fetch from 'cross-fetch';
 import { SolVoidClient, WalletAdapter } from '../sdk/client';
 import { DataOrigin, DataTrust, Unit, enforce, PublicKeySchema, IdlSchema } from '../sdk/integrity';
+import { registerGhostCommand } from './commands/ghost';
+import { registerRescueCommand } from './commands/rescue';
+import { Command } from 'commander';
 
 dotenv.config();
 
@@ -19,28 +22,45 @@ const CLI_METADATA = {
     owner: 'CLI User'
 };
 
-function registerGhostCommand(program: any) {
-    program
-        .command('ghost <address>')
-        .description('Calculate Privacy Ghost Score')
-        .option('--badge', 'Generate terminal badge')
-        .action(async (address: string, options: any) => {
-            console.log(`Analyzing Ghost Score for ${address}...`);
-            // Mocking logic for CLI display if not fully linked
-            const score = Math.floor(Math.random() * 40) + 50;
-            console.log(`\n--- GHOST SCORE ---`);
-            console.log(`Score: ${score}/100`);
-            if (options.badge) console.log(`[ PRIVACY GHOST: ${score} ] Verified by SolVoid`);
-        });
-}
+function registerAdminCommand(program: Command, client: SolVoidClient) {
+    const admin = program.command('admin').description('Protocol Administration & Emergency Controls');
 
-function registerRescueCommand(program: any) {
-    program
-        .command('rescue <address>')
-        .description('Atomic shielding of leaked assets')
-        .action(async (address: string) => {
-            console.log(`Analyzing rescue path for ${address}...`);
-            console.log(`Found 3 leaked ATA accounts. Preparing atomic migration...`);
+    admin
+        .command('trigger-emergency')
+        .description('Trigger protocol-wide emergency fee multiplier')
+        .argument('<multiplier>', 'Fee multiplier (1-10)')
+        .argument('<reason>', 'Reason for emergency')
+        .action(async (multiplier, reason) => {
+            console.log(`Triggering emergency mode (x${multiplier}) for: ${reason}`);
+            const tx = await client.triggerEmergencyMode(BigInt(multiplier), reason);
+            console.log(`Emergency mode active. Signature: ${tx}`);
+        });
+
+    admin
+        .command('disable-emergency')
+        .description('Deactivate emergency mode and reset fees')
+        .action(async () => {
+            console.log('Deactivating emergency mode...');
+            const tx = await client.disableEmergencyMode();
+            console.log(`Emergency mode disabled. Signature: ${tx}`);
+        });
+
+    admin
+        .command('pause')
+        .description('Pause all withdrawals via Circuit Breaker')
+        .action(async () => {
+            console.log('Triggering Circuit Breaker...');
+            const tx = await client.triggerCircuitBreaker();
+            console.log(`Protocol PAUSED. Signature: ${tx}`);
+        });
+
+    admin
+        .command('resume')
+        .description('Resume withdrawals and reset circuit breaker')
+        .action(async () => {
+            console.log('Resetting Circuit Breaker...');
+            const tx = await client.resetCircuitBreaker();
+            console.log(`Protocol RESUMED. Signature: ${tx}`);
         });
 }
 
@@ -86,11 +106,30 @@ Commands:
     if (!rpcUrl || !programId) throw new Error("Missing required configuration (RPC_URL or PROGRAM_ID)");
 
     const wallet = Keypair.generate();
-    const client = new SolVoidClient({
+    const config = {
         rpcUrl: rpcUrl ?? '',
         programId: programId ?? '',
         relayerUrl: relayerUrl ?? ''
-    }, wallet as unknown as WalletAdapter);
+    };
+    const client = new SolVoidClient(config, wallet as unknown as WalletAdapter);
+
+    const program = new Command();
+    program.name('solvoid-scan').description('SolVoid Digital Fortress CLI');
+
+    // Add global options for usage by subcommands
+    program.option('--rpc <url>', 'Solana RPC URL', rpcUrl);
+    program.option('--program <id>', 'SolVoid Program ID', programId);
+    program.option('--relayer <url>', 'Shadow Relayer URL', relayerUrl);
+
+    // Register modular commands
+    registerGhostCommand(program);
+    registerRescueCommand(program);
+    registerAdminCommand(program, client);
+
+    if (command === 'ghost' || command === 'rescue' || command === 'admin') {
+        program.parse(process.argv);
+        return;
+    }
 
     try {
         switch (command) {

@@ -142,17 +142,18 @@ test_emergency_activation() {
         const programId = JSON.parse(require('fs').readFileSync('./target/deploy/solvoid.json', 'utf8')).programId;
         const program = new Program(idl, programId, provider);
         
-        const stateAccount = Keypair.generate();
+        const [stateAddress] = PublicKey.findProgramAddressSync([Buffer.from("state")], program.programId);
+        const [economicAddress] = PublicKey.findProgramAddressSync([Buffer.from("economic_state")], program.programId);
         
         try {
             // Activate emergency mode
             await program.methods
-                .setEmergencyMode(true, new BN(3))
+                .triggerEmergencyMode(new BN(3), "Emergency Procedure Test")
                 .accounts({
-                    state: stateAccount.publicKey,
+                    state: stateAddress,
+                    economicState: economicAddress,
                     authority: admin.publicKey,
                 })
-                .signers([admin, stateAccount])
                 .rpc();
                 
             console.log('Emergency mode activation test passed');
@@ -176,7 +177,7 @@ test_emergency_activation() {
     log_info "Testing emergency mode fee calculation..."
     
     if node -e "
-    const { Connection, Keypair } = require('@solana/web3.js');
+    const { Connection, Keypair, PublicKey } = require('@solana/web3.js');
     const { Program, AnchorProvider, Wallet, BN } = require('@coral-xyz/anchor');
     
     async function test() {
@@ -188,17 +189,18 @@ test_emergency_activation() {
         const programId = JSON.parse(require('fs').readFileSync('./target/deploy/solvoid.json', 'utf8')).programId;
         const program = new Program(idl, programId, provider);
         
-        const stateAccount = Keypair.generate();
+        const [stateAddress] = PublicKey.findProgramAddressSync([Buffer.from("state")], program.programId);
+        const [economicAddress] = PublicKey.findProgramAddressSync([Buffer.from("economic_state")], program.programId);
         
         try {
             // Activate emergency mode with multiplier
             await program.methods
-                .setEmergencyMode(true, new BN(3))
+                .triggerEmergencyMode(new BN(3), "Fee Calculation Test")
                 .accounts({
-                    state: stateAccount.publicKey,
+                    state: stateAddress,
+                    economicState: economicAddress,
                     authority: admin.publicKey,
                 })
-                .signers([admin, stateAccount])
                 .rpc();
                 
             console.log('Emergency mode fee calculation test passed');
@@ -224,7 +226,7 @@ test_emergency_deactivation() {
     log_info "Testing emergency mode deactivation..."
     
     if node -e "
-    const { Connection, Keypair } = require('@solana/web3.js');
+    const { Connection, Keypair, PublicKey } = require('@solana/web3.js');
     const { Program, AnchorProvider, Wallet, BN } = require('@coral-xyz/anchor');
     
     async function test() {
@@ -236,17 +238,18 @@ test_emergency_deactivation() {
         const programId = JSON.parse(require('fs').readFileSync('./target/deploy/solvoid.json', 'utf8')).programId;
         const program = new Program(idl, programId, provider);
         
-        const stateAccount = Keypair.generate();
+        const [stateAddress] = PublicKey.findProgramAddressSync([Buffer.from("state")], program.programId);
+        const [economicAddress] = PublicKey.findProgramAddressSync([Buffer.from("economic_state")], program.programId);
         
         try {
             // Deactivate emergency mode
             await program.methods
-                .setEmergencyMode(false, new BN(1))
+                .disableEmergencyMode()
                 .accounts({
-                    state: stateAccount.publicKey,
+                    state: stateAddress,
+                    economicState: economicAddress,
                     authority: admin.publicKey,
                 })
-                .signers([admin, stateAccount])
                 .rpc();
                 
             console.log('Emergency mode deactivation test passed');
@@ -273,7 +276,7 @@ test_pause_resume_operations() {
     
     # Test pause withdrawals
     if node -e "
-    const { Connection, Keypair } = require('@solana/web3.js');
+    const { Connection, Keypair, PublicKey } = require('@solana/web3.js');
     const { Program, AnchorProvider, Wallet } = require('@coral-xyz/anchor');
     
     async function test() {
@@ -285,17 +288,18 @@ test_pause_resume_operations() {
         const programId = JSON.parse(require('fs').readFileSync('./target/deploy/solvoid.json', 'utf8')).programId;
         const program = new Program(idl, programId, provider);
         
-        const stateAccount = Keypair.generate();
+        const [stateAddress] = PublicKey.findProgramAddressSync([Buffer.from("state")], program.programId);
+        const [economicAddress] = PublicKey.findProgramAddressSync([Buffer.from("economic_state")], program.programId);
         
         try {
-            // Pause withdrawals
+            // Pause withdrawals (Circuit Breaker)
             await program.methods
-                .pauseWithdrawals(true)
+                .triggerCircuitBreaker()
                 .accounts({
-                    state: stateAccount.publicKey,
+                    state: stateAddress,
+                    economicState: economicAddress,
                     authority: admin.publicKey,
                 })
-                .signers([admin, stateAccount])
                 .rpc();
                 
             console.log('Pause withdrawals test passed');
@@ -317,7 +321,7 @@ test_pause_resume_operations() {
     
     # Test resume withdrawals
     if node -e "
-    const { Connection, Keypair } = require('@solana/web3.js');
+    const { Connection, Keypair, PublicKey } = require('@solana/web3.js');
     const { Program, AnchorProvider, Wallet } = require('@coral-xyz/anchor');
     
     async function test() {
@@ -329,17 +333,18 @@ test_pause_resume_operations() {
         const programId = JSON.parse(require('fs').readFileSync('./target/deploy/solvoid.json', 'utf8')).programId;
         const program = new Program(idl, programId, provider);
         
-        const stateAccount = Keypair.generate();
+        const [stateAddress] = PublicKey.findProgramAddressSync([Buffer.from("state")], program.programId);
+        const [economicAddress] = PublicKey.findProgramAddressSync([Buffer.from("economic_state")], program.programId);
         
         try {
             // Resume withdrawals
             await program.methods
-                .pauseWithdrawals(false)
+                .resetCircuitBreaker()
                 .accounts({
-                    state: stateAccount.publicKey,
+                    state: stateAddress,
+                    economicState: economicAddress,
                     authority: admin.publicKey,
                 })
-                .signers([admin, stateAccount])
                 .rpc();
                 
             console.log('Resume withdrawals test passed');
@@ -366,7 +371,7 @@ test_emergency_events() {
     
     # Test that circuit breaker events are emitted
     if node -e "
-    const { Connection, Keypair } = require('@solana/web3.js');
+    const { Connection, Keypair, PublicKey } = require('@solana/web3.js');
     const { Program, AnchorProvider, Wallet } = require('@coral-xyz/anchor');
     
     async function test() {

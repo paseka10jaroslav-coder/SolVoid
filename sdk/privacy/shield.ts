@@ -117,18 +117,6 @@ export class PrivacyShield {
             .rpc();
     }
 
-    public async initializeTreasury(): Promise<string> {
-        const [treasuryPda] = PublicKey.findProgramAddressSync([Buffer.from('treasury')], this.getProgramId());
-
-        return await (this.program.methods as any)
-            .initializeTreasury()
-            .accounts({
-                treasury: treasuryPda,
-                authority: this.program.provider.publicKey,
-                systemProgram: SystemProgram.programId,
-            })
-            .rpc();
-    }
 
     public async initializeEconomics(): Promise<string> {
         const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());

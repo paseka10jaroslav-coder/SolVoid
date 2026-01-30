@@ -203,6 +203,26 @@ pub mod solvoid_zk {
         msg!("Withdrawal completed successfully. Nullifier: {:?}", nullifier_hash);
         Ok(())
     }
+
+    pub fn trigger_emergency_mode(
+        ctx: Context<AdminControlWithEconomics>,
+        multiplier: u64,
+        reason: String,
+    ) -> Result<()> {
+        economics::trigger_emergency_mode(ctx, multiplier, reason)
+    }
+
+    pub fn disable_emergency_mode(ctx: Context<AdminControlWithEconomics>) -> Result<()> {
+        economics::disable_emergency_mode(ctx)
+    }
+
+    pub fn trigger_circuit_breaker(ctx: Context<AdminControlWithEconomics>) -> Result<()> {
+        economics::trigger_circuit_breaker(ctx)
+    }
+
+    pub fn reset_circuit_breaker(ctx: Context<AdminControlWithEconomics>) -> Result<()> {
+        economics::reset_circuit_breaker(ctx)
+    }
 }
 
 pub fn check_field_element(bytes: &[u8; 32]) -> Result<()> {

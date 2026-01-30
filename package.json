@@ -1,6 +1,6 @@
 {
   "name": "solvoid",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Enterprise-grade Privacy Lifecycle Management (PLM) platform for the Solana Ecosystem",
   "main": "dist/sdk/index.js",
   "types": "dist/sdk/index.d.ts",
