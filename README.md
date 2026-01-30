@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/brainless3178/SolVoid/main/assets/banner-ultra.png" alt="SolVoid Ultra Banner" width="900">
   <br />
   <pre>
 ███████╗ ██████╗ ██╗     ██╗   ██╗ ██████╗ ██╗██████╗ 
