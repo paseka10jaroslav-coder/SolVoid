@@ -69,6 +69,23 @@ Cargo.lock
 # SolVoid specific
 privacy_tool.zip
 .solvoid/cache/
+.privacy-zero/
+.relayer-keys.json
+privacy-manifest.json
+
 # Passport storage
 privacy-passport.json
+
+# ZK Ceremony artifacts
+ceremony/contributions/
+ceremony/output/
+ceremony/*.ptau
+ceremony/*.zkey
+
+# Additional security
+**/*keypair.json
+**/*secret.json
+**/*.id.json
+**/.env*
+
 solana/

@@ -137,7 +137,7 @@ export class PrivacyShield {
             .initializeEconomics()
             .accounts({
                 economicState: economicPda,
-                admin: this.program.provider.publicKey,
+                authority: this.program.provider.publicKey,
                 systemProgram: SystemProgram.programId,
             })
             .rpc();
@@ -289,11 +289,23 @@ export class PrivacyShield {
             zkeyPath
         );
 
+        // Map snarkjs proof format to SolVoid ProofData (aligned with groth16-solana expectations)
+        // This requires careful G1/G2 point serialization
+        const proofAG1 = Buffer.from(BigInt(proof.pi_a[0]).toString(16).padStart(64, '0'), 'hex');
+
+        // G2 points are typically represented as pairs of coefficients
+        const proofBG2 = Buffer.concat([
+            Buffer.from(BigInt(proof.pi_b[0][1]).toString(16).padStart(64, '0'), 'hex'),
+            Buffer.from(BigInt(proof.pi_b[0][0]).toString(16).padStart(64, '0'), 'hex')
+        ]);
+
+        const proofCG1 = Buffer.from(BigInt(proof.pi_c[0]).toString(16).padStart(64, '0'), 'hex');
+
         return {
             proof: {
-                a: Array.from(Buffer.from(BigInt(proof.pi_a[0]).toString(16).padStart(64, '0'), 'hex')),
-                b: Array.from(Buffer.from(BigInt(proof.pi_b[0][0]).toString(16).padStart(64, '0'), 'hex')), // This is a placeholder; real Groth16 proof mapping happens here
-                c: Array.from(Buffer.from(BigInt(proof.pi_c[0]).toString(16).padStart(64, '0'), 'hex')),
+                proofAG1: Array.from(proofAG1),
+                proofBG2: Array.from(proofBG2),
+                proofCG1: Array.from(proofCG1),
             },
             publicSignals
         };

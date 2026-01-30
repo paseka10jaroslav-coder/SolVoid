@@ -177,7 +177,7 @@ echo "    Novel privacy scoring"
 echo "    Complete ecosystem"
 
 echo -e "\n PRODUCTION STATUS:"
-echo "   Git Repository: https://github.com/solvoid/solvoid"
+echo "   Git Repository: https://github.com/brainless3178/SolVoid"
 echo "   Documentation: Comprehensive guides included"
 echo "   Deployment: Ready for mainnet"
 echo "   Status: PRODUCTION READY"

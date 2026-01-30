@@ -204,14 +204,14 @@ print_success " Testing: 50+ comprehensive test files"
 print_success " CI/CD: Full automation pipeline"
 
 echo -e "\n Quick Start Commands:"
-echo "git clone https://github.com/solvoid/solvoid"
+echo "git clone https://github.com/brainless3178/SolVoid"
 echo "cd solvoid"
 echo "npm install"
 echo "anchor deploy --provider.cluster devnet"
 echo "solvoid scan --address [YOUR_WALLET]"
 
 echo -e "\n Judge Information:"
-echo "Repository: https://github.com/solvoid/solvoid"
+echo "Repository: https://github.com/brainless3178/SolVoid"
 echo "Documentation: Comprehensive guides and API docs"
 echo "Status: Production-ready for devnet deployment"
 

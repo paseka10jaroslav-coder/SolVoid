@@ -43,7 +43,7 @@ export class SolVoidClient {
         // Optimized Anchor 0.30 IDL
         const idlUnvalidated = {
             version: "0.1.0",
-            name: "solvoid",
+            name: "solvoid_zk",
             instructions: [
                 {
                     name: "initialize",
@@ -68,15 +68,6 @@ export class SolVoidClient {
                     name: "initializeRootHistory",
                     accounts: [
                         { name: "rootHistory", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: []
-                },
-                {
-                    name: "initializeTreasury",
-                    accounts: [
-                        { name: "treasury", writable: true, signer: false },
                         { name: "authority", writable: true, signer: true },
                         { name: "systemProgram", writable: false, signer: false }
                     ],
@@ -114,7 +105,7 @@ export class SolVoidClient {
                         { name: "relayer", writable: true, signer: true },
                         { name: "protocolFeeAccumulator", writable: true, signer: false },
                         { name: "verifierState", writable: false, signer: false },
-                        { name: "rootHistory", writable: true, signer: false },
+                        { name: "rootHistory", writable: false, signer: false },
                         { name: "nullifierAccount", writable: true, signer: false },
                         { name: "economicState", writable: true, signer: false },
                         { name: "systemProgram", writable: false, signer: false }
@@ -137,11 +128,12 @@ export class SolVoidClient {
                     type: {
                         kind: "struct",
                         fields: [
-                            { name: "alpha", type: { array: ["u8", 32] } },
-                            { name: "beta", type: { array: ["u8", 64] } },
-                            { name: "gamma", type: { array: ["u8", 64] } },
-                            { name: "delta", type: { array: ["u8", 64] } },
-                            { name: "ic", type: { vec: { array: ["u8", 32] } } }
+                            { name: "nrPubinputs", type: "u32" },
+                            { name: "vkAlphaG1", type: { array: ["u8", 32] } },
+                            { name: "vkBetaG2", type: { array: ["u8", 64] } },
+                            { name: "vkGammaG2", type: { array: ["u8", 64] } },
+                            { name: "vkDeltaG2", type: { array: ["u8", 64] } },
+                            { name: "vkIc", type: { vec: { array: ["u8", 32] } } }
                         ]
                     }
                 },
@@ -150,9 +142,9 @@ export class SolVoidClient {
                     type: {
                         kind: "struct",
                         fields: [
-                            { name: "a", type: { array: ["u8", 32] } },
-                            { name: "b", type: { array: ["u8", 64] } },
-                            { name: "c", type: { array: ["u8", 32] } }
+                            { name: "proofAG1", type: { array: ["u8", 32] } },
+                            { name: "proofBG2", type: { array: ["u8", 64] } },
+                            { name: "proofCG1", type: { array: ["u8", 32] } }
                         ]
                     }
                 }

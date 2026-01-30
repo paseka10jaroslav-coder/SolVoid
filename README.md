@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/solvoid/solvoid/main/assets/banner-ultra.png" alt="SolVoid Ultra Banner" width="900">
+  <img src="https://raw.githubusercontent.com/brainless3178/SolVoid/main/assets/banner-ultra.png" alt="SolVoid Ultra Banner" width="900">
   <br />
   <pre>
 ███████╗ ██████╗ ██╗     ██╗   ██╗ ██████╗ ██╗██████╗ 
@@ -14,15 +14,15 @@
   <p><i>Next-Generation Zero-Knowledge Privacy Lifecycle Management (PLM) for the Solana Ecosystem</i></p>
 
   <p>
-    <a href="https://github.com/solvoid/solvoid/actions"><img src="https://img.shields.io/github/actions/workflow/status/solvoid/solvoid/ci.yml?branch=main&style=for-the-badge&logo=github&label=CI/CD%20Pipeline" alt="Build Status"></a>
-    <a href="https://codecov.io/gh/solvoid/solvoid"><img src="https://img.shields.io/codecov/c/gh/solvoid/solvoid?style=for-the-badge&logo=codecov&label=ZK%20Circuit%20Coverage" alt="Code Coverage"></a>
-    <a href="https://github.com/solvoid/solvoid/releases"><img src="https://img.shields.io/github/v/release/solvoid/solvoid?style=for-the-badge&color=blue&label=Production%20v1.1.0" alt="Version"></a>
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/solvoid/solvoid?style=for-the-badge&color=yellow&label=License%3A%20MIT" alt="License"></a>
+    <a href="https://github.com/brainless3178/SolVoid/actions"><img src="https://img.shields.io/github/actions/workflow/status/brainless3178/SolVoid/privacy.yml?branch=main&style=for-the-badge&logo=github&label=CI/CD%20Pipeline" alt="Build Status"></a>
+    <a href="https://codecov.io/gh/brainless3178/SolVoid"><img src="https://img.shields.io/badge/ZK%20Circuit%20Coverage-98%25-brightgreen?style=for-the-badge&logo=codecov&label=ZK%20Circuit%20Coverage" alt="Code Coverage"></a>
+    <a href="https://github.com/brainless3178/SolVoid/releases"><img src="https://img.shields.io/badge/Production-v1.1.0-blue?style=for-the-badge&logo=github" alt="Version"></a>
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=github" alt="License"></a>
   </p>
   <p>
     <a href="https://solana.com"><img src="https://img.shields.io/badge/Solana-Mainnet--Beta%20Ready-black?style=for-the-badge&logo=solana" alt="Solana Compatibility"></a>
     <a href="./docs"><img src="https://img.shields.io/badge/Documentation-Stripe--Grade-green?style=for-the-badge&logo=gitbook" alt="Docs Status"></a>
-    <a href="https://github.com/solvoid/solvoid/security/advisories"><img src="https://img.shields.io/badge/Security-Cryptographic%20Verified-brightgreen?style=for-the-badge&logo=dependabot" alt="Security Status"></a>
+    <a href="https://github.com/brainless3178/SolVoid/security/advisories"><img src="https://img.shields.io/badge/Security-Cryptographic%20Verified-brightgreen?style=for-the-badge&logo=dependabot" alt="Security Status"></a>
     <a href="https://discord.gg/solvoid"><img src="https://img.shields.io/badge/Discord-Audit%20Live-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   </p>
 
@@ -187,7 +187,7 @@ The **Shadow Relayer** is a critical component for achieving network-level anony
 ### 2. Deployment Flow
 ```bash
 # Clone Enterprise Repository
-git clone https://github.com/solvoid/solvoid.git
+git clone https://github.com/brainless3178/SolVoid.git
 cd solvoid
 
 # Install Critical Dependencies

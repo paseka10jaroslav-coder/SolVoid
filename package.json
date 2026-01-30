@@ -100,12 +100,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/solvoid/solvoid"
+    "url": "https://github.com/brainless3178/SolVoid"
   },
   "bugs": {
-    "url": "https://github.com/solvoid/solvoid/issues"
+    "url": "https://github.com/brainless3178/SolVoid/issues"
   },
-  "homepage": "https://github.com/solvoid/solvoid#readme",
+  "homepage": "https://github.com/brainless3178/SolVoid#readme",
   "overrides": {
     "elliptic": "^6.5.7",
     "@ethersproject/signing-key": "^4.2.1",
