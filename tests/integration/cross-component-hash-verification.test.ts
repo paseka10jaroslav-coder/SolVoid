@@ -5,7 +5,7 @@ import { execSync } from 'child_process';
 
 describe('Cross-Component Hash Verification', () => {
     let poseidon: any;
-    
+
     // Helper function to convert poseidon result to hex string
     function poseidonResultToHex(result: any): string {
         if (result instanceof Uint8Array) {
@@ -23,7 +23,7 @@ describe('Cross-Component Hash Verification', () => {
             return resultStr.startsWith('0x') ? resultStr : '0x' + resultStr;
         }
     }
-    
+
     // Official test vectors from circomlibjs
     const testVectors = {
         singleHash: [
@@ -63,21 +63,21 @@ describe('Cross-Component Hash Verification', () => {
                 const inputsBigInt = vector.inputs.map(x => BigInt(x));
                 const result = poseidon(inputsBigInt);
                 const resultHex = poseidonResultToHex(result);
-                
+
                 console.log(`Testing Poseidon(${vector.inputs.join(', ')}):`);
                 console.log(`  Expected: ${vector.expected}`);
                 console.log(`  Got:      ${resultHex}`);
-                
+
                 expect(resultHex).to.equal(vector.expected);
             }
-            
+
             console.log(' All official test vectors validated');
         });
 
         it('should validate merkle tree test vectors', async () => {
             for (const vector of testVectors.merkleTree) {
                 const leavesBigInt = vector.leaves.map(leaf => BigInt(leaf));
-                
+
                 // Build 4-leaf merkle tree
                 const level0 = leavesBigInt;
                 const level1 = [
@@ -86,14 +86,14 @@ describe('Cross-Component Hash Verification', () => {
                 ];
                 const root = poseidon([level1[0], level1[1]]);
                 const rootHex = poseidonResultToHex(root);
-                
+
                 console.log(`Testing 4-leaf merkle tree:`);
                 console.log(`  Expected root: ${vector.expectedRoot}`);
                 console.log(`  Got root:      ${rootHex}`);
-                
+
                 expect(rootHex).to.equal(vector.expectedRoot);
             }
-            
+
             console.log(' All merkle tree test vectors validated');
         });
     });
@@ -110,17 +110,17 @@ describe('Cross-Component Hash Verification', () => {
 
             for (const inputs of testInputs) {
                 console.log(`\nTesting inputs: [${inputs.join(', ')}]`);
-                
+
                 // TypeScript computation
                 const inputsBigInt = inputs.map(x => BigInt(x));
                 const tsResult = poseidon(inputsBigInt);
                 const tsHex = poseidonResultToHex(tsResult);
-                
+
                 // Rust computation (via cargo test)
                 let rustResult: string;
                 try {
                     const rustOutput = execSync(
-                        `cd program && cargo test test_poseidon_hash -- --nocapture "${inputs.join(',')}"`,
+                        `cd programs/solvoid-zk && cargo test test_poseidon_hash -- --nocapture "${inputs.join(',')}"`,
                         { encoding: 'utf8' }
                     );
                     const match = rustOutput.match(/0x[a-fA-F0-9]{64}/);
@@ -129,14 +129,14 @@ describe('Cross-Component Hash Verification', () => {
                     console.warn('Rust test not available, skipping...');
                     rustResult = tsHex; // Fallback for CI
                 }
-                
+
                 // Circom computation (via snarkjs)
                 let circomResult: string;
                 try {
                     const circuitInput = {
                         inputs: inputsBigInt.map(x => x.toString())
                     };
-                    
+
                     // Create temporary circuit for testing
                     const tempCircuit = `
                         pragma circom 2.0.0;
@@ -150,18 +150,18 @@ describe('Cross-Component Hash Verification', () => {
                         }
                         component main = TestHash();
                     `;
-                    
+
                     fs.writeFileSync('./temp_test.circom', tempCircuit);
-                    
+
                     // Compile and compute witness
                     execSync('circom temp_test.circom --r1cs --wasm --sym', { cwd: '.' });
-                    
+
                     const { witness } = await require('./temp_test_js').default.witness.calculate(
                         circuitInput
                     );
-                    
+
                     circomResult = '0x' + witness[1].toString(16).padStart(64, '0');
-                    
+
                     // Cleanup
                     fs.unlinkSync('./temp_test.circom');
                     fs.rmSync('./temp_test_js', { recursive: true, force: true });
@@ -172,23 +172,23 @@ describe('Cross-Component Hash Verification', () => {
                     console.warn('Circom test not available, skipping...');
                     circomResult = tsHex; // Fallback for CI
                 }
-                
+
                 console.log(`  TypeScript: ${tsHex}`);
                 console.log(`  Rust:       ${rustResult}`);
                 console.log(`  Circom:     ${circomResult}`);
-                
+
                 // Assert exact byte-for-byte equality (use fallback values if components not available)
                 expect(tsHex).to.match(/^0x[a-fA-F0-9]{64}$/);
                 expect(rustResult).to.match(/^0x[a-fA-F0-9]{64}$/);
                 expect(circomResult).to.match(/^0x[a-fA-F0-9]{64}$/);
-                
+
                 // If all components are available, they should match
                 if (rustResult !== tsHex && circomResult !== tsHex) {
                     expect(tsHex).to.equal(rustResult);
                     expect(tsHex).to.equal(circomResult);
                 }
             }
-            
+
             console.log('\n All cross-platform hashes match exactly');
         });
 
@@ -207,17 +207,17 @@ describe('Cross-Component Hash Verification', () => {
 
             for (const tree of testTrees) {
                 console.log(`\nTesting ${tree.name}:`);
-                
+
                 // TypeScript computation
                 const leavesBigInt = tree.leaves.map(leaf => BigInt(leaf));
                 const tsRoot = poseidon(leavesBigInt);
                 const tsHex = poseidonResultToHex(tsRoot);
-                
+
                 // Rust computation (via cargo test)
                 let rustRoot: string;
                 try {
                     const rustOutput = execSync(
-                        `cd program && cargo test test_merkle_root -- --nocapture "${tree.leaves.join(',')}"`,
+                        `cd programs/solvoid-zk && cargo test test_merkle_root -- --nocapture "${tree.leaves.join(',')}"`,
                         { encoding: 'utf8' }
                     );
                     const match = rustOutput.match(/0x[a-fA-F0-9]{64}/);
@@ -226,20 +226,20 @@ describe('Cross-Component Hash Verification', () => {
                     console.warn('Rust merkle test not available, skipping...');
                     rustRoot = tsHex; // Fallback for CI
                 }
-                
+
                 console.log(`  TypeScript: ${tsHex}`);
                 console.log(`  Rust:       ${rustRoot}`);
-                
+
                 // Validate hex format
                 expect(tsHex).to.match(/^0x[a-fA-F0-9]{64}$/);
                 expect(rustRoot).to.match(/^0x[a-fA-F0-9]{64}$/);
-                
+
                 // If both components are available, they should match
                 if (rustRoot !== tsHex) {
                     expect(tsHex).to.equal(rustRoot);
                 }
             }
-            
+
             console.log('\n All merkle root computations match');
         });
     });
@@ -262,17 +262,17 @@ describe('Cross-Component Hash Verification', () => {
                 const inputsBigInt = vector.inputs.map(x => BigInt(x));
                 const result = poseidon(inputsBigInt);
                 const resultHex = poseidonResultToHex(result);
-                
+
                 // For CI, we just verify the format and that it produces consistent results
                 expect(resultHex).to.match(/^0x[a-fA-F0-9]{64}$/);
                 expect(resultHex.length).to.equal(66); // 0x + 64 hex chars
-                
+
                 // Verify deterministic behavior
                 const result2 = poseidon(inputsBigInt);
                 const resultHex2 = poseidonResultToHex(result2);
                 expect(resultHex).to.equal(resultHex2);
             }
-            
+
             console.log(' Critical hash verification passed - build can proceed');
         });
 
@@ -289,17 +289,17 @@ describe('Cross-Component Hash Verification', () => {
                 const inputsBigInt = inputs.map(x => BigInt(x));
                 const result = poseidon(inputsBigInt);
                 const resultHex = poseidonResultToHex(result);
-                
+
                 // Ensure no floating point artifacts
                 expect(resultHex).to.match(/^0x[a-fA-F0-9]{64}$/);
                 expect(resultHex.length).to.equal(66); // 0x + 64 hex chars
-                
+
                 // Ensure deterministic results
                 const result2 = poseidon(inputsBigInt);
                 const resultHex2 = poseidonResultToHex(result2);
                 expect(resultHex).to.equal(resultHex2);
             }
-            
+
             console.log(' No floating point or rounding differences detected');
         });
     });
@@ -324,17 +324,17 @@ describe('Cross-Component Hash Verification', () => {
                 const inputsBigInt = vector.inputs.map(x => BigInt(x));
                 const result = poseidon(inputsBigInt);
                 const resultHex = poseidonResultToHex(result);
-                
+
                 // For regression testing, we verify format and consistency
                 expect(resultHex).to.match(/^0x[a-fA-F0-9]{64}$/);
                 expect(resultHex.length).to.equal(66); // 0x + 64 hex chars
-                
+
                 // Verify deterministic behavior
                 const result2 = poseidon(inputsBigInt);
                 const resultHex2 = poseidonResultToHex(result2);
                 expect(resultHex).to.equal(resultHex2);
             }
-            
+
             console.log(' Regression tests passed - no cryptographic drift detected');
         });
     });

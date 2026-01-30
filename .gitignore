@@ -76,11 +76,17 @@ privacy-manifest.json
 # Passport storage
 privacy-passport.json
 
-# ZK Ceremony artifacts
-ceremony/contributions/
-ceremony/output/
-ceremony/*.ptau
-ceremony/*.zkey
+**/ceremony/
+**/*.ptau
+**/*.zkey
+**/*.r1cs
+**/*.sym
+**/*_js/
+**/build/
+**/build-zk/
+documentation/
+rust/
+solana/
 
 # Additional security
 **/*keypair.json

@@ -15,7 +15,7 @@ mkdir -p $CONTRIBUTION_DIR
 # 1. Start from local zkey if exists, or generate initial from ptau
 if [ ! -f "withdraw_0000.zkey" ]; then
     echo "[i] Generating initial zkey from ptau..."
-    npx snarkjs groth16 setup program/circuits/${CIRCUIT_NAME}.r1cs $PTAU_FILE withdraw_0000.zkey
+    npx snarkjs groth16 setup circuits/${CIRCUIT_NAME}.r1cs $PTAU_FILE withdraw_0000.zkey
 fi
 
 echo "[i] Current contribution count: $(ls $CONTRIBUTION_DIR | wc -l)"

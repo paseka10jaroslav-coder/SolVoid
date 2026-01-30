@@ -76,7 +76,7 @@ run_typescript_tests() {
 run_rust_tests() {
     log_info "Running Rust hash tests..."
     
-    cd program
+    cd programs/solvoid-zk
     
     # Run Poseidon hash tests
     cargo test test_poseidon_hash --release

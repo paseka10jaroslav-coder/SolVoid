@@ -59,7 +59,7 @@ $SNARKJS_CMD zkey export solidityverifier $BUILD_DIR/withdraw_final.zkey $BUILD_
 
 # Copy final keys to program directory
 echo " Copying verification keys..."
-cp $BUILD_DIR/withdraw_vk.json program/
+cp $BUILD_DIR/withdraw_vk.json programs/solvoid-zk/
 
 echo " Circuit build complete!"
 echo ""

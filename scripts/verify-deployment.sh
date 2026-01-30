@@ -70,7 +70,7 @@ main() {
     echo "Environment: ${NODE_ENV:-development}"
     
     # Check if we're in the right directory
-    if [ ! -f "package.json" ] || [ ! -d "program" ]; then
+    if [ ! -f "package.json" ] || [ ! -d "programs" ]; then
         log_error "Must run from project root directory"
         exit 1
     fi
@@ -88,13 +88,13 @@ main() {
         "node -e \"const fs = require('fs'); const vk = JSON.parse(fs.readFileSync('./verification_key.json', 'utf8')); console.log('VK loaded successfully');\""
     
     run_check "Ed25519 signature verification" \
-        "grep -r 'nacl.sign.detached.verify' program/src/ relayer/ > /dev/null && ! grep -r 'HMAC\\|hmac' program/src/ relayer/ > /dev/null"
+        "grep -r 'nacl.sign.detached.verify' programs/ relayer/ > /dev/null && ! grep -r 'HMAC\\|hmac' programs/ relayer/ > /dev/null"
     
     # 2. Security Verification
     log_section "Section 2: Security Verification"
     
     run_check "No unchecked arithmetic operations" \
-        "! grep -r 'unchecked_add\\|unchecked_sub\\|unchecked_mul' program/src/ > /dev/null"
+        "! grep -r 'unchecked_add\\|unchecked_sub\\|unchecked_mul' programs/ > /dev/null"
     
     run_check "Arithmetic safety tests" \
         "./scripts/arithmetic-safety-test.sh | grep -q ' Arithmetic safety validation completed!'"
@@ -139,7 +139,7 @@ main() {
         "[ -f 'docs/EMERGENCY_PROCEDURES.md' ]"
     
     run_check "Circuit breaker implementation" \
-        "grep -r 'circuit_breaker\\|CircuitBreaker' program/src/ > /dev/null"
+        "grep -r 'circuit_breaker\\|CircuitBreaker' programs/ > /dev/null"
     
     run_check "Upgrade documentation" \
         "[ -f 'docs/UPGRADE.md' ] && [ -f 'docs/ROLLBACK.md' ]"
@@ -154,7 +154,7 @@ main() {
         "./scripts/rust-clippy-test.sh | grep -q ' Rust clippy validation completed!'"
     
     run_check "No TODO comments in production code" \
-        "! grep -r 'TODO\\|FIXME\\|XXX' src/ program/src/ relayer/ > /dev/null"
+        "! grep -r 'TODO\\|FIXME\\|XXX' sdk/ cli/ programs/ relayer/ > /dev/null"
     
     # 7. Dependencies
     log_section "Section 7: Dependencies"

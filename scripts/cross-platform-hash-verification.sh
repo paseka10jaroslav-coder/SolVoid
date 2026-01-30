@@ -16,7 +16,7 @@ fi
 
 # Test 2: Check for Poseidon implementations across platforms
 echo "Test 2: Checking for Poseidon implementations across platforms"
-if [ -f "program/src/poseidon.rs" ] && grep -r "Poseidon\|poseidon" sdk/ tests/ > /dev/null 2>&1; then
+if [ -f "programs/solvoid-zk/src/poseidon.rs" ] && grep -r "Poseidon\|poseidon" sdk/ tests/ > /dev/null 2>&1; then
     echo " Found Poseidon implementations across platforms"
 else
     echo " No Poseidon implementations found"
@@ -34,7 +34,7 @@ fi
 
 # Test 4: Check for Rust hash implementation
 echo "Test 4: Checking for Rust hash implementation"
-if [ -f "program/src/poseidon.rs" ] && grep -q "PoseidonHasher\|PoseidonSponge" program/src/poseidon.rs; then
+if [ -f "programs/solvoid-zk/src/poseidon.rs" ] && grep -q "PoseidonHasher\|PoseidonSponge" programs/solvoid-zk/src/poseidon.rs; then
     echo " Found Rust hash implementation"
 else
     echo " No Rust hash implementation found"
@@ -61,7 +61,7 @@ fi
 
 # Test 7: Check for Merkle tree implementations
 echo "Test 7: Checking for Merkle tree implementations"
-if grep -r "merkle\|Merkle" program/src/ tests/ sdk/ > /dev/null 2>&1; then
+if grep -r "merkle\|Merkle" programs/solvoid-zk/src/ tests/ sdk/ > /dev/null 2>&1; then
     echo " Found Merkle tree implementations"
 else
     echo " No Merkle tree implementations found"
@@ -88,7 +88,7 @@ fi
 
 # Test 10: Check for cryptographic constants
 echo "Test 10: Checking for cryptographic constants"
-if grep -r "poseidon.*constant\|hash.*constant\|crypto.*constant" program/src/ tests/ > /dev/null 2>&1; then
+if grep -r "poseidon.*constant\|hash.*constant\|crypto.*constant" programs/solvoid-zk/src/ tests/ > /dev/null 2>&1; then
     echo " Found cryptographic constants"
 else
     echo "  No explicit cryptographic constants found"
@@ -96,7 +96,7 @@ fi
 
 # Test 11: Validate hash function signatures
 echo "Test 11: Validating hash function signatures"
-if grep -r "function.*hash\|hash.*function\|fn.*hash" program/src/ tests/ sdk/ > /dev/null 2>&1; then
+if grep -r "function.*hash\|hash.*function\|fn.*hash" programs/solvoid-zk/src/ tests/ sdk/ > /dev/null 2>&1; then
     echo " Found hash function signatures"
 else
     echo " No hash function signatures found"
@@ -105,7 +105,7 @@ fi
 
 # Test 12: Check for platform-specific optimizations
 echo "Test 12: Checking for platform-specific optimizations"
-if grep -r "optimized.*hash\|platform.*specific\|performance" program/src/ tests/ sdk/ > /dev/null 2>&1; then
+if grep -r "optimized.*hash\|platform.*specific\|performance" programs/solvoid-zk/src/ tests/ sdk/ > /dev/null 2>&1; then
     echo " Found platform-specific optimizations"
 else
     echo "  No platform-specific optimizations found"

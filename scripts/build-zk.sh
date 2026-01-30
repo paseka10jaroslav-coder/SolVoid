@@ -11,7 +11,7 @@ BUILD_DIR="./build-zk"
 mkdir -p $BUILD_DIR
 
 echo "--- Phase 1: Circom Compilation ---"
-circom -l node_modules circuits/$CIRCUIT_NAME.circom --r1cs --wasm --sym --output $BUILD_DIR
+circom -l "/home/elliot/Documents/Solana privacy/privacy-zero/" circuits/$CIRCUIT_NAME.circom --r1cs --wasm --sym --output $BUILD_DIR
 
 echo "--- Phase 2: Powers of Tau ---"
 if [ ! -f "$PTAU_FILE" ]; then

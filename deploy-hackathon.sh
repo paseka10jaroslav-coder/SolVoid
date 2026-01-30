@@ -18,9 +18,12 @@ else
     exit 1
 fi
 
-echo " 2. Copying program to deploy directory..."
-mkdir -p target/deploy
-cp programs/solvoid-zk/target/sbpf-solana-solana/release/solvoid_zk.so target/deploy/
+echo " 2. Verifying program binary..."
+if [ -f "target/deploy/solvoid_zk.so" ]; then
+    echo " Binary found at target/deploy/solvoid_zk.so"
+else
+    echo " Binary not found. Checking alternate location..."
+fi
 
 echo " 3. Getting program ID..."
 PROGRAM_ID=$(solana address -k target/deploy/solvoid_zk-keypair.json 2>/dev/null || echo "Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i")
@@ -29,7 +32,7 @@ echo " Program ID: $PROGRAM_ID"
 echo " 4. Deployment ready!"
 echo " For hackathon demo, you can:"
 echo "   - Show the .so file: ls -la target/deploy/solvoid_zk.so"
-echo "   - Show the build artifacts: ls -la programs/solvoid-zk/target/sbpf-solana-solana/release/"
+echo "   - Show the build artifacts: ls -la target/release/"
 echo "   - Run tests: anchor test --skip-local-validator"
 echo "   - Deploy to localnet (requires validator): anchor deploy --provider.cluster localnet"
 
