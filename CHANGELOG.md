@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-31
+
+### Added
+- **Protocol Administration Suite**: New `admin` commands in the CLI for triggering/disabling emergency modes and managing the circuit breaker.
+- **Enhanced Emergency Procedures**: Fully scripted and tested procedures for protocol pause, resume, and fee scaling.
+- **Unified Command & API Index**: Created `COMMANDS2.md` as the definitive cross-component reference guide.
+- **SDK Administrative Layer**: Integrated all on-chain administrative and initialization instructions into the `SolVoidClient` and `PrivacyShield` classes.
+
+### Changed
+- **PDA Architecture**: Standardized on-chain account derivation for `state` and `economic_state` across all testing and deployment scripts.
+- **CLI Refactoring**: Modularized `ghost` and `rescue` commands for improved maintainability.
+
+### Fixed
+- **SDK Synchronisation**: Fixed missing instructions in the hardcoded IDL and added the missing `PublicKey` imports in administration scripts.
+- **Build Integrity**: Resolved TS2339 property missing errors in the CLI entry point.
+
 ## [1.1.3] - 2026-01-31
 
 ### Added
