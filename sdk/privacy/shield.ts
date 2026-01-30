@@ -131,6 +131,62 @@ export class PrivacyShield {
             .rpc();
     }
 
+    public async triggerEmergencyMode(multiplier: bigint, reason: string): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .triggerEmergencyMode(new BN(multiplier.toString()), reason)
+            .accounts({
+                state: statePda,
+                economicState: economicPda,
+                authority: this.program.provider.publicKey,
+            })
+            .rpc();
+    }
+
+    public async disableEmergencyMode(): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .disableEmergencyMode()
+            .accounts({
+                state: statePda,
+                economicState: economicPda,
+                authority: this.program.provider.publicKey,
+            })
+            .rpc();
+    }
+
+    public async triggerCircuitBreaker(): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .triggerCircuitBreaker()
+            .accounts({
+                state: statePda,
+                economicState: economicPda,
+                authority: this.program.provider.publicKey,
+            })
+            .rpc();
+    }
+
+    public async resetCircuitBreaker(): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.getProgramId());
+        const [economicPda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.getProgramId());
+
+        return await (this.program.methods as any)
+            .resetCircuitBreaker()
+            .accounts({
+                state: statePda,
+                economicState: economicPda,
+                authority: this.program.provider.publicKey,
+            })
+            .rpc();
+    }
+
     public async generateCommitment(amount: number = 0): Promise<CommitmentData> {
         // secure randoms for secret/nullifier
         const secret = crypto.randomBytes(32);

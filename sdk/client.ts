@@ -417,4 +417,35 @@ export class SolVoidClient {
             message: 'Proof generated. Submit via relayer or directly to chain.'
         };
     }
+    public async triggerEmergencyMode(multiplier: bigint, reason: string) {
+        return this.protocolShield.triggerEmergencyMode(multiplier, reason);
+    }
+
+    public async disableEmergencyMode() {
+        return this.protocolShield.disableEmergencyMode();
+    }
+
+    public async triggerCircuitBreaker() {
+        return this.protocolShield.triggerCircuitBreaker();
+    }
+
+    public async resetCircuitBreaker() {
+        return this.protocolShield.resetCircuitBreaker();
+    }
+
+    public async initialize(authority: PublicKey) {
+        return this.protocolShield.initialize(authority);
+    }
+
+    public async initializeVerifier(vk: any) {
+        return this.protocolShield.initializeVerifier(vk);
+    }
+
+    public async initializeRootHistory() {
+        return this.protocolShield.initializeRootHistory();
+    }
+
+    public async initializeEconomics() {
+        return this.protocolShield.initializeEconomics();
+    }
 }
