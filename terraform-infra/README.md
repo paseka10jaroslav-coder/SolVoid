@@ -35,6 +35,33 @@ terraform-infra/
 - S3 bucket for Terraform state (configured in backend.tf)
 - DynamoDB table for state locking
 
+### Backend Setup
+
+Before running `terraform init`, you need to create the backend resources manually:
+
+1. **Create S3 Bucket for State Storage:**
+   ```bash
+   aws s3api create-bucket --bucket solvoid-terraform-state-dev --region us-east-1
+   aws s3api put-bucket-versioning --bucket solvoid-terraform-state-dev --versioning-configuration Status=Enabled
+   aws s3api put-bucket-encryption --bucket solvoid-terraform-state-dev --server-side-encryption-configuration '{
+     "Rules": [{
+       "ApplyServerSideEncryptionByDefault": {
+         "SSEAlgorithm": "AES256"
+       }
+     }]
+   }'
+   ```
+
+2. **Create DynamoDB Table for State Locking:**
+   ```bash
+   aws dynamodb create-table \
+     --table-name solvoid-terraform-locks-dev \
+     --attribute-definitions AttributeName=LockID,AttributeType=S \
+     --key-schema AttributeName=LockID,KeyType=HASH \
+     --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 \
+     --region us-east-1
+   ```
+
 ## Getting Started
 
 ### 1. Initialize Terraform
@@ -94,6 +121,21 @@ The GitHub Actions workflow (`.github/workflows/terraform.yml`) automatically:
 - Runs `terraform validate`
 - Runs `terraform plan` on pull requests
 - Runs `terraform apply` on merges to main branch
+
+### GitHub Actions Setup
+
+Before the workflow can run, you need to configure the following secrets in your GitHub repository:
+
+1. **AWS_ACCESS_KEY_ID**: AWS access key with permissions to manage infrastructure
+2. **AWS_SECRET_ACCESS_KEY**: AWS secret access key
+
+To add these secrets:
+1. Go to your repository on GitHub
+2. Navigate to Settings > Secrets and variables > Actions
+3. Click "New repository secret"
+4. Add both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+
+Alternatively, you can configure OIDC authentication with AWS IAM for a more secure, keyless approach.
 
 ## Best Practices
 
