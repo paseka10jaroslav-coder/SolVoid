@@ -1,0 +1,15 @@
+# Terraform Infrastructure Code Owners
+# These owners will be the default owners for everything in
+# the terraform-infra directory
+
+# Global owners for all terraform files
+*.tf @paseka10jaroslav-coder
+*.tfvars @paseka10jaroslav-coder
+
+# Environment specific owners
+/terraform-infra/environments/prod/ @paseka10jaroslav-coder
+/terraform-infra/environments/staging/ @paseka10jaroslav-coder
+/terraform-infra/environments/dev/ @paseka10jaroslav-coder
+
+# Modules
+/terraform-infra/modules/ @paseka10jaroslav-coder
