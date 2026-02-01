@@ -1,0 +1,53 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform-infra/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform-infra/**'
+
+jobs:
+  terraform:
+    name: Terraform Plan and Apply
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+      
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: terraform-infra
+      
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform-infra/environments/${{ matrix.environment }}
+      
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: terraform-infra/environments/${{ matrix.environment }}
+      
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        working-directory: terraform-infra/environments/${{ matrix.environment }}
+        env:
+          TF_VAR_environment: ${{ matrix.environment }}
+      
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform-infra/environments/${{ matrix.environment }}
