@@ -113,8 +113,28 @@ def monitor_upwork():
         chrome_options.add_argument('--window-size=1920,1080')
         
         # Initialize the driver
-        service = Service('/usr/bin/chromedriver')
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Try common chromedriver paths
+        chromedriver_paths = [
+            '/usr/bin/chromedriver',
+            '/usr/bin/chromium-chromedriver',
+            'chromedriver'  # Will use PATH
+        ]
+        
+        driver = None
+        for path in chromedriver_paths:
+            try:
+                service = Service(path)
+                driver = webdriver.Chrome(service=service, options=chrome_options)
+                logger.info(f"Successfully initialized Chrome driver using: {path}")
+                break
+            except Exception as e:
+                logger.debug(f"Failed to initialize driver with path {path}: {e}")
+                continue
+        
+        if driver is None:
+            # Fallback: try without specifying service (let selenium find it)
+            driver = webdriver.Chrome(options=chrome_options)
+            logger.info("Successfully initialized Chrome driver using auto-detection")
         
         username = os.getenv('UPWORK_USERNAME')
         password = os.getenv('UPWORK_PASSWORD')
