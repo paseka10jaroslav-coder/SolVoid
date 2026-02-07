@@ -36,18 +36,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Check for stored session on mount
   useEffect(() => {
+    // Check if there's a stored session and validate it
+    if (typeof window !== 'undefined') {
+      const storedSession = localStorage.getItem('solvoid_session');
+      if (storedSession && connected && publicKey) {
+        try {
+          const session = JSON.parse(storedSession);
+          if (session.address === publicKey.toBase58()) {
+            setIsAuthenticated(true);
+          }
+        } catch (e) {
+          // Invalid session data, clear it
+          localStorage.removeItem('solvoid_session');
+        }
+      }
+    }
     setIsLoading(false);
-  }, []);
+  }, [connected, publicKey]);
 
   // Update auth state when wallet connects/disconnects
   useEffect(() => {
     if (connected && publicKey) {
       const address = publicKey.toBase58();
-      // Store session
+      // Store session - only on client side
       if (typeof window !== 'undefined') {
         const storedSession = localStorage.getItem('solvoid_session');
-        const shouldAuth = !storedSession || 
-          (storedSession && JSON.parse(storedSession).address === address);
+        const shouldAuth = !storedSession || JSON.parse(storedSession).address === address;
         
         if (shouldAuth) {
           localStorage.setItem('solvoid_session', JSON.stringify({
@@ -56,8 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }));
           setIsAuthenticated(true);
         }
-      } else {
-        setIsAuthenticated(true);
       }
     } else if (!connected) {
       // Clear session

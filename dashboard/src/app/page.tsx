@@ -163,12 +163,13 @@ export default function Home() {
   // Handle wallet disconnection
   const handleWalletDisconnect = async () => {
     try {
-      setWalletDropdownOpen(false);
       await logout();
       info('Wallet Disconnected', 'Your wallet has been disconnected successfully.');
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
       showError('Disconnection Error', 'Failed to disconnect wallet. Please try again.');
+    } finally {
+      setWalletDropdownOpen(false);
     }
   };
 
