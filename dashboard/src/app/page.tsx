@@ -21,6 +21,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { PublicKey } from "@solana/web3.js";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/hooks/useAuth";
 
 import { DEFAULT_RPC } from "@/config/rpc";
 
@@ -65,6 +67,7 @@ export default function Home() {
   const { publicKey, connected, connecting, disconnect } = useWallet();
   const { connection } = useConnection();
   const { setVisible } = useWalletModal();
+  const { logout } = useAuth();
 
   // Only initialize hook on client side
   const solVoidData = typeof window !== 'undefined' ? useSolVoid() : null;
@@ -160,8 +163,8 @@ export default function Home() {
   // Handle wallet disconnection
   const handleWalletDisconnect = async () => {
     try {
-      await disconnect();
       setWalletDropdownOpen(false);
+      await logout();
       info('Wallet Disconnected', 'Your wallet has been disconnected successfully.');
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
@@ -267,7 +270,8 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col relative overflow-x-hidden selection:bg-tactical-cyan/20">
+    <ProtectedRoute>
+      <main className="min-h-screen flex flex-col relative overflow-x-hidden selection:bg-tactical-cyan/20">
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid pointer-events-none opacity-30 z-0" />
       <div className="fixed inset-0 bg-radial pointer-events-none z-0" />
@@ -496,5 +500,6 @@ export default function Home() {
 
       <MobileNavigation activeTab={activeTab} onChange={setActiveTab} />
     </main>
+    </ProtectedRoute>
   );
 }
