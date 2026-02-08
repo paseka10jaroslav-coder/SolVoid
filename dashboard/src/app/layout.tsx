@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { WalletContextProvider } from "@/components/WalletContextProvider";
 import { ToastProvider } from "@/components/Toast";
+import { AuthProvider } from "@/hooks/useAuth";
 
 export const metadata: Metadata = {
   title: "SolVoid | Privacy Infrastructure for Solana",
@@ -42,9 +43,11 @@ export default function RootLayout({
       </head>
       <body className="font-sans">
         <WalletContextProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </AuthProvider>
         </WalletContextProvider>
       </body>
     </html>
