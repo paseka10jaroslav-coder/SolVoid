@@ -16,7 +16,7 @@ import { TacticalOperations } from "@/components/TacticalOperations";
 import { PathVisualizer } from "@/components/PathVisualizer";
 import { ActivityLedger } from "@/components/ActivityLedger";
 import { useToast } from "@/components/Toast";
-import { Search, Crosshair, AlertCircle, Shield, Zap, Activity, Wallet, ChevronDown, Menu, Globe } from "lucide-react";
+import { Search, Crosshair, AlertCircle, Shield, Zap, Activity, Wallet, ChevronDown, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -348,8 +348,17 @@ export default function Home() {
         </div>
 
         <div className="lg:hidden">
-          <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
-            <Menu className="w-5 h-5 text-white/60" />
+          <button
+            onClick={() => {
+              if (!connected) { handleWalletConnect(); } else { handleWalletDisconnect(); }
+            }}
+            className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
+            disabled={connecting}
+          >
+            <Wallet className="w-4 h-4 text-white/60" />
+            <span className="text-xs text-white/80 font-mono">
+              {connecting ? '...' : connected && address ? truncateAddress(sanitizeInput(address)) : 'Connect'}
+            </span>
           </button>
         </div>
       </header>
@@ -364,7 +373,7 @@ export default function Home() {
               <input
                 type="text"
                 placeholder="Paste wallet or transaction to analyze privacy exposure"
-                className={`input-primary pl-12 pr-32 text-lg h-16 sm:h-18 ${searchError ? 'error' : ''}`}
+                className={`input-primary pl-12 pr-28 sm:pr-32 text-sm sm:text-lg h-12 sm:h-16 ${searchError ? 'error' : ''}`}
                 value={searchInput}
                 onChange={(e) => {
                   setSearchInput(e.target.value);
@@ -372,7 +381,7 @@ export default function Home() {
                 }}
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" disabled={loading || !!searchError} className="btn-primary px-6 py-3 text-base font-medium min-w-[140px]">
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" disabled={loading || !!searchError} className="btn-primary px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium min-w-[100px] sm:min-w-[140px]">
                   {loading ? "Scanning..." : "Run Forensic Scan"}
                 </motion.button>
               </div>
