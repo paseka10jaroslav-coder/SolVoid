@@ -73,7 +73,7 @@ export default function LoginPage() {
         ))}
       </div>
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-12">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-3 sm:px-4 py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Side - Branding & Info */}
           <motion.div
@@ -95,7 +95,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
                 Enterprise Zero-Knowledge<br />
                 <span className="text-tactical-cyan">Privacy Protocol</span>
               </h2>
@@ -147,7 +147,7 @@ export default function LoginPage() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="tactical-glass p-8 lg:p-12 border border-white/10 rounded-2xl backdrop-blur-xl"
+            className="tactical-glass p-6 sm:p-8 lg:p-12 border border-white/10 rounded-2xl backdrop-blur-xl"
           >
             <div className="space-y-8">
               <div className="text-center space-y-3">
@@ -165,7 +165,7 @@ export default function LoginPage() {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleConnect}
                   disabled={connecting}
-                  className="w-full btn-primary py-6 text-lg font-bold uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(0,243,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full btn-primary py-4 sm:py-6 text-base sm:text-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_30px_rgba(0,243,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Wallet className="w-6 h-6" />
                   {connecting ? 'Connecting...' : 'Connect Wallet'}
@@ -181,7 +181,7 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {['Phantom', 'Solflare', 'Coinbase'].map((wallet) => (
                     <div
                       key={wallet}
