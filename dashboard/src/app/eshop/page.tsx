@@ -326,6 +326,7 @@ export default function EShopPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              aria-label="Sort products by"
               className="ml-auto px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-tactical-cyan/50"
             >
               <option value="featured">Featured</option>
@@ -346,9 +347,9 @@ export default function EShopPage() {
               >
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-white/40 font-bold uppercase mb-2 block">
+                    <div className="text-xs text-white/40 font-bold uppercase mb-2">
                       Price Range: {priceRange[0]} - {priceRange[1]} SOL
-                    </label>
+                    </div>
                     <div className="flex gap-4">
                       <input
                         type="range"
@@ -360,6 +361,7 @@ export default function EShopPage() {
                           const newMin = parseFloat(e.target.value);
                           setPriceRange([newMin, Math.max(newMin, priceRange[1])]);
                         }}
+                        aria-label="Minimum price"
                         className="flex-1"
                       />
                       <input
@@ -372,6 +374,7 @@ export default function EShopPage() {
                           const newMax = parseFloat(e.target.value);
                           setPriceRange([Math.min(priceRange[0], newMax), newMax]);
                         }}
+                        aria-label="Maximum price"
                         className="flex-1"
                       />
                     </div>
