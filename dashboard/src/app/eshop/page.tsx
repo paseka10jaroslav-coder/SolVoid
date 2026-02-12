@@ -356,7 +356,10 @@ export default function EShopPage() {
                         max="10"
                         step="0.1"
                         value={priceRange[0]}
-                        onChange={(e) => setPriceRange([parseFloat(e.target.value), priceRange[1]])}
+                        onChange={(e) => {
+                          const newMin = parseFloat(e.target.value);
+                          setPriceRange([newMin, Math.max(newMin, priceRange[1])]);
+                        }}
                         className="flex-1"
                       />
                       <input
@@ -365,7 +368,10 @@ export default function EShopPage() {
                         max="10"
                         step="0.1"
                         value={priceRange[1]}
-                        onChange={(e) => setPriceRange([priceRange[0], parseFloat(e.target.value)])}
+                        onChange={(e) => {
+                          const newMax = parseFloat(e.target.value);
+                          setPriceRange([Math.min(priceRange[0], newMax), newMax]);
+                        }}
                         className="flex-1"
                       />
                     </div>
